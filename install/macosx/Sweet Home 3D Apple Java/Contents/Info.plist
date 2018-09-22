@@ -5,7 +5,7 @@
 	<key>CFBundleGetInfoString</key>
 	<string>Sweet Home 3D 6.0 Copyright 2007-2018 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>6000</string>
+	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
 	<string>6.0</string>
 	<key>CFBundleDevelopmentRegion</key>
@@ -26,11 +26,11 @@
 	<string>SH3D</string>
 	<key>CFBundleAllowMixedLocalizations</key>
 	<string>true</string>
-	<key>NSHighResolutionCapable</key>	
+	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.8.3</string>
-	
+	<string>10.6.8</string>
+
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
@@ -218,5 +218,43 @@
 			<string>Viewer</string>
 		</dict>
 	</array>
+
+	<!-- JavaApplicationStub arguments for Java 6 -->
+	<key>Java</key>
+	<dict>
+		<key>JVMVersion</key>
+		<string>1.6*</string>
+		<key>MainClass</key>
+		<string>com.eteks.sweethome3d.SweetHome3D</string>
+		<key>VMOptions</key>
+		<string>-Xmx1024m</string>
+		<key>ClassPath</key>
+		<array>
+			<string>$JAVAROOT/SweetHome3D.jar</string>
+			<string>$JAVAROOT/Furniture.jar</string>
+			<string>$JAVAROOT/Textures.jar</string>
+			<string>$JAVAROOT/Examples.jar</string>
+			<string>$JAVAROOT/Help.jar</string>
+			<string>$JAVAROOT/batik-svgpathparser-1.7.jar</string>
+			<string>$JAVAROOT/jeksparser-calculator.jar</string>
+			<string>$JAVAROOT/freehep-vectorgraphics-svg-2.1.1b.jar</string>
+			<string>$JAVAROOT/sunflow-0.07.3i.jar</string>
+		</array>
+		<key>Properties</key>
+		<dict>
+			<key>java.ext.dirs</key>
+			<string>$JAVAROOT/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/lib/ext:/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home/lib/ext</string>
+			<key>java.library.path</key>
+			<string>$JAVAROOT/ext</string>
+			<key>jogamp.gluegen.UseTempJarCache</key>
+			<string>false</string>
+			<key>apple.awt.graphics.UseQuartz</key>
+			<string>true</string>
+			<key>sweethome3d.bundle</key>
+			<string>true</string>
+			<key>com.eteks.sweethome3d.applicationId</key>
+			<string>SweetHome3D#Installer</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

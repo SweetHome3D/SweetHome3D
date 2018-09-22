@@ -523,8 +523,8 @@
   </target>
 
   <!-- Builds Sweet Home 3D Windows launcher in install/windows/build directory.
-       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE,
-                 64 bit JRE and launch4j installed in their default location -->
+       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_181,
+                 64 bit JRE 1.8.0_181 and launch4j installed in their default location -->
   <target name="windowsLauncher" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Windows launcher">
     <!-- Copy SweetHome3D JARs and Windows Java 3D DLLs and JARs for Java 3D
@@ -750,8 +750,8 @@
 
   <!-- Builds install/SweetHome3D-version-windows.exe installer able to install SweetHome3D.exe
        with a Windows JRE and Sweet Home 3D libraries.
-       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE, 64 bit JRE,
-                 launch4j and Inno Setup installed in their default location -->
+       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_181, 
+                 64 bit JRE 1.8.0_181, launch4j and Inno Setup installed in their default location -->
   <target name="windowsInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
     <!-- Create SweetHome3D-version-windows.exe with Inno Setup -->
@@ -774,8 +774,8 @@
 
   <!-- Builds install/SweetHome3D-version-windows.exe signed installer able to install SweetHome3D.exe
        with a Windows JRE and Sweet Home 3D libraries.
-       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE, 64 bit JRE,
-                 launch4j, Inno Setup and SignTool included in Windows platform SDK
+       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_181, 
+                 64 bit JRE 1.8.0_181, launch4j, Inno Setup and SignTool included in Windows platform SDK
                  installed in their default location -->
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
@@ -814,7 +814,8 @@
     <echo message="signed install/SweetHome3D-${version}-windows.exe ready for ftp"/>
   </target>
 
-  <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. -->
+  <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. 
+       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_181 installed in its default location -->
   <target name="macosxBundle" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
@@ -829,12 +830,12 @@
     <!-- Copy SweetHome3D JARs and its direct libs
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java -->
     <mkdir dir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
-    <move file="build/SweetHome3D.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="build/Furniture.jar"   todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="build/Textures.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="build/Examples.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="build/Help.jar"        todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" >
+    <copy file="build/SweetHome3D.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" />
+    <copy file="build/Furniture.jar"   todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" />
+    <copy file="build/Textures.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" />
+    <copy file="build/Examples.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" />
+    <copy file="build/Help.jar"        todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" />
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
         <exclude name="jmf.jar"/>
@@ -845,13 +846,11 @@
         <exclude name="iText-2.1.7.jar"/>
       </fileset>
     </copy>
-    <!-- Copy jnlp.jar, JMF and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D
-         to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java/ext -->
-    <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
-    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext" >
-      <fileset dir="lib">
-        <include name="jmf.jar"/>
-      </fileset>
+    <!-- Copy jnlp.jar, JMF and Mac OS X Java 3D 1.6 DLLs and JARs for Java 3D
+         to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Java/ext -->
+    <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java/ext"/>
+    <copy file="lib/jmf.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java/ext"/>
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Java/ext" >
       <fileset dir="lib/java3d-1.6">
         <include name="*.jar"/>
         <exclude name="jogl-all.jar"/>
@@ -863,6 +862,95 @@
         <include name="*.jnilib"/>
       </fileset>
     </copy>
+
+    <!-- Create directories required by Oracle Java AppBundler -->
+    <mkdir dir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/Java.runtime/Contents/Home/jre" />
+    <!-- Copy JRE included in JDK to install/macosx/SweetHome3D-version/Contents/Plugins/Java.runtime/Contents/Home   
+         excluding unnecessary files mentioned in JDK README.TXT file -->
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/Java.runtime/Contents/Home/jre">
+      <fileset dir="/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre">
+        <include name="**"/>
+        <exclude name="lib/ext/sunec.jar"/>
+        <exclude name="lib/ext/sunpkcs11.jar"/>
+        <exclude name="bin/rmid"/>
+        <exclude name="bin/rmiregistry"/>
+        <exclude name="bin/tnameserv"/>
+        <exclude name="bin/keytool"/>
+        <exclude name="bin/policytool"/>
+        <exclude name="bin/orbd"/>
+        <exclude name="bin/servertool"/>
+        <exclude name="lib/javaws.jar"/>
+        <exclude name="lib/cmm/PYCC.pf"/>
+        <exclude name="lib/jfr"/>
+        <exclude name="lib/jfr.jar"/>
+        <!-- No need of JavaFX support -->
+        <exclude name="THIRDPARTYLICENSEREADME-JAVAFX.txt"/>
+        <exclude name="lib/javafx.properties"/>
+        <exclude name="lib/fxplugins.dylib"/>
+        <exclude name="lib/libdecora_sse.dylib"/>
+        <exclude name="lib/libglass.dylib"/>
+        <exclude name="lib/libglib-lite.dylib"/>
+        <exclude name="lib/libgstreamer-lite.dylib"/>
+        <exclude name="lib/libjavafx-font_t2k.dylib"/>
+        <exclude name="lib/libjavafx-font.dylib"/>
+        <exclude name="lib/libjavafx-iio.dylib"/>
+        <exclude name="lib/libjfxmedia.dylib"/>
+        <exclude name="lib/libjfxwebkit.dylib"/>
+        <exclude name="lib/libprism_common.dylib"/>   
+        <exclude name="lib/libprism_sw.dylib"/>
+        <exclude name="lib/libprism_es2.dylib"/>
+        <exclude name="lib/ext/jfxrt.jar"/>
+        <exclude name="lib/ext/nashorn.jar"/>
+      </fileset>
+    </copy>
+
+  	<!-- Build legacy Sweet Home 3D version based on Apple Java -->
+  	<copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app">
+      <fileset dir="install/macosx/Sweet Home 3D Apple Java"/>
+    </copy>
+  	<copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources">
+      <fileset dir="install/macosx/Sweet Home 3D/Contents/Resources"/>
+    </copy>
+
+    <!-- Change executable permission of SweetHome3D lost during copy task -->
+    <chmod perm="+x" file="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/MacOS/SweetHome3D"/>
+
+    <!-- Copy SweetHome3D JARs and its direct libs
+         to install/macosx/SweetHome3D-version/Sweet Home 3D Apple Java.app/Contents/Resources/Java -->
+    <mkdir dir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java/ext"/>
+    <move file="build/SweetHome3D.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java" />
+    <move file="build/Furniture.jar"   todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java" />
+    <move file="build/Textures.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java" />
+    <move file="build/Examples.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java" />
+    <move file="build/Help.jar"        todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java" />
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java" >
+      <fileset dir="lib">
+        <include name="*.jar"/>
+        <exclude name="jmf.jar"/>
+        <exclude name="j3dcore.jar"/>
+        <exclude name="j3dutils.jar"/>
+        <exclude name="vecmath.jar"/>
+        <!-- Print to PDF menu item isn't available under Mac OS X as it's already in standard print dialog -->
+        <exclude name="iText-2.1.7.jar"/>
+      </fileset>
+    </copy>
+    <!-- Copy jnlp.jar, JMF and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D
+         to install/macosx/SweetHome3D-version/Sweet Home 3D Apple Java.app/Contents/Resources/Java/ext -->
+    <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java/ext"/>
+    <copy file="lib/jmf.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java/ext"/>
+    <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app/Contents/Resources/Java/ext" >
+      <fileset dir="lib/java3d-1.6">
+        <include name="*.jar"/>
+        <exclude name="jogl-all.jar"/>
+      </fileset>
+      <fileset dir="build/java3d-1.6">
+        <include name="jogl-java3d.jar"/>
+      </fileset>
+      <fileset dir="lib/java3d-1.6/macosx">
+        <include name="*.jnilib"/>
+      </fileset>
+    </copy>
+  	
     <!-- Copy COPYING.TXT and licenses texts to install/macosx/SweetHome3D-version/ -->
     <copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-${version}"/>
     <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-${version}" />
@@ -877,7 +965,8 @@
 
   <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app
        and Sweet Home 3D libraries.
-       CAUTION : May be run only under Mac OS X and requires Disk Utility -->
+       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_181 
+                 installed in its default location and Disk Utility -->
   <target name="macosxInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
     <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
@@ -898,8 +987,8 @@
 
   <!-- Builds install/SweetHome3D-version-macosx.dmg signed archive that contains SweetHome3D.app
        and Sweet Home 3D libraries.
-       CAUTION : May be run only under Mac OS X and requires hdutil, codesign
-                 and a certificate imported in Keychain Access -->
+       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_181 installed in 
+                 its default location, hdutil, codesign and a certificate imported in Keychain Access -->
   <target name="macosxSignedInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
     <input message="Enter certificate name:" addproperty="certificateName"/>
@@ -909,6 +998,7 @@
       <arg value="-s"/>
       <arg value="${certificateName}"/>
       <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app"/>
+      <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D Apple Java.app"/>
     </exec>
 
     <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
