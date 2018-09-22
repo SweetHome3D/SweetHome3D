@@ -731,7 +731,7 @@ public class WallPanel extends JPanel implements DialogView {
     PropertyChangeListener arcLengthChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           Float arcLength = controller.getArcLength();
-          if (arcLength != null && controller.getArcExtentInDegrees() != 0) {
+          if (arcLength != null && (controller.getArcExtentInDegrees() != 0 || SwingTools.isToolTipShowing())) {
             String arcExtentSpinnerToolTip = preferences.getLocalizedString(WallPanel.class,
                 "arcExtentSpinner.tooltip", preferences.getLengthUnit().getFormatWithUnit().format(arcLength));
             arcExtentSpinner.setToolTipText(arcExtentSpinnerToolTip);
