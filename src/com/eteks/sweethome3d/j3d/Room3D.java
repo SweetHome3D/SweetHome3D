@@ -73,7 +73,7 @@ public class Room3D extends Object3DBranch {
   public Room3D(Room room, Home home,
                 boolean ignoreCeilingPart,
                 boolean waitTextureLoadingEnd) {
-    this(room, home, false, true, false);
+    this(room, home, ignoreCeilingPart, true, waitTextureLoadingEnd);
   }
 
   /**
