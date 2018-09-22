@@ -668,11 +668,12 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       int labelAlignment = OperatingSystem.isMacOSX()
           ? GridBagConstraints.LINE_END
           : GridBagConstraints.LINE_START;
+      int standardGap = Math.round(5 * SwingTools.getResolutionScale());
       JPanel leftPanel = new JPanel(new GridBagLayout());
       // First row
       leftPanel.add(this.availableTexturesLabel, new GridBagConstraints(
           0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       // Second row
       JScrollPane scrollPane = new JScrollPane(this.availableTexturesList);
       scrollPane.getVerticalScrollBar().addAdjustmentListener(
@@ -700,45 +701,45 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       // First row
       rightPanel.add(this.chosenTextureLabel, new GridBagConstraints(
           2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       // Second row
       rightPanel.add(this.texturePreviewComponent, new GridBagConstraints(
           2, 1, 2, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       // Third row
       rightPanel.add(this.xOffsetLabel, new GridBagConstraints(
           2, 2, 1, 1, 0.1, 0, labelAlignment,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
       rightPanel.add(this.xOffsetSpinner, new GridBagConstraints(
           3, 2, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
       if (this.controller.isRotationSupported()) {
         // Fourth row
         rightPanel.add(this.yOffsetLabel, new GridBagConstraints(
             2, 3, 1, 1, 0.1, 0, labelAlignment,
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
         rightPanel.add(this.yOffsetSpinner, new GridBagConstraints(
             3, 3, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
         // Fifth row
         rightPanel.add(this.angleLabel, new GridBagConstraints(
             2, 4, 1, 1, 0.1, 0, labelAlignment,
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
         rightPanel.add(this.angleSpinner, new GridBagConstraints(
             3, 4, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
         // Sixth row
         rightPanel.add(this.scaleLabel, new GridBagConstraints(
             2, 5, 1, 1, 0.1, 0, labelAlignment,
-            GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
         rightPanel.add(this.scaleSpinner, new GridBagConstraints(
             3, 5, 1, 1, 0.1, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
       }
       // Seventh row
       rightPanel.add(new JSeparator(), new GridBagConstraints(
           2, 6, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
       // Height row
       if (this.importTextureButton != null) {
         JPanel buttonsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
@@ -758,7 +759,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       add(this.recentTexturesPanel, new GridBagConstraints(
           0, 1, 2, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, 0), 0, 0));
 
       // Change component tab order to ensure search text field is after the available textures list
       final List<JComponent> components = new ArrayList<JComponent>();

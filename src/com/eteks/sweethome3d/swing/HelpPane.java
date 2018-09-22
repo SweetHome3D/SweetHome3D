@@ -93,8 +93,8 @@ public class HelpPane extends JRootPane implements HelpView {
   private JLabel                searchLabel;
   private JTextField            searchTextField;
   private JEditorPane           helpEditorPane;
-  
-  public HelpPane(UserPreferences preferences, 
+
+  public HelpPane(UserPreferences preferences,
                   final HelpController controller) {
     this.preferences = preferences;
     createActions(preferences, controller);
@@ -106,16 +106,16 @@ public class HelpPane extends JRootPane implements HelpView {
       addHyperlinkListener(controller);
       installKeyboardActions();
     }
-    
+
     setPage(controller.getHelpPage());
-    controller.addPropertyChangeListener(HelpController.Property.HELP_PAGE, 
+    controller.addPropertyChangeListener(HelpController.Property.HELP_PAGE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             setPage(controller.getHelpPage());
             highlightText(controller.getHighlightedText());
           }
         });
-    controller.addPropertyChangeListener(HelpController.Property.BROWSER_PAGE, 
+    controller.addPropertyChangeListener(HelpController.Property.BROWSER_PAGE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             SwingTools.showDocumentInBrowser(controller.getBrowserPage());
@@ -123,35 +123,35 @@ public class HelpPane extends JRootPane implements HelpView {
         });
   }
 
-  /** 
+  /**
    * Creates actions bound to <code>controller</code>.
    */
-  private void createActions(UserPreferences preferences, 
+  private void createActions(UserPreferences preferences,
                              final HelpController controller) {
-    ActionMap actions = getActionMap();    
+    ActionMap actions = getActionMap();
     try {
       final ControllerAction showPreviousAction = new ControllerAction(
           preferences, HelpPane.class, ActionType.SHOW_PREVIOUS.name(), controller, "showPrevious");
       showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
-      controller.addPropertyChangeListener(HelpController.Property.PREVIOUS_PAGE_ENABLED, 
+      controller.addPropertyChangeListener(HelpController.Property.PREVIOUS_PAGE_ENABLED,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
             }
           });
       actions.put(ActionType.SHOW_PREVIOUS, showPreviousAction);
-      
+
       final ControllerAction showNextAction = new ControllerAction(
           preferences, HelpPane.class, ActionType.SHOW_NEXT.name(), controller, "showNext");
       showNextAction.setEnabled(controller.isNextPageEnabled());
-      controller.addPropertyChangeListener(HelpController.Property.NEXT_PAGE_ENABLED, 
+      controller.addPropertyChangeListener(HelpController.Property.NEXT_PAGE_ENABLED,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               showNextAction.setEnabled(controller.isNextPageEnabled());
             }
           });
       actions.put(ActionType.SHOW_NEXT, showNextAction);
-      
+
       actions.put(ActionType.SEARCH, new ResourceAction(preferences, HelpPane.class, ActionType.SEARCH.name()) {
           @Override
           public void actionPerformed(ActionEvent ev) {
@@ -184,13 +184,13 @@ public class HelpPane extends JRootPane implements HelpView {
    * actions when preferred language changes.
    */
   private void addLanguageListener(UserPreferences preferences) {
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
         new LanguageChangeListener(this));
   }
 
   /**
    * Preferences property listener bound to this component with a weak reference to avoid
-   * strong link between preferences and this component.  
+   * strong link between preferences and this component.
    */
   private static class LanguageChangeListener implements PropertyChangeListener {
     private WeakReference<HelpPane> helpPane;
@@ -198,7 +198,7 @@ public class HelpPane extends JRootPane implements HelpView {
     public LanguageChangeListener(HelpPane helpPane) {
       this.helpPane = new WeakReference<HelpPane>(helpPane);
     }
-    
+
     public void propertyChange(PropertyChangeEvent ev) {
       // If help pane was garbage collected, remove this listener from preferences
       HelpPane helpPane = this.helpPane.get();
@@ -219,7 +219,7 @@ public class HelpPane extends JRootPane implements HelpView {
       }
     }
   }
-  
+
   /**
    * Creates the components displayed by this view.
   */
@@ -231,7 +231,7 @@ public class HelpPane extends JRootPane implements HelpView {
       this.searchTextField.putClientProperty("JTextField.variant", "search");
       this.searchTextField.putClientProperty("JTextField.Search.FindAction",
           getActionMap().get(ActionType.SEARCH));
-    } 
+    }
     this.searchTextField.addActionListener(getActionMap().get(ActionType.SEARCH));
     // Enable search only if search text field isn't empty
     this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
@@ -239,16 +239,16 @@ public class HelpPane extends JRootPane implements HelpView {
           getActionMap().get(ActionType.SEARCH).setEnabled(searchTextField.getText().trim().length() > 0);
           controller.setHighlightedText(searchTextField.getText());
         }
-    
+
         public void insertUpdate(DocumentEvent ev) {
           changedUpdate(ev);
         }
-    
+
         public void removeUpdate(DocumentEvent ev) {
           changedUpdate(ev);
         }
       });
-    
+
     this.helpEditorPane = new JEditorPane();
     this.helpEditorPane.setBorder(null);
     this.helpEditorPane.setEditable(false);
@@ -335,7 +335,7 @@ public class HelpPane extends JRootPane implements HelpView {
           }
         });
     }
-    
+
     setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
         @Override
         public Component getDefaultComponent(Container container) {
@@ -348,7 +348,7 @@ public class HelpPane extends JRootPane implements HelpView {
    * Highlights the words of the given text in HTML pane.
    */
   private void highlightText(String highlightedText) {
-    DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
+    DefaultHighlighter.DefaultHighlightPainter highlightPainter =
         new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 204, 51));
     this.helpEditorPane.getHighlighter().removeAllHighlights();
     if (highlightedText != null) {
@@ -357,19 +357,19 @@ public class HelpPane extends JRootPane implements HelpView {
         if (highlightedWord.length() > 0) {
           highlightedWords.add(highlightedWord);
         }
-      }                            
-      highlightWords(this.helpEditorPane.getDocument().getDefaultRootElement(), 
+      }
+      highlightWords(this.helpEditorPane.getDocument().getDefaultRootElement(),
           highlightedWords.toArray(new String [highlightedWords.size()]), highlightPainter);
-    } 
+    }
   }
 
-  private void highlightWords(Element element, 
-                              String [] highlightedWords, 
+  private void highlightWords(Element element,
+                              String [] highlightedWords,
                               Highlighter.HighlightPainter highlightPainter) {
     if (element.isLeaf()) {
       int startOffset = element.getStartOffset();
       try {
-        String text = element.getDocument().getText(element.getStartOffset(), 
+        String text = element.getDocument().getText(element.getStartOffset(),
             element.getEndOffset() - startOffset).toLowerCase();
         for (String highlightedWord : highlightedWords) {
           for (int index = 0; index < text.length() - 1 &&  (index = text.indexOf(highlightedWord, index)) >= 0; index += highlightedWord.length() + 1) {
@@ -397,7 +397,7 @@ public class HelpPane extends JRootPane implements HelpView {
       this.searchLabel.setLabelFor(this.searchTextField);
     }
   }
-  
+
   /**
    * Layouts the components displayed by this view.
    */
@@ -406,61 +406,62 @@ public class HelpPane extends JRootPane implements HelpView {
     toolBar.setFloatable(false);
     // Change layout because BoxLayout glue doesn't work well under Linux
     toolBar.setLayout(new GridBagLayout());
-    ActionMap actions = getActionMap();    
+    ActionMap actions = getActionMap();
     final JButton previousButton = new JButton(actions.get(ActionType.SHOW_PREVIOUS));
     final JButton nextButton = new JButton(actions.get(ActionType.SHOW_NEXT));
     toolBar.add(previousButton);
     toolBar.add(nextButton);
     layoutToolBarButtons(toolBar, previousButton, nextButton);
-    toolBar.addPropertyChangeListener("componentOrientation", 
+    toolBar.addPropertyChangeListener("componentOrientation",
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent evt) {
             layoutToolBarButtons(toolBar, previousButton, nextButton);
           }
         });
     toolBar.add(new JLabel(),
-        new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, 
+        new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    
+
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       toolBar.add(this.searchLabel,
-          new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-              GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
+              GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     }
     toolBar.add(this.searchTextField,
-        new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
             GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     this.searchTextField.setMaximumSize(this.searchTextField.getPreferredSize());
     // Ignore search button under Mac OS X 10.5 (it's included in the search field)
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       toolBar.add(new JButton(actions.get(ActionType.SEARCH)),
-          new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-              GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));          
+          new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
+              GridBagConstraints.NONE, new Insets(0, standardGap, 0, 0), 0, 0));
     }
     // Remove focusable property on buttons
-    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {      
+    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
       Component component = toolBar.getComponent(i);
       if (component instanceof JButton) {
         component.setFocusable(false);
       }
     }
-    
+
     getContentPane().add(toolBar, BorderLayout.NORTH);
     getContentPane().add(new JScrollPane(this.helpEditorPane), BorderLayout.CENTER);
   }
 
   /**
-   * Updates buttons layout and under Mac OS X 10.5 use segmented buttons with properties 
+   * Updates buttons layout and under Mac OS X 10.5 use segmented buttons with properties
    * depending on toolbar orientation.
    */
-  private void layoutToolBarButtons(JToolBar toolBar, 
+  private void layoutToolBarButtons(JToolBar toolBar,
                                     JButton previousButton,
                                     JButton nextButton) {
     int buttonPadY;
     int buttonsTopBottomInset;
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() 
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()
         && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-      // Ensure the top and bottom of segmented buttons are correctly drawn 
+      // Ensure the top and bottom of segmented buttons are correctly drawn
       buttonPadY = 6;
       buttonsTopBottomInset = -2;
     } else {
@@ -470,14 +471,14 @@ public class HelpPane extends JRootPane implements HelpView {
     ComponentOrientation orientation = toolBar.getComponentOrientation();
     GridBagLayout layout = (GridBagLayout)toolBar.getLayout();
     GridBagConstraints firstButtonConstraints = new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, new Insets(buttonsTopBottomInset, 0, buttonsTopBottomInset, 0), 0, buttonPadY);
     GridBagConstraints secondButtonContraints = new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.NONE, new Insets(buttonsTopBottomInset, 0, buttonsTopBottomInset, 5), 0, buttonPadY);
-    layout.setConstraints(orientation.isLeftToRight() ? previousButton : nextButton, 
+    layout.setConstraints(orientation.isLeftToRight() ? previousButton : nextButton,
         firstButtonConstraints);
-    layout.setConstraints(orientation.isLeftToRight() ? nextButton : previousButton, 
+    layout.setConstraints(orientation.isLeftToRight() ? nextButton : previousButton,
         secondButtonContraints);
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
@@ -488,7 +489,7 @@ public class HelpPane extends JRootPane implements HelpView {
     }
     toolBar.revalidate();
   }
-    
+
   /**
    * Adds an hyperlink listener on the editor pane displayed by this pane.
    */
@@ -503,19 +504,19 @@ public class HelpPane extends JRootPane implements HelpView {
   }
 
   /**
-   * Installs keys bound to actions. 
+   * Installs keys bound to actions.
    */
   private void installKeyboardActions() {
-    ActionMap actions = getActionMap();      
+    ActionMap actions = getActionMap();
     // As no menu is created for this pane, change its input map to ensure accelerators work
     InputMap inputMap = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_PREVIOUS).getValue(Action.ACCELERATOR_KEY), 
+    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_PREVIOUS).getValue(Action.ACCELERATOR_KEY),
         ActionType.SHOW_PREVIOUS);
-    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_NEXT).getValue(Action.ACCELERATOR_KEY), 
+    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_NEXT).getValue(Action.ACCELERATOR_KEY),
         ActionType.SHOW_NEXT);
-    inputMap.put((KeyStroke)actions.get(ActionType.CLOSE).getValue(Action.ACCELERATOR_KEY), 
+    inputMap.put((KeyStroke)actions.get(ActionType.CLOSE).getValue(Action.ACCELERATOR_KEY),
         ActionType.CLOSE);
-    inputMap.put((KeyStroke)actions.get(ActionType.SEARCH).getValue(Action.ACCELERATOR_KEY), 
+    inputMap.put((KeyStroke)actions.get(ActionType.SEARCH).getValue(Action.ACCELERATOR_KEY),
         ActionType.SEARCH);
   }
 
@@ -530,7 +531,7 @@ public class HelpPane extends JRootPane implements HelpView {
             setRootPane(HelpPane.this);
           }
         };
-      // Update frame image and title 
+      // Update frame image and title
       this.frame.setIconImage(new ImageIcon(HelpPane.class.getResource(
           this.preferences.getLocalizedString(HelpPane.class, "helpFrame.icon"))).getImage());
       this.frame.setTitle(this.preferences.getLocalizedString(HelpPane.class, "helpFrame.title"));
@@ -540,13 +541,13 @@ public class HelpPane extends JRootPane implements HelpView {
       // Just hide help frame when user close it
       this.frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
     }
-    
+
     // Show frame
     this.frame.setVisible(true);
     this.frame.setState(JFrame.NORMAL);
     this.frame.toFront();
   }
-  
+
   /**
    * Computes <code>frame</code> size and location to fit into screen.
    */
@@ -556,10 +557,10 @@ public class HelpPane extends JRootPane implements HelpView {
     Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
     screenSize.width -= screenInsets.left + screenInsets.right;
     screenSize.height -= screenInsets.top + screenInsets.bottom;
-    frame.setSize(Math.min(2 * screenSize.width / 3, Math.round(800 * SwingTools.getResolutionScale())), 
+    frame.setSize(Math.min(2 * screenSize.width / 3, Math.round(800 * SwingTools.getResolutionScale())),
         screenSize.height * 4 / 5);
   }
-  
+
   /**
    * Displays <code>url</code> in this pane.
    */

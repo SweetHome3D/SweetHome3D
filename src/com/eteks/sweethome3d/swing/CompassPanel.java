@@ -107,16 +107,16 @@ public class CompassPanel extends JPanel implements DialogView {
   /**
    * Creates and initializes components.
    */
-  private void createComponents(UserPreferences preferences, 
+  private void createComponents(UserPreferences preferences,
                                 final CompassController controller) {
-    // Get unit name matching current unit 
+    // Get unit name matching current unit
     String unitName = preferences.getLengthUnit().getName();
 
     // Create X label and its spinner bound to X controller property
-    this.xLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+    this.xLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         CompassPanel.class, "xLabel.text", unitName));
     float maximumLength = preferences.getLengthUnit().getMaximumLength();
-    final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
+    final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel =
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
     this.xSpinner = new NullableSpinner(xSpinnerModel);
     xSpinnerModel.setLength(controller.getX());
@@ -133,11 +133,11 @@ public class CompassPanel extends JPanel implements DialogView {
           controller.addPropertyChangeListener(CompassController.Property.X, xChangeListener);
         }
       });
-    
+
     // Create Y label and its spinner bound to Y controller property
-    this.yLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+    this.yLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         CompassPanel.class, "yLabel.text", unitName));
-    final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel = 
+    final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel =
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -maximumLength, maximumLength);
     this.ySpinner = new NullableSpinner(ySpinnerModel);
     ySpinnerModel.setLength(controller.getY());
@@ -154,12 +154,12 @@ public class CompassPanel extends JPanel implements DialogView {
           controller.addPropertyChangeListener(CompassController.Property.Y, yChangeListener);
         }
       });
-    
+
     // Create diameter label and its spinner bound to DIAMETER controller property
-    this.diameterLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+    this.diameterLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         CompassPanel.class, "diameterLabel.text", unitName));
-    final NullableSpinner.NullableSpinnerLengthModel diameterSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 
+    final NullableSpinner.NullableSpinnerLengthModel diameterSpinnerModel =
+        new NullableSpinner.NullableSpinnerLengthModel(preferences,
             preferences.getLengthUnit().getMinimumLength(), preferences.getLengthUnit().getMaximumLength()  / 10);
     this.diameterSpinner = new NullableSpinner(diameterSpinnerModel);
     diameterSpinnerModel.setLength(controller.getDiameter());
@@ -168,20 +168,20 @@ public class CompassPanel extends JPanel implements DialogView {
           diameterSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
-    controller.addPropertyChangeListener(CompassController.Property.DIAMETER, 
+    controller.addPropertyChangeListener(CompassController.Property.DIAMETER,
         diameterChangeListener);
     diameterSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          controller.removePropertyChangeListener(CompassController.Property.DIAMETER, 
+          controller.removePropertyChangeListener(CompassController.Property.DIAMETER,
               diameterChangeListener);
           controller.setDiameter(diameterSpinnerModel.getLength());
-          controller.addPropertyChangeListener(CompassController.Property.DIAMETER, 
+          controller.addPropertyChangeListener(CompassController.Property.DIAMETER,
               diameterChangeListener);
         }
       });
-    
+
     // Create visible check box bound to VISIBLE controller property
-    this.visibleCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+    this.visibleCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences,
         CompassPanel.class, "visibleCheckBox.text"));
     this.visibleCheckBox.setSelected(controller.isVisible());
     final PropertyChangeListener visibleChangeListener = new PropertyChangeListener() {
@@ -221,7 +221,7 @@ public class CompassPanel extends JPanel implements DialogView {
           controller.addPropertyChangeListener(CompassController.Property.LATITUDE_IN_DEGREES, latitudeChangeListener);
         }
       });
-    
+
     this.longitudeLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "longitudeLabel.text"));
     final SpinnerNumberModel longitudeSpinnerModel = new SpinnerNumberModel(new Float(0), new Float(-180), new Float(180), new Float(5));
     this.longitudeSpinner = new AutoCommitSpinner(longitudeSpinnerModel);
@@ -301,7 +301,7 @@ public class CompassPanel extends JPanel implements DialogView {
         }
       });
     this.timeZoneComboBox.setPrototypeDisplayValue("GMT");
-    
+
     this.northDirectionLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, CompassPanel.class, "northDirectionLabel.text"));
     // Create a spinner model able to choose an angle modulo 360
     final SpinnerNumberModel northDirectionSpinnerModel = new AutoCommitSpinner.SpinnerModuloNumberModel(0, 0, 360, 5);
@@ -312,7 +312,7 @@ public class CompassPanel extends JPanel implements DialogView {
         public Dimension getPreferredSize() {
           return new Dimension(35, 35);
         }
-        
+
         @Override
         protected void paintComponent(Graphics g) {
           Graphics2D g2D = (Graphics2D) g;
@@ -398,89 +398,90 @@ public class CompassPanel extends JPanel implements DialogView {
       this.northDirectionLabel.setLabelFor(this.northDirectionSpinner);
     }
   }
-  
+
   /**
-   * Layouts panel components in panel with their labels. 
+   * Layouts panel components in panel with their labels.
    */
   private void layoutComponents(UserPreferences preferences) {
-    int labelAlignment = OperatingSystem.isMacOSX() 
+    int labelAlignment = OperatingSystem.isMacOSX()
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
     JPanel compassRosePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         CompassPanel.class, "compassRosePanel.title"));
-    Insets labelInsets = new Insets(0, 0, 5, 5);
-    Insets componentInsets = new Insets(0, 0, 5, 10);
-    Insets lastComponentInsets = new Insets(0, 0, 5, 0);
-    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
+    Insets labelInsets = new Insets(0, 0, standardGap, standardGap);
+    Insets componentInsets = new Insets(0, 0, standardGap, 10);
+    Insets lastComponentInsets = new Insets(0, 0, standardGap, 0);
+    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : standardGap;
     compassRosePanel.add(this.xLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     compassRosePanel.add(this.xSpinner, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 20), -10, 0));
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 20), -10, 0));
     compassRosePanel.add(this.visibleCheckBox, new GridBagConstraints(
-        2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, lastComponentInsets, 0, 0));
     compassRosePanel.add(this.yLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        0, 1, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     compassRosePanel.add(this.ySpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 20), -10, 0));
     compassRosePanel.add(this.diameterLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        2, 1, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     compassRosePanel.add(this.diameterSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     add(compassRosePanel, new GridBagConstraints(
-        0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, 
+        0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, rowGap, 0), 0, 0));
     // Second row
     JPanel geographicLocationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         CompassPanel.class, "geographicLocationPanel.title"));
     geographicLocationPanel.add(this.latitudeLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, labelAlignment, 
+        0, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     geographicLocationPanel.add(this.latitudeSpinner, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, componentInsets, 20, 0));
     geographicLocationPanel.add(this.northDirectionLabel, new GridBagConstraints(
-        2, 0, 1, 1, 0, 0, labelAlignment, 
+        2, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     geographicLocationPanel.add(this.northDirectionSpinner, new GridBagConstraints(
-        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     geographicLocationPanel.add(this.northDirectionComponent, new GridBagConstraints(
-        4, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        4, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     geographicLocationPanel.add(this.longitudeLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        0, 1, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     geographicLocationPanel.add(this.longitudeSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 20, 0));
     geographicLocationPanel.add(this.timeZoneLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        2, 1, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     geographicLocationPanel.add(this.timeZoneComboBox, new GridBagConstraints(
-        3, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        3, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    this.timeZoneComboBox.setPreferredSize(new Dimension(this.latitudeSpinner.getPreferredSize().width + 60, 
+    this.timeZoneComboBox.setPreferredSize(new Dimension(this.latitudeSpinner.getPreferredSize().width + 60,
         this.timeZoneComboBox.getPreferredSize().height));
     add(geographicLocationPanel, new GridBagConstraints(
-        0, 1, 1, 1, 1, 0, GridBagConstraints.CENTER, 
+        0, 1, 1, 1, 1, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**
-   * Displays this panel in a modal dialog box. 
+   * Displays this panel in a modal dialog box.
    */
   public void displayView(View parentView) {
-    JFormattedTextField northDirectionTextField = 
+    JFormattedTextField northDirectionTextField =
         ((JSpinner.DefaultEditor)this.northDirectionSpinner.getEditor()).getTextField();
-    if (SwingTools.showConfirmDialog((JComponent)parentView, 
+    if (SwingTools.showConfirmDialog((JComponent)parentView,
             this, this.dialogTitle, northDirectionTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyCompass();

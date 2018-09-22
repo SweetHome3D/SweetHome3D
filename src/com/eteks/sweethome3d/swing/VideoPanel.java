@@ -604,7 +604,7 @@ public class VideoPanel extends JPanel implements DialogView {
     this.qualityLabel = new JLabel();
     Dimension imageSize;
     try {
-      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class, 
+      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class,
             "resources/quality0.jpg"));
     } catch (IOException ex) {
       // Shouldn't happen since resource exists
@@ -927,14 +927,15 @@ public class VideoPanel extends JPanel implements DialogView {
     progressPanel.add(this.progressBar, BorderLayout.NORTH);
     progressPanel.add(this.progressLabel);
     this.statusPanel.add(progressPanel, PROGRESS_CARD);
-    // First row
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
+        // First row
     add(this.planComponent, new GridBagConstraints(
         0, 0, 4, 1, 1, 1, labelAlignment,
-        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, standardGap, 0), 0, 0));
     // Second row
     add(this.videoToolBar, new GridBagConstraints(
         0, 1, 4, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     // Third row
     add(this.statusPanel, new GridBagConstraints(
         0, 2, 4, 1, 0, 0, GridBagConstraints.CENTER,
@@ -949,14 +950,14 @@ public class VideoPanel extends JPanel implements DialogView {
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(this.videoFormatLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     add(this.videoFormatComboBox, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), -50, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 10), -50, 0));
     // Fifth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 2, standardGap), 0, 0));
     add(this.qualitySlider, new GridBagConstraints(
         2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
@@ -968,19 +969,19 @@ public class VideoPanel extends JPanel implements DialogView {
     JPanel advancedPanel = new JPanel(new GridBagLayout());
     advancedPanel.add(this.dateLabel, new GridBagConstraints(
         1, 7, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.dateSpinner, new GridBagConstraints(
         2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 1, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 10), 1, 0));
     advancedPanel.add(this.timeLabel, new GridBagConstraints(
         3, 7, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
         4, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
         5, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     // Last row
     advancedPanel.add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
         1, 8, 5, 1, 0, 0, GridBagConstraints.CENTER,

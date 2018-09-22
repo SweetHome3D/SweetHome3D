@@ -556,10 +556,11 @@ public class ModelMaterialsComponent extends JButton implements View {
      * Layouts components in panel with their labels.
      */
     private void layoutComponents() {
+      int standardGap = Math.round(5 * SwingTools.getResolutionScale());
       // Preview
       add(this.previewLabel, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 10), 0, 0));
       float resolutionScale = SwingTools.getResolutionScale();
       this.previewComponent.setPreferredSize(new Dimension((int)(150 * resolutionScale), (int)(150 * resolutionScale)));
       add(this.previewComponent, new GridBagConstraints(
@@ -569,7 +570,7 @@ public class ModelMaterialsComponent extends JButton implements View {
       // Materials list
       add(this.materialsLabel, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 15), 0, 0));
       JScrollPane scrollPane = new JScrollPane(this.materialsList);
       Dimension preferredSize = scrollPane.getPreferredSize();
       scrollPane.setPreferredSize(new Dimension(Math.min(200, preferredSize.width), preferredSize.height));
@@ -581,22 +582,22 @@ public class ModelMaterialsComponent extends JButton implements View {
       // Color and Texture
       add(this.colorAndTextureLabel, new GridBagConstraints(
           2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
           2, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.invisibleRadioButton, new GridBagConstraints(
           2, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.colorRadioButton, new GridBagConstraints(
           2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
       add(this.colorButton, new GridBagConstraints(
           3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.textureRadioButton, new GridBagConstraints(
           2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
       add(this.textureComponent, new GridBagConstraints(
           3, 4, 1, 1, 0, 0, GridBagConstraints.CENTER,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -605,10 +606,10 @@ public class ModelMaterialsComponent extends JButton implements View {
       // Shininess
       add(this.shininessLabel, new GridBagConstraints(
           2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(15, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(15, 0, standardGap, 0), 0, 0));
       add(this.shininessSlider, new GridBagConstraints(
           2, 6, 2, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -20, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), -20, 0));
     }
 
     public void displayView(View parent) {

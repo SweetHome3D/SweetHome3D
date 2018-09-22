@@ -319,14 +319,15 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         : GridBagConstraints.LINE_START;
     JPanel groundPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         Home3DAttributesPanel.class, "groundPanel.title"));
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
-    Insets labelInsets = new Insets(0, 0, 2, 5);
+    Insets labelInsets = new Insets(0, 0, Math.round(2 * SwingTools.getResolutionScale()), standardGap);
     groundPanel.add(this.groundColorRadioButton, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, labelInsets, 0, 0));
     groundPanel.add(this.groundColorButton, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, Math.round(2 * SwingTools.getResolutionScale()), 0), 0, 0));
     // Dummy label
     groundPanel.add(new JLabel(), new GridBagConstraints(
         2, 0, 1, 2, 1, 0, GridBagConstraints.LINE_START,
@@ -334,16 +335,16 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     // Second row
     groundPanel.add(this.groundTextureRadioButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     groundPanel.add(this.groundTextureComponent, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     Insets rowInsets;
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // User smaller insets for Mac OS X 10.5
       rowInsets = new Insets(0, 0, 0, 0);
     } else {
-      rowInsets = new Insets(0, 0, 5, 0);
+      rowInsets = new Insets(0, 0, standardGap, 0);
     }
     // Third row
     this.backgroundImageVisibleOnGround3DCheckBox.setVerticalTextPosition(JCheckBox.TOP);
@@ -364,10 +365,10 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     skyPanel.add(this.skyTextureRadioButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     skyPanel.add(this.skyTextureComponent, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     // Dummy label
     skyPanel.add(new JLabel(), new GridBagConstraints(
         0, 2, 2, 1, 0, 1, GridBagConstraints.LINE_START,
@@ -381,7 +382,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     // Fourth row
     renderingPanel.add(this.brightnessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     renderingPanel.add(this.brightnessSlider, new GridBagConstraints(
         1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -395,7 +396,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     // Last row
     renderingPanel.add(this.wallsTransparencyLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     renderingPanel.add(this.wallsTransparencySlider, new GridBagConstraints(
         1, 2, 3, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));

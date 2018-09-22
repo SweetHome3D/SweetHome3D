@@ -483,7 +483,7 @@ public class WallPanel extends JPanel implements DialogView {
                 public int getIconWidth() {
                   return (int)(patternImage.getWidth() * 4 * resolutionScale + 1);
                 }
-  
+
                 public int getIconHeight() {
                   return (int)(patternImage.getHeight() * resolutionScale + 2);
                 }
@@ -961,12 +961,13 @@ public class WallPanel extends JPanel implements DialogView {
         preferences.getLocalizedString(WallPanel.class, "startPointPanel.title"),
         new JComponent [] {this.xStartLabel, this.xStartSpinner,
                            this.yStartLabel, this.yStartSpinner}, true);
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     Insets rowInsets;
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // User smaller insets for Mac OS X 10.5
       rowInsets = new Insets(0, 0, 0, 0);
     } else {
-      rowInsets = new Insets(0, 0, 5, 0);
+      rowInsets = new Insets(0, 0, standardGap, 0);
     }
     add(startPointPanel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
@@ -979,10 +980,10 @@ public class WallPanel extends JPanel implements DialogView {
     // Add distance label and spinner at the end of second row of endPointPanel
     endPointPanel.add(this.distanceToEndPointLabel, new GridBagConstraints(
         0, 1, 3, 1, 1, 0, GridBagConstraints.LINE_END,
-        GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, 0, standardGap), 0, 0));
     endPointPanel.add(this.distanceToEndPointSpinner, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, 0), 0, 0));
 
     add(endPointPanel, new GridBagConstraints(
         0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
@@ -997,13 +998,13 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     leftSidePanel.add(this.leftSideMattRadioButton, new GridBagConstraints(
         0, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     leftSidePanel.add(this.leftSideShinyRadioButton, new GridBagConstraints(
         1, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     leftSidePanel.add(this.leftSideBaseboardButton, new GridBagConstraints(
         0, 4, 2, 1, 1, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, 0, 0), 0, 0));
     add(leftSidePanel, new GridBagConstraints(
         0, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
@@ -1017,13 +1018,13 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, new Insets(3, 0, 3, 0), 0, 0));
     rightSidePanel.add(this.rightSideMattRadioButton, new GridBagConstraints(
         0, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     rightSidePanel.add(this.rightSideShinyRadioButton, new GridBagConstraints(
         1, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     rightSidePanel.add(this.rightSideBaseboardButton, new GridBagConstraints(
         0, 4, 2, 1, 1, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, 0, 0), 0, 0));
     add(rightSidePanel, new GridBagConstraints(
         1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
@@ -1034,19 +1035,19 @@ public class WallPanel extends JPanel implements DialogView {
     int leftInset = new JRadioButton().getPreferredSize().width;
     topPanel.add(this.patternLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, leftInset, 3, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, leftInset, 3, standardGap), 0, 0));
     topPanel.add(this.patternComboBox, new GridBagConstraints(
         1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 3, 0), 0, 0));
     topPanel.add(this.topColorLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, leftInset, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, leftInset, 0, standardGap), 0, 0));
     topPanel.add(this.topDefaultColorRadioButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
     topPanel.add(this.topColorRadioButton, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_END,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     topPanel.add(this.topColorButton, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -1065,13 +1066,13 @@ public class WallPanel extends JPanel implements DialogView {
     int spinnerPadX = OperatingSystem.isMacOSX()  ? -20  : -10;
     heightPanel.add(new JLabel(), new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), new JRadioButton().getPreferredSize().width, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
     heightPanel.add(this.rectangularWallHeightLabel, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     heightPanel.add(this.rectangularWallHeightSpinner, new GridBagConstraints(
         2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), spinnerPadX, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), spinnerPadX, 0));
     // Third column of height panel
     heightPanel.add(this.slopingWallRadioButton, new GridBagConstraints(
         3, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
@@ -1079,17 +1080,17 @@ public class WallPanel extends JPanel implements DialogView {
     // Second row of height panel
     heightPanel.add(new JLabel(), new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), new JRadioButton().getPreferredSize().width, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), new JRadioButton().getPreferredSize().width, 0));
     heightPanel.add(this.slopingWallHeightAtStartLabel, new GridBagConstraints(
         4, 1, 1, 1, 1, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     heightPanel.add(this.slopingWallHeightAtStartSpinner, new GridBagConstraints(
         5, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), spinnerPadX, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), spinnerPadX, 0));
     // Third row of height panel
     heightPanel.add(this.slopingWallHeightAtEndLabel, new GridBagConstraints(
         4, 2, 1, 1, 1, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     heightPanel.add(this.slopingWallHeightAtEndSpinner, new GridBagConstraints(
         5, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), spinnerPadX, 0));
@@ -1101,19 +1102,19 @@ public class WallPanel extends JPanel implements DialogView {
     JPanel ticknessAndArcExtentPanel = new JPanel(new GridBagLayout());
     ticknessAndArcExtentPanel.add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
     ticknessAndArcExtentPanel.add(this.thicknessSpinner, new GridBagConstraints(
         1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
     ticknessAndArcExtentPanel.add(this.arcExtentLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
     ticknessAndArcExtentPanel.add(this.arcExtentSpinner, new GridBagConstraints(
         3, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(ticknessAndArcExtentPanel, new GridBagConstraints(
         0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(5, 8, 10, 8), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 8, 10, 8), 0, 0));
 
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
@@ -1138,13 +1139,13 @@ public class WallPanel extends JPanel implements DialogView {
 
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
     JPanel titledPanel = SwingTools.createTitledPanel(title);
-
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     if (horizontal) {
       int labelAlignment = OperatingSystem.isMacOSX()
           ? GridBagConstraints.LINE_END
           : GridBagConstraints.LINE_START;
-      Insets labelInsets = new Insets(0, 0, 0, 5);
-      Insets insets = new Insets(0, 0, 0, 5);
+      Insets labelInsets = new Insets(0, 0, 0, standardGap);
+      Insets insets = new Insets(0, 0, 0, standardGap);
       for (int i = 0; i < components.length - 1; i += 2) {
         titledPanel.add(components [i], new GridBagConstraints(
             i, 0, 1, 1, 1, 0, labelAlignment,
@@ -1159,11 +1160,11 @@ public class WallPanel extends JPanel implements DialogView {
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     } else {
       for (int i = 0; i < components.length; i += 2) {
-        int bottomInset = i < components.length - 2  ? 2  : 0;
+        int bottomInset = i < components.length - 2  ? Math.round(2 * SwingTools.getResolutionScale())  : 0;
         titledPanel.add(components [i], new GridBagConstraints(
             0, i / 2, components [i + 1] != null  ? 1  : 2, 1, 1, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.NONE,
-            new Insets(0, 0, bottomInset , 5), 0, 0));
+            new Insets(0, 0, bottomInset, standardGap), 0, 0));
         if (components [i + 1] != null) {
           titledPanel.add(components [i + 1], new GridBagConstraints(
               1, i / 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,

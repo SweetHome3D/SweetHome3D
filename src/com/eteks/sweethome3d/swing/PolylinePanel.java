@@ -117,6 +117,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     }
     this.arrowsStyleComboBox = new JComboBox(new DefaultComboBoxModel(arrowsStyles));
     this.arrowsStyleComboBox.setMaximumRowCount(arrowsStyles.length);
+    final float resolutionScale = SwingTools.getResolutionScale();
     this.arrowsStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list,
@@ -126,22 +127,23 @@ public class PolylinePanel extends JPanel implements DialogView {
               list, "", index, isSelected, cellHasFocus);
           setIcon(new Icon() {
               public int getIconWidth() {
-                return 64;
+                return Math.round(64 * resolutionScale);
               }
 
               public int getIconHeight() {
-                return 16;
+                return Math.round(16 * resolutionScale);
               }
 
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (arrowsStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                     g2D.translate(0, 2);
                   }
                   g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                   g2D.setColor(list.getForeground());
-                  int iconWidth = getIconWidth();
+                  int iconWidth = 64;
                   g2D.setStroke(new BasicStroke(2));
                   g2D.drawLine(6, 8, iconWidth - 6, 8);
                   switch (arrowsStyle.getStartArrowStyle()) {
@@ -232,16 +234,17 @@ public class PolylinePanel extends JPanel implements DialogView {
               list, "", index, isSelected, cellHasFocus);
           setIcon(new Icon() {
               public int getIconWidth() {
-                return 64;
+                return Math.round(64 * resolutionScale);
               }
 
               public int getIconHeight() {
-                return 16;
+                return Math.round(16 * resolutionScale);
               }
 
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (joinStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                     g2D.translate(0, 2);
                   }
@@ -295,16 +298,17 @@ public class PolylinePanel extends JPanel implements DialogView {
               list, "", index, isSelected, cellHasFocus);
           setIcon(new Icon() {
               public int getIconWidth() {
-                return 64;
+                return Math.round(64 * resolutionScale);
               }
 
               public int getIconHeight() {
-                return 16;
+                return Math.round(16 * resolutionScale);
               }
 
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (dashStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                     g2D.translate(0, 2);
                   }
@@ -436,12 +440,13 @@ public class PolylinePanel extends JPanel implements DialogView {
     int labelAlignment = OperatingSystem.isMacOSX()
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
-    Insets labelInsets = new Insets(0, 0, 5, 5);
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
+    Insets labelInsets = new Insets(0, 0, standardGap, standardGap);
     // First row
     add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment,
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets rightComponentInsets = new Insets(0, 0, 5, 0);
+    Insets rightComponentInsets = new Insets(0, 0, standardGap, 0);
     add(this.thicknessSpinner, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
@@ -479,7 +484,7 @@ public class PolylinePanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.colorButton, new GridBagConstraints(
         1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, 5, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, standardGap, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
     // Last row
     add(this.visibleIn3DViewCheckBox, new GridBagConstraints(
         0, 6, 2, 1, 0, 0, GridBagConstraints.LINE_START,

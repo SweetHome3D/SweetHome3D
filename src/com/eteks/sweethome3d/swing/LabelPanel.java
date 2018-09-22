@@ -400,54 +400,54 @@ public class LabelPanel extends JPanel implements DialogView {
     int labelAlignment = OperatingSystem.isMacOSX()
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
-
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     JPanel nameAndStylePanel = SwingTools.createTitledPanel(
         preferences.getLocalizedString(LabelPanel.class, "textAndStylePanel.title"));
     nameAndStylePanel.add(this.textLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, OperatingSystem.isMacOSX()  ? GridBagConstraints.NORTHEAST  : GridBagConstraints.NORTHWEST,
-        GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 0 : 5, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(OperatingSystem.isMacOSX() ? 0 : standardGap, 0, standardGap, 5), 0, 0));
     nameAndStylePanel.add(SwingTools.createScrollPane(this.textTextArea), new GridBagConstraints(
         1, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isMacOSX() ? 0 : 5, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isMacOSX() ? 0 : standardGap, 0, standardGap, 0), 0, 0));
     nameAndStylePanel.add(this.alignmentLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     JPanel alignmentPanel = new JPanel(new GridBagLayout());
     alignmentPanel.setOpaque(false);
     alignmentPanel.add(this.leftAlignmentRadioButton, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     alignmentPanel.add(this.centerAlignmentRadioButton, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     alignmentPanel.add(this.rightAlignmentRadioButton, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     nameAndStylePanel.add(alignmentPanel, new GridBagConstraints(
         1, 1, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     nameAndStylePanel.add(this.fontNameLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     Dimension preferredSize = this.fontNameComboBox.getPreferredSize();
     preferredSize.width = Math.min(preferredSize.width, this.textTextArea.getPreferredSize().width);
     this.fontNameComboBox.setPreferredSize(preferredSize);
     nameAndStylePanel.add(this.fontNameComboBox, new GridBagConstraints(
         1, 2, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     nameAndStylePanel.add(this.fontSizeLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     nameAndStylePanel.add(this.fontSizeSpinner, new GridBagConstraints(
         1, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 5, 0));
     nameAndStylePanel.add(this.colorLabel, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 10, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 10, 0, standardGap), 0, 0));
     nameAndStylePanel.add(this.colorButton, new GridBagConstraints(
         3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, OperatingSystem.isMacOSX()  ? 6  : 0), 0, 0));
-    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
+    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : standardGap;
     add(nameAndStylePanel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.BOTH, new Insets(0, 0, rowGap, 0), 0, 0));
@@ -456,19 +456,19 @@ public class LabelPanel extends JPanel implements DialogView {
         preferences.getLocalizedString(LabelPanel.class, "rendering3DPanel.title"));
     rendering3DPanel.add(this.visibleIn3DViewCheckBox, new GridBagConstraints(
         0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, OperatingSystem.isMacOSX() ? -8 : 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, OperatingSystem.isMacOSX() ? -8 : 0, standardGap, 0), 0, 0));
     rendering3DPanel.add(this.pitchLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     rendering3DPanel.add(this.pitch0DegreeRadioButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     rendering3DPanel.add(this.pitch90DegreeRadioButton, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     rendering3DPanel.add(this.elevationLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     rendering3DPanel.add(this.elevationSpinner, new GridBagConstraints(
         1, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));

@@ -2084,7 +2084,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToToolBar(ActionType.PREFERENCES, toolBar);
     }
     toolBar.addSeparator();
-    
+
     int previousCount = toolBar.getComponentCount();
     addActionToToolBar(ActionType.UNDO, toolBar);
     addActionToToolBar(ActionType.REDO, toolBar);
@@ -3693,7 +3693,7 @@ public class HomePane extends JRootPane implements HomeView {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(message), new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, (int)(5 * SwingTools.getResolutionScale()), 0), 0, 0));
     panel.add(new JScrollPane(homeExamplesList), new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -3914,7 +3914,7 @@ public class HomePane extends JRootPane implements HomeView {
       }
       tipPanel.add(doNotDisplayTipCheckBox, new GridBagConstraints(
           0, 1, 1, 1, 0, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, (int)(5 * SwingTools.getResolutionScale()), 0), 0, 0));
 
       SwingTools.showMessageDialog(this, tipPanel, title,
           JOptionPane.INFORMATION_MESSAGE, doNotDisplayTipCheckBox);
@@ -3945,7 +3945,7 @@ public class HomePane extends JRootPane implements HomeView {
     } else {
       message = this.preferences.getLocalizedString(HomePane.class, "confirmSave.message", "");
     }
-    
+
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmSave.title");
     String save = this.preferences.getLocalizedString(HomePane.class, "confirmSave.save");
     String doNotSave = this.preferences.getLocalizedString(HomePane.class, "confirmSave.doNotSave");
@@ -4314,7 +4314,7 @@ public class HomePane extends JRootPane implements HomeView {
       });
     updatesPanel.add(messageScrollPane, new GridBagConstraints(
         0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER,
-        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, (int)(5 * SwingTools.getResolutionScale()), 0), 0, 0));
 
     // Add a check box that lets user choose whether he wants to display the update again at next program launch
     JCheckBox doNotDisplayShownUpdatesCheckBox = new JCheckBox(
@@ -4841,7 +4841,7 @@ public class HomePane extends JRootPane implements HomeView {
     String message = this.preferences.getLocalizedString(HomePane.class, "showDeletedCamerasDialog.message");
     String title = this.preferences.getLocalizedString(HomePane.class, "showDeletedCamerasDialog.title");
 
-    JPanel camerasPanel = new JPanel(new BorderLayout(0, 5));
+    JPanel camerasPanel = new JPanel(new BorderLayout(0, (int)(5 * SwingTools.getResolutionScale())));
     camerasPanel.add(new JLabel(message), BorderLayout.NORTH);
     camerasPanel.add(SwingTools.createScrollPane(camerasList), BorderLayout.CENTER);
 

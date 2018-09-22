@@ -633,21 +633,22 @@ public class ColorButton extends JButton {
       // Layout components
       setLayout(new GridBagLayout());
       int labelAlignment = GridBagConstraints.LINE_START;
+      int standardGap = Math.round(5 * SwingTools.getResolutionScale());
       add(this.grayColorChart, new GridBagConstraints(
           0, 0, 1, 7, 0, 0, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 0, standardGap), 0, 0));
       add(this.colorChart, new GridBagConstraints(
           1, 0, 1, 7, 0, 0, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 10), 0, 0));
       add(colorLabel, new GridBagConstraints(
           2, 0, 1, 1, 0, 0, labelAlignment,
-          GridBagConstraints.NONE, new Insets(0, 0, 8, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 8, standardGap), 0, 0));
       add(this.colorComponent, new GridBagConstraints(
           3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 8, 0), 0, 0));
       add(pipetteButton, new GridBagConstraints(
           4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
-          GridBagConstraints.NONE, new Insets(0, 5, 8, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, standardGap, 8, 0), 0, 0));
       add(rgbLabel, new GridBagConstraints(
           2, 1, 3, 1, 0, 0, labelAlignment,
           GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
@@ -656,13 +657,13 @@ public class ColorButton extends JButton {
           GridBagConstraints.HORIZONTAL,
           OperatingSystem.isMacOSX()
               ? new Insets(0, 1, 5, 1)
-              : new Insets(0, 0, 5, 0), 0, 0));
+              : new Insets(0, 0, standardGap, 0), 0, 0));
       add(ralLabel, new GridBagConstraints(
           2, 3, 3, 1, 0, 0, labelAlignment,
           GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
       add(this.ralComboBox, new GridBagConstraints(
           2, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
       add(creativeCommonsLabel, new GridBagConstraints(
           2, 5, 3, 1, 0, 0, labelAlignment,
           GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));

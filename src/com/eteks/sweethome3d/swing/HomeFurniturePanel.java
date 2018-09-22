@@ -1149,11 +1149,12 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         && (this.rollRadioButton != null || this.pitchRadioButton != null);
     JPanel namePanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, priceDisplayed  ?  "nameAndPricePanel.title"  : "namePanel.title"));
-    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : 5;
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
+    int rowGap = OperatingSystem.isMacOSXLeopardOrSuperior() ? 0 : standardGap;
     if (this.nameLabel != null) {
       namePanel.add(this.nameLabel, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
-          new Insets(0, 0, 0, 5), 0, 0));
+          new Insets(0, 0, 0, standardGap), 0, 0));
       namePanel.add(this.nameTextField, new GridBagConstraints(
           1, 0, 3, 1, 1, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
@@ -1166,25 +1167,25 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     if (this.descriptionLabel != null) {
       namePanel.add(this.descriptionLabel, new GridBagConstraints(
           0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
-          new Insets(5, 0, 0, 5), 0, 0));
+          new Insets(standardGap, 0, 0, standardGap), 0, 0));
       namePanel.add(this.descriptionTextField, new GridBagConstraints(
           1, 1, priceDisplayed ? 1 : 3, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, priceDisplayed  ? 10  : 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, priceDisplayed  ? 10  : 0), 0, 0));
     }
     if (priceDisplayed) {
       namePanel.add(this.priceLabel, new GridBagConstraints(
           this.descriptionLabel != null ? 2 : 0, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
-          new Insets(5, 0, 0, 5), 0, 0));
+          new Insets(standardGap, 0, 0, standardGap), 0, 0));
       namePanel.add(this.priceSpinner, new GridBagConstraints(
           this.descriptionLabel != null ? 3 : 1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), OperatingSystem.isMacOSX() ? -60 : -30, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, 0), OperatingSystem.isMacOSX() ? -60 : -30, 0));
       if (this.valueAddedTaxPercentageLabel != null) {
         namePanel.add(this.valueAddedTaxPercentageLabel, new GridBagConstraints(
             this.descriptionLabel != null ? 4 : 2, 1, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
-            new Insets(5, 10, 0, 5), 0, 0));
+            new Insets(standardGap, 10, 0, standardGap), 0, 0));
         namePanel.add(this.valueAddedTaxPercentageSpinner, new GridBagConstraints(
             this.descriptionLabel != null ? 5 : 3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+            GridBagConstraints.NONE, new Insets(standardGap, 0, 0, 0), 0, 0));
       }
     }
     if (namePanel.getComponentCount() > 0) {
@@ -1194,8 +1195,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Location panel
     JPanel locationPanel = SwingTools.createTitledPanel(preferences.getLocalizedString(
         HomeFurniturePanel.class, "locationPanel.title"));
-    Insets labelInsets = new Insets(0, 0, 5, 5);
-    Insets rightComponentInsets = new Insets(0, 0, 5, 0);
+    Insets labelInsets = new Insets(0, 0, standardGap, standardGap);
+    Insets rightComponentInsets = new Insets(0, 0, standardGap, 0);
     if (this.xLabel != null) {
       locationPanel.add(this.xLabel, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, labelAlignment, GridBagConstraints.NONE,
@@ -1264,14 +1265,15 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         // Row 0 may contain verticalRotationLabel
         orientationPanel.add(this.angleLabel, new GridBagConstraints(
             0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(0, new JRadioButton().getPreferredSize().width, OperatingSystem.isMacOSX() || layoutWithHorizontalVerticalLabels ? 5 : 2, 5), 0, 0));
+            GridBagConstraints.NONE,
+            new Insets(0, new JRadioButton().getPreferredSize().width, OperatingSystem.isMacOSX() || layoutWithHorizontalVerticalLabels ? standardGap : 2, standardGap), 0, 0));
         orientationPanel.add(this.angleSpinner, new GridBagConstraints(
             1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
             GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
       }
-      Insets secondRadioButtonInsets = new Insets(0, 0, layoutWithHorizontalVerticalLabels ? 2 : (OperatingSystem.isMacOSX() ? 5 : 1), 5);
-      Insets secondSpinnerInsets = new Insets(0, 0, layoutWithHorizontalVerticalLabels ? 2 : 5, 0);
-      Insets thirdRadioButtonInsets = new Insets(0, 0, 0, 5);
+      Insets secondRadioButtonInsets = new Insets(0, 0, layoutWithHorizontalVerticalLabels ? 2 : (OperatingSystem.isMacOSX() ? 5 : 1), standardGap);
+      Insets secondSpinnerInsets = new Insets(0, 0, layoutWithHorizontalVerticalLabels ? 2 : standardGap, 0);
+      Insets thirdRadioButtonInsets = new Insets(0, 0, 0, standardGap);
       Insets thirdSpinnerinsets = new Insets(0, 0, 0, 0);
       if (this.pitchRadioButton != null) {
         // Row 2 may contain horizontalRotationLabel
@@ -1296,7 +1298,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           // Do not display orientation label information for not texturable furniture to keep a balanced dialog box
           orientationPanel.add(new JLabel(new ImageIcon(getClass().getResource("resources/furnitureOrientation.png"))), new GridBagConstraints(
               0, 6, 2, 1, 1, layoutWithHorizontalVerticalLabels ? 1 : 0, GridBagConstraints.CENTER,
-              GridBagConstraints.BOTH, new Insets(10, 0, 5, 0), 0, 0));
+              GridBagConstraints.BOTH, new Insets(10, 0, standardGap, 0), 0, 0));
         }
         if (layoutWithHorizontalVerticalLabels) {
           // Add information labels about axes adjusting insets to align with components in other panels
@@ -1385,25 +1387,25 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       paintPanel.add(this.colorRadioButton, new GridBagConstraints(
           0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
       paintPanel.add(this.colorButton, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, buttonsBottomInset, 0), 0, buttonPadY));
       if (this.textureComponent != null) {
         paintPanel.add(this.textureRadioButton, new GridBagConstraints(
             0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(standardGap, 0, 0, standardGap), 0, 0));
         paintPanel.add(this.textureComponent, new GridBagConstraints(
             1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.HORIZONTAL, new Insets(5, 0, buttonsBottomInset, 0), 0, buttonPadY));
+            GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, buttonsBottomInset, 0), 0, buttonPadY));
       }
       if (this.modelMaterialsComponent != null) {
         paintPanel.add(this.modelMaterialsRadioButton, new GridBagConstraints(
             0, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
+            GridBagConstraints.NONE, new Insets(standardGap, 0, 0, standardGap), 0, 0));
         paintPanel.add(this.modelMaterialsComponent, new GridBagConstraints(
             1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.HORIZONTAL, new Insets(5, 0, buttonsBottomInset, 0), 0, buttonPadY));
+            GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, buttonsBottomInset, 0), 0, buttonPadY));
       }
       add(paintPanel, new GridBagConstraints(
           0, 2, 1, 1, 0, 0, labelAlignment,
@@ -1423,17 +1425,17 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           HomeFurniturePanel.class, "shininessPanel.title"));
       shininessPanel.add(this.defaultShininessRadioButton, new GridBagConstraints(
           0, 0, 1, 1, 0, 1, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       shininessPanel.add(this.mattRadioButton, new GridBagConstraints(
           0, 1, 1, 1, 0, 1, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       shininessPanel.add(this.shinyRadioButton, new GridBagConstraints(
           0, 2, 1, 1, 0, 1, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(standardGap, 0, 0, 0), 0, 0));
       if (paintPanel.getComponentCount() == 7) {
         shininessPanel.add(new JLabel(), new GridBagConstraints(
             0, 3, 1, 1, 0, 1, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+            GridBagConstraints.NONE, new Insets(standardGap, 0, 0, 0), 0, 0));
       }
       add(shininessPanel, new GridBagConstraints(
           orientationPanelDisplayed ? 2 : 1, 2, 2, 1, 0, 0, labelAlignment,
@@ -1456,10 +1458,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     if (this.lightPowerLabel != null) {
       add(this.lightPowerLabel, new GridBagConstraints(
           orientationPanelDisplayed ? 2 : 1, 3, 1, 1, 0, 0, labelAlignment,
-          GridBagConstraints.NONE, new Insets(0, 10, 0, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 10, 0, standardGap), 0, 0));
       add(this.lightPowerSpinner, new GridBagConstraints(
           orientationPanelDisplayed ? 3 : 2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     }
   }
 
@@ -1582,26 +1584,27 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
      * Layouts components in panel with their labels.
      */
     private void layoutComponents() {
+      int standardGap = Math.round(5 * SwingTools.getResolutionScale());
       // Preview
       add(this.transformationsLabel, new GridBagConstraints(
           0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 10), 0, 0));
       this.previewComponent.setPreferredSize(new Dimension(400, 400));
       add(this.previewComponent, new GridBagConstraints(
           0, 1, 1, 10, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
       add(this.resetTransformationsButton, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(2, 0, standardGap, 0), 0, 0));
       add(this.viewFromFrontButton, new GridBagConstraints(
           1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(2, 0, standardGap, 0), 0, 0));
       add(this.viewFromSideButton, new GridBagConstraints(
           1, 3, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(2, 0, standardGap, 0), 0, 0));
       add(this.viewFromTopButton, new GridBagConstraints(
           1, 4, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.BOTH, new Insets(2, 0, 5, 0), 0, 0));
+          GridBagConstraints.BOTH, new Insets(2, 0, standardGap, 0), 0, 0));
     }
 
     private void updateLocationAndSize() {

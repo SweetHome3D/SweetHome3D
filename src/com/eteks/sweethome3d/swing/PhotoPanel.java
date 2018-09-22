@@ -531,10 +531,11 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoPanel = new JPanel(this.photoCardLayout);
     photoPanel.add(this.photoComponent, PHOTO_CARD);
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
     add(this.photoPanel, new GridBagConstraints(
         0, 0, 3, 1, 1, 1, GridBagConstraints.CENTER,
-        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, standardGap, 0), 0, 0));
     // Second row
     // Add a dummy label at left and right
     add(new JLabel(), new GridBagConstraints(
@@ -554,25 +555,25 @@ public class PhotoPanel extends JPanel implements DialogView {
     JPanel advancedPanel = new JPanel(new GridBagLayout());
     advancedPanel.add(this.dateLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     this.dateLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.dateSpinner, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 10), 0, 0));
     advancedPanel.add(this.timeLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     this.timeLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     // Last row
     advancedPanel.add(this.lensLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
     this.lensLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.lensComboBox, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START,

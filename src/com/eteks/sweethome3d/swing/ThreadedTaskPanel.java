@@ -51,10 +51,10 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
   private JDialog                      dialog;
   private boolean                      taskRunning;
 
-  public ThreadedTaskPanel(String taskMessage, 
-                           UserPreferences preferences, 
+  public ThreadedTaskPanel(String taskMessage,
+                           UserPreferences preferences,
                            ThreadedTaskController controller) {
-    super(new BorderLayout(5, 5));
+    super(new BorderLayout(5, (int)(5 * SwingTools.getResolutionScale())));
     this.preferences = preferences;
     this.controller = controller;
     createComponents(taskMessage);
@@ -69,18 +69,18 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
     this.taskProgressBar = new JProgressBar();
     this.taskProgressBar.setIndeterminate(true);
   }
-    
+
   /**
-   * Layouts panel components in panel with their labels. 
+   * Layouts panel components in panel with their labels.
    */
   private void layoutComponents() {
     add(this.taskLabel, BorderLayout.NORTH);
     add(this.taskProgressBar, BorderLayout.SOUTH);
   }
-  
+
   /**
    * Sets the status of the progress bar shown by this panel as indeterminate.
-   * This method may be called from an other thread than EDT.  
+   * This method may be called from an other thread than EDT.
    */
   public void setIndeterminateProgress() {
     if (EventQueue.isDispatchThread()) {
@@ -94,13 +94,13 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
         });
     }
   }
-  
+
   /**
-   * Sets the current value of the progress bar shown by this panel.  
-   * This method may be called from an other thread than EDT.  
+   * Sets the current value of the progress bar shown by this panel.
+   * This method may be called from an other thread than EDT.
    */
-  public void setProgress(final int value, 
-                          final int minimum, 
+  public void setProgress(final int value,
+                          final int minimum,
                           final int maximum) {
     if (EventQueue.isDispatchThread()) {
       this.taskProgressBar.setIndeterminate(false);
@@ -116,17 +116,17 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
         });
     }
   }
-  
+
   /**
    * Executes <code>runnable</code> asynchronously in the Event Dispatch Thread.
-   * Caution !!! This method may be called from an other thread than EDT.  
+   * Caution !!! This method may be called from an other thread than EDT.
    */
   public void invokeLater(Runnable runnable) {
     EventQueue.invokeLater(runnable);
   }
 
   /**
-   * Sets the running status of the threaded task. 
+   * Sets the running status of the threaded task.
    * If <code>taskRunning</code> is <code>true</code>, a waiting dialog will be shown.
    */
   public void setTaskRunning(boolean taskRunning, View executingView) {
@@ -136,8 +136,8 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
           ThreadedTaskPanel.class, "threadedTask.title");
       final JButton cancelButton = new JButton(this.preferences.getLocalizedString(
           ThreadedTaskPanel.class, "cancelButton.text"));
-      
-      final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
+
+      final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE,
           JOptionPane.DEFAULT_OPTION, null, new Object [] {cancelButton});
       cancelButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
@@ -145,18 +145,18 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
           }
         });
       this.dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)executingView), dialogTitle);
-      
-      // Wait 200 ms before showing dialog to avoid displaying it 
+
+      // Wait 200 ms before showing dialog to avoid displaying it
       // when the task doesn't last so long
       new Timer(200, new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             ((Timer)ev.getSource()).stop();
             if (controller.isTaskRunning()) {
               dialog.setVisible(true);
-              
+
               dialog.dispose();
-              if (ThreadedTaskPanel.this.taskRunning 
-                  && (cancelButton == optionPane.getValue() 
+              if (ThreadedTaskPanel.this.taskRunning
+                  && (cancelButton == optionPane.getValue()
                       || new Integer(JOptionPane.CLOSED_OPTION).equals(optionPane.getValue()))) {
                 dialog = null;
                 controller.cancelTask();

@@ -306,24 +306,25 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row
+    int standardGap = Math.round(2 * SwingTools.getResolutionScale());
     add(this.totalPriceLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(2, 2, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 2, 0, standardGap), 0, 0));
     add(this.totalPriceTextField, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, 0), 0, 0));
     add(this.totalValueAddedTaxLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(2, 5, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, standardGap, 0, standardGap), 0, 0));
     add(this.totalValueAddedTaxTextField, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, 0), 0, 0));
     add(this.totalPriceValueAddedTaxIncludedLabel, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, labelAlignment,
-        GridBagConstraints.NONE, new Insets(2, 5, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, standardGap, 0, standardGap), 0, 0));
     add(this.totalPriceValueAddedTaxIncludedTextField, new GridBagConstraints(
         5, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(standardGap, 0, 0, 0), 0, 0));
   }
 
   @Override

@@ -216,7 +216,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     this.bestQualityLabel = new JLabel();
     Dimension imageSize;
     try {
-      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class, 
+      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class,
             "resources/quality0.jpg"));
     } catch (IOException ex) {
       // Shouldn't happen since resource exists
@@ -393,8 +393,9 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     int labelAlignment = OperatingSystem.isMacOSX()
         ? JLabel.TRAILING
         : JLabel.LEADING;
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
-    Insets labelInsets = new Insets(0, 0, 0, 5);
+    Insets labelInsets = new Insets(0, 0, 0, standardGap);
     add(this.widthLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
@@ -422,7 +423,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     // Third row
     add(this.qualityLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
     this.qualityLabel.setHorizontalAlignment(labelAlignment);
     add(this.qualitySlider, new GridBagConstraints(
         1, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START,

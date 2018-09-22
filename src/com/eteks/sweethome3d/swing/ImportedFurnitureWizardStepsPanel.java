@@ -906,11 +906,11 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private void layoutComponents() {
     this.cardLayout = new CardLayout();
     setLayout(this.cardLayout);
-
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     JPanel modelPanel = new JPanel(new GridBagLayout());
     modelPanel.add(this.modelChoiceOrChangeLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
     if (this.findModelsButton != null) {
       modelPanel.add(this.modelChoiceOrChangeButton, new GridBagConstraints(
           0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_END,
@@ -925,18 +925,18 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     }
     modelPanel.add(this.modelChoiceErrorLabel, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, 0, 0), 0, 0));
     modelPanel.add(this.modelPreviewComponent, new GridBagConstraints(
         0, 3, 2, 1, 0, 1, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
 
     JPanel orientationPanel = new JPanel(new GridBagLayout());
     orientationPanel.add(this.orientationLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
     orientationPanel.add(this.rotationPreviewComponent, new GridBagConstraints(
         0, 1, 1, 1, 1, 1, GridBagConstraints.LINE_END,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 15), 0, 0));
     JPanel rotationButtonsPanel = new JPanel(new GridBagLayout()) {
         @Override
         public void applyComponentOrientation(ComponentOrientation orientation) {
@@ -957,102 +957,102 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
 
     rotationButtonsPanel.add(this.turnUpButton, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTH,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     rotationButtonsPanel.add(this.turnLeftButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.EAST,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     rotationButtonsPanel.add(this.defaultOrientationButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     rotationButtonsPanel.add(this.turnRightButton, new GridBagConstraints(
         2, 1, 1, 1, 1, 0, GridBagConstraints.WEST,
-        GridBagConstraints.NONE, new Insets(0, 5, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, standardGap, standardGap, 0), 0, 0));
     rotationButtonsPanel.add(this.turnDownButton, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     orientationPanel.add(rotationButtonsPanel, new GridBagConstraints(
         1, 1, 1, 1, 1, 1, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     orientationPanel.add(this.backFaceShownLabel, new GridBagConstraints(
         0, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
     orientationPanel.add(this.backFaceShownCheckBox, new GridBagConstraints(
         0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
 
     JPanel attributesPanel = new JPanel(new GridBagLayout());
     attributesPanel.add(this.attributesLabel, new GridBagConstraints(
         0, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.attributesPreviewComponent, new GridBagConstraints(
         0, 1, 1, 14, 1, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.nameLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.nameTextField, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.addToCatalogCheckBox, new GridBagConstraints(
         1, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.categoryLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.categoryComboBox, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.creatorLabel, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.creatorTextField, new GridBagConstraints(
         2, 4, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.widthLabel, new GridBagConstraints(
         1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.widthSpinner, new GridBagConstraints(
         2, 5, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.depthLabel, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.depthSpinner, new GridBagConstraints(
         2, 6, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.heightLabel, new GridBagConstraints(
         1, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.heightSpinner, new GridBagConstraints(
         2, 7, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.keepProportionsCheckBox, new GridBagConstraints(
         1, 8, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
     attributesPanel.add(this.elevationLabel, new GridBagConstraints(
         1, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.elevationSpinner, new GridBagConstraints(
         2, 9, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.movableCheckBox, new GridBagConstraints(
         1, 10, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.doorOrWindowCheckBox, new GridBagConstraints(
         1, 11, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.staircaseCheckBox, new GridBagConstraints(
         1, 12, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.colorLabel, new GridBagConstraints(
         1, 13, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     attributesPanel.add(this.colorButton, new GridBagConstraints(
         2, 13, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     attributesPanel.add(this.clearColorButton, new GridBagConstraints(
         2, 14, 1, 1, 0, 0, GridBagConstraints.CENTER,
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     // Add a dummy label to force components to be at top of panel
     attributesPanel.add(new JLabel(), new GridBagConstraints(
         1, 15, 1, 1, 1, 1, GridBagConstraints.CENTER,
@@ -1061,10 +1061,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     JPanel iconPanel = new JPanel(new GridBagLayout());
     iconPanel.add(this.iconLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
     iconPanel.add(this.iconPreviewComponent, new GridBagConstraints(
         0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER,
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(standardGap, 0, standardGap, 0), 0, 0));
 
     add(modelPanel, ImportedFurnitureWizardController.Step.MODEL.name());
     add(orientationPanel, ImportedFurnitureWizardController.Step.ROTATION.name());
