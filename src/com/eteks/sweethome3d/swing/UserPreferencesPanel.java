@@ -992,13 +992,16 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         : GridBagConstraints.LINE_START;
     boolean smallScreen = getToolkit().getScreenSize().height <= 650;
     int standardGap = Math.round(5 * SwingTools.getResolutionScale());
+    if (smallScreen) {
+      standardGap = 3;
+    }
     int checkBoxVecticalGap = (int)(3 * SwingTools.getResolutionScale());
-    Insets labelInsets = new Insets(0, 0, smallScreen ? 3 : standardGap, standardGap);
-    Insets checkBoxLabelInsets = new Insets(0, 0, smallScreen ? 1 : (OperatingSystem.isMacOSX() ? 5 : checkBoxVecticalGap), standardGap);
-    Insets labelInsetsWithSpace = new Insets(0, 0, smallScreen ? 5 : 10, standardGap);
-    Insets rightComponentInsets = new Insets(0, 0, smallScreen ? 3 : standardGap, 0);
-    Insets checkBoxInsets = new Insets(0, 0, smallScreen ? 1 : (OperatingSystem.isMacOSX() ? 5 : checkBoxVecticalGap), 0);
-    Insets rightComponentInsetsWithSpace = new Insets(0, 0, smallScreen ? 5 : 10, 0);
+    Insets labelInsets = new Insets(0, 0, standardGap, standardGap);
+    Insets checkBoxLabelInsets = new Insets(0, 0, smallScreen ? 0 : (OperatingSystem.isMacOSX() ? 5 : checkBoxVecticalGap), standardGap);
+    Insets labelInsetsWithSpace = new Insets(0, 0, smallScreen ? 2 : 10, standardGap);
+    Insets rightComponentInsets = new Insets(0, 0, standardGap, 0);
+    Insets checkBoxInsets = new Insets(0, 0, smallScreen ? 0 : (OperatingSystem.isMacOSX() ? 5 : checkBoxVecticalGap), 0);
+    Insets rightComponentInsetsWithSpace = new Insets(0, 0, smallScreen ? 0 : 10, 0);
     if (this.languageLabel != null) {
       // First row
       add(this.languageLabel, new GridBagConstraints(
@@ -1034,7 +1037,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       if (this.valueAddedTaxCheckBox != null) {
         add(this.valueAddedTaxCheckBox, new GridBagConstraints(
             2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-            GridBagConstraints.NONE, new Insets(0, standardGap, smallScreen ? 3 : standardGap, 0), 0, 0));
+            GridBagConstraints.NONE, new Insets(0, standardGap, standardGap, 0), 0, 0));
       }
     }
     if (this.furnitureCatalogViewLabel != null) {
