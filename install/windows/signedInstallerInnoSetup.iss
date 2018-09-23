@@ -21,6 +21,7 @@ AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
 AppUpdatesURL=http://sweethome3d.sourceforge.net
+DisableDirPage=no
 DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
@@ -46,7 +47,6 @@ ArchitecturesInstallIn64BitMode=x64
 ; <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
 ;    <arg value="/sSignToolPgm=$$qC:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} $p"/>
 ;    <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
-; </exec>  
 SignTool=SignToolPgm /d $qSweet Home 3D Installer$q /du $qhttp://www.sweethome3d.com/$q $f
 SignedUninstaller=yes
 
@@ -134,11 +134,15 @@ Filename: "{app}\jre8\bin\unpack200.exe"; Parameters:"-r -q ""{app}\lib\SweetHom
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Delete unpacked jars
-Type: files; Name: "{app}\jre8\lib\rt.jar"
-Type: files; Name: "{app}\lib\SweetHome3D.jar"
 ; Delete files created by Launch4j
 Type: filesandordirs; Name: "{app}\jre8\launch4j-tmp"
+; Delete unpacked jars
+Type: files; Name: "{app}\jre8\lib\rt.jar"
+Type: dirifempty; Name: "{app}\jre8\lib" 
+Type: dirifempty; Name: "{app}\jre8" 
+Type: files; Name: "{app}\lib\SweetHome3D.jar"
+Type: dirifempty; Name: "{app}\lib" 
+Type: dirifempty; Name: "{app}" 
 
 [CustomMessages]
 ArchitectureLabel=Architecture:
@@ -149,6 +153,9 @@ dutch.ArchitectureLabel=Architectuur:
 german.ArchitectureLabel=Architektur:
 portuguese.ArchitectureLabel=Arquitetura:
 brazilianportuguese.ArchitectureLabel=Arquitetura:
+
+UninstallExistingVersionCheckBox=Uninstall previously installed version
+french.UninstallExistingVersionCheckBox=Désinstaller la version installée précédemment
 
 SweetHome3DComment=Arrange the furniture of your house
 french.SweetHome3DComment=Aménagez les meubles de votre logement
@@ -190,7 +197,8 @@ Root: HKCR; Subkey: "eTeks Sweet Home 3D Plugin\shell\open\command"; ValueType: 
 
 [Code]
 var architecture64Bit : boolean;
-
+var uninstallExistingVersionCheckBox : TCheckBox;
+  
 function IsJava3D152Installed: Boolean;
 var
   windowsVersion : TWindowsVersion;
@@ -258,6 +266,18 @@ begin
   UpdateInstallationDir();
 end;
 
+function GetExistingVersionUninstallPath : String;
+var
+  uninstallKeyName : String;
+  uninstallPath : String;
+begin
+  uninstallKeyName := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\Sweet Home 3D_is1';
+  uninstallPath := '';
+  if not RegQueryStringValue(HKLM, uninstallKeyName, 'UninstallString', uninstallPath) then
+    RegQueryStringValue(HKCU, uninstallKeyName, 'UninstallString', uninstallPath);
+  Result := uninstallPath;
+end;
+
 (* Run at wizard launch *)
 procedure InitializeWizard;
 var
@@ -318,4 +338,29 @@ begin
   x64RadioButton.Checked := architecture64Bit;
   x64RadioButton.OnClick := @UpdateArchitecture64Bit; 
   x64RadioButton.Parent := architecturePanel;
+
+  uninstallExistingVersionCheckBox := TCheckBox.Create(page);
+  uninstallExistingVersionCheckBox.Top := architecturePanel.Top + architecturePanel.Height + 10;
+  uninstallExistingVersionCheckBox.Caption := CustomMessage('UninstallExistingVersionCheckBox');
+  uninstallExistingVersionCheckBox.Height := architecturePanel.Height;
+  uninstallExistingVersionCheckBox.Width := 500;
+  uninstallExistingVersionCheckBox.Checked := true;
+  uninstallExistingVersionCheckBox.Visible := GetExistingVersionUninstallPath <> '';
+  uninstallExistingVersionCheckBox.Parent := page;
+end;
+
+procedure CurStepChanged(currentStep: TSetupStep);
+var 
+  previousVersionUninstallPath : String;
+  resultCode : Integer;
+begin
+  if ((currentStep = ssInstall)
+	  and uninstallExistingVersionCheckBox.Checked) then
+	begin
+	  (* Uninstall previous version if requested *) 
+      previousVersionUninstallPath := GetExistingVersionUninstallPath;
+      if previousVersionUninstallPath <> '' then 
+        Exec(RemoveQuotes(previousVersionUninstallPath), '/VERYSILENT /NORESTART /SUPPRESSMSGBOXES', 
+             '', SW_HIDE, ewWaitUntilTerminated, resultCode);
+  end;
 end;
