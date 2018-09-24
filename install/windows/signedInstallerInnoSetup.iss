@@ -67,7 +67,7 @@ Name: "greek"; MessagesFile: "compiler:Languages\Greek.isl"
 Name: "japanese"; Messagesfile: "compiler:Languages\Japanese.isl"
 Name: "swedish"; MessagesFile: "Swedish.isl"
 Name: "chinesesimp"; Messagesfile: "ChineseSimplified.isl"
-Name: "chinesestrad"; Messagesfile: "ChineseTraditional.isl"
+Name: "chinesetrad"; Messagesfile: "ChineseTraditional.isl"
 Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 
 [Tasks]
