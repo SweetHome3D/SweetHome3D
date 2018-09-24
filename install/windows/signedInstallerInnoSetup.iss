@@ -343,7 +343,7 @@ begin
   uninstallExistingVersionCheckBox.Top := architecturePanel.Top + architecturePanel.Height + 10;
   uninstallExistingVersionCheckBox.Caption := CustomMessage('UninstallExistingVersionCheckBox');
   uninstallExistingVersionCheckBox.Height := architecturePanel.Height;
-  uninstallExistingVersionCheckBox.Width := 500;
+  uninstallExistingVersionCheckBox.Width := 600;
   uninstallExistingVersionCheckBox.Checked := true;
   uninstallExistingVersionCheckBox.Visible := GetExistingVersionUninstallPath <> '';
   uninstallExistingVersionCheckBox.Parent := page;
