@@ -17,10 +17,6 @@ http://github.com/hharrison/java3d-core/
 http://github.com/hharrison/java3d-utils/
 http://github.com/hharrison/vecmath/
 
-Support for HiDPI under Windows and Linux can be achieved with j3dcore.jar 1.6.0a only.
-To build j3dcore.jar 1.6.0a, follow instructions given in j3dcore-1.6.0a-src-diff.zip file
-included in Sweet Home 3D project
-
 
 j3dutils.jar is licensed under Berkeley Software Distribution (BSD) License
 
