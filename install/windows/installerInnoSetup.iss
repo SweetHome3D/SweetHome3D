@@ -55,7 +55,8 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "greek"; MessagesFile: "compiler:Languages\Greek.isl"
 Name: "japanese"; Messagesfile: "compiler:Languages\Japanese.isl"
 Name: "swedish"; MessagesFile: "Swedish.isl"
-Name: "chinesesimp"; Messagesfile: "ChineseSimp.isl"
+Name: "chinesesimp"; Messagesfile: "ChineseSimplified.isl"
+Name: "chinesestrad"; Messagesfile: "ChineseTraditional.isl"
 Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 
 [Tasks]
@@ -154,6 +155,7 @@ czech.SweetHome3DComment=Sestavte si design interieru vaseho domu
 polish.SweetHome3DComment=Zaprojektuj wnetrze swojego domu
 hungarian.SweetHome3DComment=Keszitse el lakasanak belso kialakitasat!
 chinesesimp.SweetHome3DComment=布置您的温馨小家
+
 UnpackingMessage=Unpacking %1...
 french.UnpackingMessage=D閏ompression du fichier %1...
 
