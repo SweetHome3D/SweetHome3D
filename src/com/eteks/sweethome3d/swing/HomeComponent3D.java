@@ -858,7 +858,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.backgroundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
-    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, this.backgroundChangeListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, this.groundChangeListener);
     this.home.removePropertyChangeListener(Home.Property.BACKGROUND_IMAGE, this.groundChangeListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.backgroundLightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
