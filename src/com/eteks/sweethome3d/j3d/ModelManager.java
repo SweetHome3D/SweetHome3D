@@ -765,14 +765,14 @@ public class ModelManager {
           public void run() {
             try {
               final BranchGroup loadedModel = loadModel(content);
-              synchronized (ModelManager.this.loadedModelNodes) {
+              synchronized (loadedModelNodes) {
                 // Update loaded models cache and notify registered observers
-                ModelManager.this.loadedModelNodes.put(content, loadedModel);
-                ModelManager.this.transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
+                loadedModelNodes.put(content, loadedModel);
+                transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
               }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    List<ModelObserver> observers = ModelManager.this.loadingModelObservers.remove(content);
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelUpdated((BranchGroup)cloneNode(loadedModel));
@@ -783,7 +783,7 @@ public class ModelManager {
             } catch (final IOException ex) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    List<ModelObserver> observers = ModelManager.this.loadingModelObservers.remove(content);
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelError(ex);
@@ -1047,16 +1047,16 @@ public class ModelManager {
   private void updateShapeNamesAndWindowPanesTransparency(Scene scene) {
     Map<String, Object> namedObjects = scene.getNamedObjects();
     for (Map.Entry<String, Object> entry : namedObjects.entrySet()) {
-      String nodeName = entry.getKey();
+      String name = entry.getKey();
       Object value = entry.getValue();
       if (value instanceof Node) {
         // Assign node name to its user data
-        ((Node)value).setUserData(nodeName);
+        ((Node)value).setUserData(name);
       }
       if (value instanceof Shape3D
-          && (nodeName.startsWith(WINDOW_PANE_SHAPE_PREFIX)
-              || nodeName.startsWith(WINDOW_PANE_ON_HINGE_PREFIX)
-              || nodeName.startsWith(WINDOW_PANE_ON_RAIL_PREFIX))) {
+          && (name.startsWith(WINDOW_PANE_SHAPE_PREFIX)
+              || name.startsWith(WINDOW_PANE_ON_HINGE_PREFIX)
+              || name.startsWith(WINDOW_PANE_ON_RAIL_PREFIX))) {
         Shape3D shape = (Shape3D)value;
         Appearance appearance = shape.getAppearance();
         if (appearance == null) {
@@ -1167,15 +1167,15 @@ public class ModelManager {
       group.addChild(pelvisGroup);
     } else {
       // Reorganize rotating openings
-      updateDeformableModelHierarchy(group, null, HINGE_PREFIX, OPENING_ON_HINGE_PREFIX, WINDOW_PANE_ON_HINGE_PREFIX);
-      updateDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null);
+      updateSimpleDeformableModelHierarchy(group, null, HINGE_PREFIX, OPENING_ON_HINGE_PREFIX, WINDOW_PANE_ON_HINGE_PREFIX);
+      updateSimpleDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null);
       // Reorganize sliding openings
-      updateDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX);
+      updateSimpleDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX);
     }
   }
 
-  private void updateDeformableModelHierarchy(Group group, String uniqueReferenceNodePrefix, String referenceNodePrefix,
-                                              String openingPrefix, String openingPanePrefix) {
+  private void updateSimpleDeformableModelHierarchy(Group group, String uniqueReferenceNodePrefix, String referenceNodePrefix,
+                                                    String openingPrefix, String openingPanePrefix) {
     if (containsNode(group, openingPrefix + 1)
         || (openingPanePrefix != null && containsNode(group, openingPanePrefix + 1))) {
       if (containsNode(group, referenceNodePrefix + 1)) {
@@ -2041,8 +2041,7 @@ public class ModelManager {
         // Test if points [i] is left of the line at the stack top
         if (isLeft(polygon [top - 1], polygon [top], vertices [i]) > 0) {
           break; // points [i] is a new hull vertex
-        }
-        else {
+        } else {
           top--; // pop top point off stack
         }
       }
