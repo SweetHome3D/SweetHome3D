@@ -1569,14 +1569,18 @@ public class ModelManager {
     } else {
       List<float []> vertices = new ArrayList<float[]>(vertexCount);
       computeVerticesOnFloor(node, vertices, new Transform3D());
-      float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
-      GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
-      generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
-      for (int i = 0; i < surroundingPolygon.length; i++) {
-        generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+      if (vertices.size() > 0) {
+        float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
+        GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
+        generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
+        for (int i = 0; i < surroundingPolygon.length; i++) {
+          generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+        }
+        generalPath.closePath();
+        modelAreaOnFloor = new Area(generalPath);
+      } else {
+        modelAreaOnFloor = new Area();
       }
-      generalPath.closePath();
-      modelAreaOnFloor = new Area(generalPath);
     }
     return modelAreaOnFloor;
   }
@@ -1664,7 +1668,6 @@ public class ModelManager {
                                                 boolean bottom) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;
-
       int vertexCount = geometryArray.getVertexCount();
       float [] vertices = new float [vertexCount * 2];
       Point3f vertex = new Point3f();
@@ -1933,7 +1936,6 @@ public class ModelManager {
           Geometry geometry = shape.getGeometry(i);
           if (geometry instanceof GeometryArray) {
             GeometryArray geometryArray = (GeometryArray)geometry;
-
             int vertexCount = geometryArray.getVertexCount();
             Point3f vertex = new Point3f();
             if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
