@@ -23,6 +23,7 @@ import java.awt.BasicStroke;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
@@ -112,43 +113,24 @@ public class Polyline3D extends Object3DBranch {
       Shape [] polylineShapes = {getArrowShape(firstPoint, angleAtStart, polyline.getStartArrowStyle(), polyline.getThickness(), arrowDelta),
                                  getArrowShape(lastPoint, angleAtEnd, polyline.getEndArrowStyle(), polyline.getThickness(), arrowDelta),
                                  stroke.createStrokedShape(polylineShape)};
-      List<Point3f> vertices = new ArrayList<Point3f>(4);
-      List<Integer> stripCountList = new ArrayList<Integer>();
-      int currentShapeStartIndex = 0;
+      Area polylineArea = new Area();
       for (Shape shape : polylineShapes) {
         if (shape != null) {
-          float [] previousPoint = null;
-          for (PathIterator it = shape.getPathIterator(null, 0.5f); !it.isDone(); it.next()) {
-            float [] point = new float[2];
-            if (it.currentSegment(point) == PathIterator.SEG_CLOSE) {
-              if (vertices.size() > 2) {
-                // Remove last point if it's equal to first point
-                if (vertices.get(currentShapeStartIndex).equals(vertices.get(vertices.size() - 1))) {
-                  vertices.remove(vertices.size() - 1);
-                }
-                if (vertices.size() <= currentShapeStartIndex + 2) {
-                  // Remove useless points
-                  while (vertices.size() > currentShapeStartIndex) {
-                    vertices.remove(vertices.size() - 1);
-                  }
-                } else {
-                  stripCountList.add(vertices.size() - currentShapeStartIndex);
-                  currentShapeStartIndex = vertices.size();
-                }
-              }
-              previousPoint = null;
-            } else if (previousPoint == null
-                       || !Arrays.equals(point, previousPoint)) {
-              vertices.add(new Point3f(point [0], 0, point [1]));
-              previousPoint = point;
-            }
-          }
+          polylineArea.add(new Area(shape));
         }
       }
-      int [] stripCounts = new int [stripCountList.size()];
-      for (int i = 0; i < stripCounts.length; i++) {
-        stripCounts [i] = stripCountList.get(i);
+      List<Point3f> vertices = new ArrayList<Point3f>(4);
+      List<float [][]> polylinePoints = getAreaPoints(polylineArea, 0.5f, false);
+      int [] stripCounts = new int [polylinePoints.size()];
+      int currentShapeStartIndex = 0;
+      for (int i = 0; i < polylinePoints.size(); i++) {
+        for (float [] point : polylinePoints.get(i)) {
+          vertices.add(new Point3f(point [0], 0, point [1]));
+        }
+        stripCounts [i] = vertices.size() - currentShapeStartIndex;
+        currentShapeStartIndex = vertices.size();
       }
+
       GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
       geometryInfo.setCoordinates(vertices.toArray(new Point3f [vertices.size()]));
       Vector3f [] normals = new Vector3f [vertices.size()];
@@ -191,7 +173,7 @@ public class Polyline3D extends Object3DBranch {
       transformGroup.setTransform(transform);
       ((Shape3D)transformGroup.getChild(0)).getAppearance().setMaterial(getMaterial(polyline.getColor(), polyline.getColor(), 0));
     } else {
-      clear();
+      removeAllChildren();
     }
   }
 
@@ -227,12 +209,5 @@ public class Polyline3D extends Object3DBranch {
       return arrowPath.createTransformedShape(transform);
     }
     return null;
-  }
-
-  /**
-   * Removes children and clear fields.
-   */
-  private void clear() {
-    removeAllChildren();
   }
 }
