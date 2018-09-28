@@ -133,12 +133,12 @@ public class Label3D extends Object3DBranch {
             baseLineShift = -(float)lineBounds.getY() + fontMetrics.getHeight() * (lines.length - 1);
           }
           lineWidths [i] = (float)lineBounds.getWidth() + 2 * stroke.getLineWidth();
+          if (style.isItalic()) {
+            lineWidths [i] += fontMetrics.getAscent() * 0.2;
+          }
           textWidth = Math.max(lineWidths [i], textWidth);
         }
 
-        if (style.isItalic()) {
-          textWidth += fontMetrics.getAscent() * 0.2;
-        }
         float textHeight = (float)fontMetrics.getHeight() * lines.length + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
@@ -162,8 +162,8 @@ public class Label3D extends Object3DBranch {
           g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
           g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
 
+          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
           g2D.translate(0, baseLineShift);
           for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines [i];
