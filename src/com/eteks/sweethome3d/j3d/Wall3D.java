@@ -566,6 +566,16 @@ public class Wall3D extends Object3DBranch {
                       frontArea = modelManager.getFrontArea(doorOrWindow.getCutOutShape(), rotation);
                       // Keep front area for a model with a given rotation in cache to avoid multiple calls to getFrontArea
                       rotatedModelsFrontAreas.put(rotatedModel, frontArea);
+                    } else {
+                      // As doorOrWindowRotatedModels and rotatedModelsFrontAreas are both WeakHashMap instances,
+                      // use the ModelRotationTuple key that already exists in rotatedModelsFrontAreas
+                      // to avoid the deletion of the entry containing the new sibling when doorOrWindow is garbage collected
+                      for (ModelRotationTuple key : rotatedModelsFrontAreas.keySet()) {
+                        if (key.equals(rotatedModel)) {
+                          rotatedModel = key;
+                          break;
+                        }
+                      }
                     }
                     // Keep rotated model key in cache for future updates
                     doorOrWindowRotatedModels.put(doorOrWindow, rotatedModel);
@@ -1436,12 +1446,7 @@ public class Wall3D extends Object3DBranch {
         ModelRotationTuple tuple = (ModelRotationTuple)obj;
         if (this.model.equals(tuple.model)
             && this.rotation.length == tuple.rotation.length) {
-          for (int i = 0; i < this.rotation.length; i++) {
-            if (!Arrays.equals(this.rotation [i], tuple.rotation [i])) {
-              return false;
-            }
-          }
-          return true;
+          return Arrays.deepEquals(this.rotation, tuple.rotation);
         }
       }
       return false;
