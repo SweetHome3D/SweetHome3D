@@ -82,7 +82,7 @@ public class Polyline3D extends Object3DBranch {
         && (polyline.getLevel() == null
             || polyline.getLevel().isViewableAndVisible())) {
       Stroke stroke = ShapeTools.getStroke(polyline.getThickness(), polyline.getCapStyle(),
-          polyline.getJoinStyle(), polyline.getDashStyle(), polyline.getDashOffset());
+          polyline.getJoinStyle(), polyline.getDashPattern(), polyline.getDashOffset());
       Shape polylineShape = ShapeTools.getPolylineShape(polyline.getPoints(),
           polyline.getJoinStyle() == Polyline.JoinStyle.CURVED, polyline.isClosedPath());
 

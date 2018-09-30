@@ -633,12 +633,21 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
             writer.writeAttribute("level", getId(polyline.getLevel()));
           }
           writer.writeFloatAttribute("thickness", polyline.getThickness(), 1f);
-          writer.writeAttribute("capStyle", polyline.getCapStyle().name());
-          writer.writeAttribute("joinStyle", polyline.getJoinStyle().name());
-          writer.writeAttribute("dashStyle", polyline.getDashStyle().name());
+          writer.writeAttribute("capStyle", polyline.getCapStyle().name(), Polyline.CapStyle.BUTT.name());
+          writer.writeAttribute("joinStyle", polyline.getJoinStyle().name(), Polyline.JoinStyle.MITER.name());
+          writer.writeAttribute("dashStyle", polyline.getDashStyle().name(), Polyline.DashStyle.SOLID.name());
+          if (polyline.getDashStyle() == Polyline.DashStyle.CUSTOMIZED) {
+            StringBuilder dashPattern = new StringBuilder();
+            for (float dashPart : polyline.getDashPattern()) {
+              dashPattern.append(floatToString(dashPart));
+              dashPattern.append(" ");
+            }
+            dashPattern.setLength(dashPattern.length() - 1);
+            writer.writeAttribute("dashPattern", dashPattern.toString());
+          }
           writer.writeFloatAttribute("dashOffset", polyline.getDashOffset(), 0f);
-          writer.writeAttribute("startArrowStyle", polyline.getStartArrowStyle().name());
-          writer.writeAttribute("endArrowStyle", polyline.getEndArrowStyle().name());
+          writer.writeAttribute("startArrowStyle", polyline.getStartArrowStyle().name(), Polyline.ArrowStyle.NONE.name());
+          writer.writeAttribute("endArrowStyle", polyline.getEndArrowStyle().name(), Polyline.ArrowStyle.NONE.name());
           if (polyline.isVisibleIn3D()) {
             writer.writeFloatAttribute("elevation", polyline.getElevation());
           }

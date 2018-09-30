@@ -1013,20 +1013,8 @@ public class SwingTools {
                                  Polyline.CapStyle capStyle,
                                  Polyline.JoinStyle joinStyle,
                                  Polyline.DashStyle dashStyle) {
-    return getStroke(thickness, capStyle, joinStyle, dashStyle, 0);
+    return ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle.getDashPattern(), 0);
   }
-
-  /**
-   * Returns the line stroke matching the given line styles and offset.
-   */
-  public static Stroke getStroke(float thickness,
-                                 Polyline.CapStyle capStyle,
-                                 Polyline.JoinStyle joinStyle,
-                                 Polyline.DashStyle dashStyle,
-                                 float dashOffset) {
-    return ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle, dashOffset);
-  }
-
 
   private static Float defaultResolutionScale;
 

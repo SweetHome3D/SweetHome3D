@@ -385,7 +385,8 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       thickness CDATA "1"
  *       capStyle (BUTT | SQUARE | ROUND) "BUTT"
  *       joinStyle (BEVEL | MITER | ROUND | CURVED) "MITER"
- *       dashStyle (SOLID | DOT | DASH | DASH_DOT | DASH_DOT_DOT) "SOLID"
+ *       dashStyle (SOLID | DOT | DASH | DASH_DOT | DASH_DOT_DOT | CUSTOMIZED) "SOLID"
+ *       dashPattern CDATA #IMPLIED
  *       dashOffset CDATA "0"
  *       startArrowStyle (NONE | DELTA | OPEN | DISC) "NONE"
  *       endArrowStyle (NONE | DELTA | OPEN | DISC) "NONE"
@@ -1527,6 +1528,19 @@ public class HomeXMLHandler extends DefaultHandler {
         polyline.setDashStyle(Polyline.DashStyle.valueOf(dashStyle));
       } catch (IllegalArgumentException ex) {
         // Ignore malformed enum constant
+      }
+    }
+    String dashPattern = attributes.get("dashPattern");
+    if (dashPattern != null) {
+      try {
+        String [] values = dashPattern.split(" ");
+        float [] pattern = new float [values.length];
+        for (int i = 0; i < values.length; i++) {
+          pattern [i] = Float.parseFloat(values [i]);
+        }
+        polyline.setDashPattern(pattern);
+      } catch (NumberFormatException ex) {
+        throw new SAXException("Invalid value for dash pattern", ex);
       }
     }
     Float dashOffset = parseOptionalFloat(attributes, "dashOffset");

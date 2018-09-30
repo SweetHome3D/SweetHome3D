@@ -53,7 +53,7 @@ public class ShapeTools {
   public static Stroke getStroke(float thickness,
                                  Polyline.CapStyle capStyle,
                                  Polyline.JoinStyle joinStyle,
-                                 Polyline.DashStyle dashStyle,
+                                 float [] dashPattern,
                                  float dashOffset) {
     int strokeCapStyle;
     switch (capStyle) {
@@ -82,34 +82,17 @@ public class ShapeTools {
         break;
     }
 
-    float [] strokeDashes;
-    switch (dashStyle) {
-      case DOT :
-        strokeDashes = new float [] {thickness, thickness};
-        break;
-      case DASH :
-        strokeDashes = new float [] {thickness * 4, thickness * 2};
-        break;
-      case DASH_DOT :
-        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2};
-        break;
-      case DASH_DOT_DOT :
-        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2, thickness * 2, thickness * 2};
-        break;
-      default :
-        strokeDashes = null;
-        break;
-    }
-
     float dashPhase = 0;
-    if (strokeDashes != null) {
-      for (float dash : strokeDashes) {
-        dashPhase += dash;
+    if (dashPattern != null) {
+      dashPattern = dashPattern.clone();
+      for (int i = 0; i < dashPattern.length; i++) {
+        dashPattern [i] *= thickness;
+        dashPhase += dashPattern [i];
       }
       dashPhase *= dashOffset;
     }
 
-    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, dashPhase);
+    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, dashPattern, dashPhase);
   }
 
   /**

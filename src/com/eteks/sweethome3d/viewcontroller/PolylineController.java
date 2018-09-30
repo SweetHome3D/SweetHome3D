@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -58,6 +59,7 @@ public class PolylineController implements Controller {
   private Polyline.JoinStyle  joinStyle;
   private boolean             joinStyleEditable;
   private Polyline.DashStyle  dashStyle;
+  private float []            dashPattern;
   private Float               dashOffset;
   private boolean             arrowsStyleEditable;
   private Polyline.ArrowStyle startArrowStyle;
@@ -127,6 +129,7 @@ public class PolylineController implements Controller {
       this.joinStyleEditable = false;
       setJoinStyle(null);
       setDashStyle(null);
+      this.dashPattern = null;
       setDashOffset(null);
       this.arrowsStyleEditable = false;
       setStartArrowStyle(null);
@@ -193,16 +196,33 @@ public class PolylineController implements Controller {
         setJoinStyle(null);
       }
 
-      Polyline.DashStyle dashStyle = firstPolyline.getDashStyle();
-      if (dashStyle != null) {
+      float [] dashPattern = firstPolyline.getDashPattern();
+      if (dashPattern != null) {
         for (int i = 1; i < selectedPolylines.size(); i++) {
-          if (dashStyle != selectedPolylines.get(i).getDashStyle()) {
-            dashStyle = null;
+          if (!Arrays.equals(dashPattern, selectedPolylines.get(i).getDashPattern())) {
+            dashPattern = null;
             break;
           }
         }
       }
-      setDashStyle(dashStyle);
+      this.dashPattern = dashPattern;
+
+      if (dashPattern != null) {
+        Polyline.DashStyle dashStyle = firstPolyline.getDashStyle();
+        if (dashStyle != null) {
+          for (int i = 1; i < selectedPolylines.size(); i++) {
+            if (dashStyle != selectedPolylines.get(i).getDashStyle()) {
+              dashStyle = null;
+              break;
+            }
+          }
+        }
+        if (dashStyle == Polyline.DashStyle.CUSTOMIZED) {
+        }
+        setDashStyle(dashStyle);
+      } else {
+        setDashStyle(null);
+      }
 
       // Search the common dash offset among polylines
       Float dashOffset = firstPolyline.getDashOffset();
@@ -358,6 +378,13 @@ public class PolylineController implements Controller {
    */
   public Polyline.DashStyle getDashStyle() {
     return this.dashStyle;
+  }
+
+  /**
+   * Returns the edited dash pattern.
+   */
+  public float [] getDashPattern() {
+    return this.dashPattern;
   }
 
   /**
@@ -635,7 +662,7 @@ public class PolylineController implements Controller {
     private final float               thickness;
     private final Polyline.CapStyle   capStyle;
     private final Polyline.JoinStyle  joinStyle;
-    private final Polyline.DashStyle  dashStyle;
+    private final float []            dashPattern;
     private final Float               dashOffset;
     private final Polyline.ArrowStyle startArrowStyle;
     private final Polyline.ArrowStyle endArrowStyle;
@@ -648,7 +675,7 @@ public class PolylineController implements Controller {
       this.thickness = polyline.getThickness();
       this.capStyle = polyline.getCapStyle();
       this.joinStyle = polyline.getJoinStyle();
-      this.dashStyle = polyline.getDashStyle();
+      this.dashPattern = polyline.getDashPattern();
       this.dashOffset = polyline.getDashOffset();
       this.startArrowStyle = polyline.getStartArrowStyle();
       this.endArrowStyle = polyline.getEndArrowStyle();
@@ -665,7 +692,7 @@ public class PolylineController implements Controller {
       this.polyline.setThickness(this.thickness);
       this.polyline.setCapStyle(this.capStyle);
       this.polyline.setJoinStyle(this.joinStyle);
-      this.polyline.setDashStyle(this.dashStyle);
+      this.polyline.setDashPattern(this.dashPattern);
       this.polyline.setDashOffset(this.dashOffset);
       this.polyline.setStartArrowStyle(this.startArrowStyle);
       this.polyline.setEndArrowStyle(this.endArrowStyle);

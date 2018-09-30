@@ -38,6 +38,7 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import com.eteks.sweethome3d.j3d.ShapeTools;
 import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Polyline.ArrowStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -89,7 +90,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PolylinePanel.class, "thicknessLabel.text", preferences.getLengthUnit().getName()));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel =
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, preferences.getLengthUnit().getMinimumLength(), 20f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, preferences.getLengthUnit().getMinimumLength(), 50f);
     this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
     thicknessSpinnerModel.setNullable(controller.getThickness() == null);
     thicknessSpinnerModel.setLength(controller.getThickness());
@@ -281,14 +282,14 @@ public class PolylinePanel extends JPanel implements DialogView {
     // Create dash style label and combo box bound to controller DASH_STYLE property
     this.dashStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PolylinePanel.class, "dashStyleLabel.text"));
-    Polyline.DashStyle [] dashStyles = Polyline.DashStyle.values();
-    if (controller.getDashStyle() == null) {
-      List<Polyline.DashStyle> dashStylesList = new ArrayList<Polyline.DashStyle>();
-      dashStylesList.add(null);
-      dashStylesList.addAll(Arrays.asList(dashStyles));
-      dashStyles = dashStylesList.toArray(new Polyline.DashStyle [dashStylesList.size()]);
+    List<Polyline.DashStyle> dashStyles = new ArrayList<Polyline.DashStyle>(Arrays.asList(Polyline.DashStyle.values()));
+    if (controller.getDashStyle() != Polyline.DashStyle.CUSTOMIZED) {
+      dashStyles.remove(Polyline.DashStyle.CUSTOMIZED);
     }
-    this.dashStyleComboBox = new JComboBox(new DefaultComboBoxModel(dashStyles));
+    if (controller.getDashStyle() == null) {
+      dashStyles.add(0, null);
+    }
+    this.dashStyleComboBox = new JComboBox(new DefaultComboBoxModel(dashStyles.toArray(new Polyline.DashStyle [dashStyles.size()])));
     this.dashStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list,
@@ -315,7 +316,8 @@ public class PolylinePanel extends JPanel implements DialogView {
                   g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                   g2D.setColor(list.getForeground());
                   float dashOffset = controller.getDashOffset() != null ? controller.getDashOffset().floatValue() : 0;
-                  g2D.setStroke(SwingTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER, dashStyle, dashOffset));
+                  g2D.setStroke(ShapeTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER,
+                      dashStyle != Polyline.DashStyle.CUSTOMIZED ? dashStyle.getDashPattern() : controller.getDashPattern(), dashOffset));
                   g2D.drawLine(4, 8, getIconWidth() - 4, 8);
                 }
               }

@@ -44,7 +44,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * The properties of a polyline that may change. <code>PropertyChangeListener</code>s added
    * to a polyline will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, START_ARROW_STYLE, END_ARROW_STYLE, DASH_OFFSET, CLOSED_PATH, COLOR, LEVEL, ELEVATION, VISIBLE_IN_3D}
+  public enum Property {POINTS, THICKNESS, CAP_STYLE, JOIN_STYLE, DASH_STYLE, DASH_OFFSET, DASH_PATTERN, START_ARROW_STYLE, END_ARROW_STYLE, CLOSED_PATH, COLOR, LEVEL, ELEVATION, VISIBLE_IN_3D}
 
   public enum CapStyle {BUTT, SQUARE, ROUND}
 
@@ -52,7 +52,22 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
 
   public enum ArrowStyle {NONE, DELTA, OPEN, DISC}
 
-  public enum DashStyle {SOLID, DOT, DASH, DASH_DOT, DASH_DOT_DOT}
+  public enum DashStyle {SOLID, DOT, DASH, DASH_DOT, DASH_DOT_DOT, CUSTOMIZED;
+    /**
+     * Returns an array describing the length of dashes and spaces between them
+     * for a 1 cm thick polyline.
+     */
+    public float [] getDashPattern() {
+      switch (this) {
+        case SOLID :        return new float [] {1f, 0f};
+        case DOT :          return new float [] {1f, 1f};
+        case DASH :         return new float [] {4f, 2f};
+        case DASH_DOT :     return new float [] {8f, 2f, 2f, 2f};
+        case DASH_DOT_DOT : return new float [] {8f, 2f, 2f, 2f, 2f, 2f};
+        default :           return null;
+      }
+    }
+  }
 
   private float [][]           points;
   private float                thickness;
@@ -62,6 +77,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   private String               joinStyleName;
   private transient DashStyle  dashStyle;
   private String               dashStyleName;
+  private float []             dashPattern;
   private float                dashOffset;
   private transient ArrowStyle startArrowStyle;
   private String               startArrowStyleName;
@@ -360,7 +376,8 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns the dash style of this polyline.
+   * Returns the dash style of this polyline. If <code>DashStyle.CUSTOMIZED</code> is returned,
+   * the actual dash pattern will be returned by {@link #getDashPattern()}.
    */
   public DashStyle getDashStyle() {
     return this.dashStyle;
@@ -372,9 +389,54 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    */
   public void setDashStyle(DashStyle dashStyle) {
     if (dashStyle != this.dashStyle) {
+      float [] oldDashPattern = getDashPattern();
       DashStyle oldDashStyle = this.dashStyle;
       this.dashStyle = dashStyle;
+      if (dashStyle != DashStyle.CUSTOMIZED) {
+        this.dashPattern = null;
+      }
+      this.propertyChangeSupport.firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, getDashPattern());
       this.propertyChangeSupport.firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, dashStyle);
+    }
+  }
+
+  /**
+   * Returns the dash pattern of this polyline in percentage of its thickness.
+   * @since 6.0
+   */
+  public float [] getDashPattern() {
+    float [] dashPattern = null;
+    if (this.dashStyle != DashStyle.CUSTOMIZED) {
+      return this.dashStyle.getDashPattern();
+    } else if (this.dashPattern != null) {
+      dashPattern = this.dashPattern.clone();
+    }
+    return dashPattern;
+  }
+
+  /**
+   * Sets the dash pattern of this polyline in percentage of its thickness.
+   * Once this polyline is updated, listeners added to this polyline will receive a change notification.
+   * @since 6.0
+   */
+  public void setDashPattern(float [] dashPattern) {
+    for (DashStyle dashStyle : DashStyle.values()) {
+      if (this.dashStyle != DashStyle.CUSTOMIZED) {
+        // If the given dash pattern matches a default dash style, simply set this dash style
+        if (Arrays.equals(dashPattern, dashStyle.getDashPattern())) {
+          setDashStyle(dashStyle);
+          return;
+        }
+      }
+    }
+    if (!Arrays.equals(dashPattern, this.dashPattern)) {
+      float [] oldDashPattern = getDashPattern();
+      this.dashPattern = dashPattern.clone();
+      this.propertyChangeSupport.firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, dashPattern);
+      // Always emit a DASH_STYLE change to let existing listeners know that the pattern change
+      DashStyle oldDashStyle = this.dashStyle;
+      this.dashStyle = DashStyle.CUSTOMIZED;
+      this.propertyChangeSupport.firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, DashStyle.CUSTOMIZED);
     }
   }
 
