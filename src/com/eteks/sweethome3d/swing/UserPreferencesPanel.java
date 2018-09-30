@@ -987,20 +987,25 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
    * Layouts panel components in panel with their labels.
    */
   private void layoutComponents() {
-    int labelAlignment = OperatingSystem.isMacOSX()
+    boolean macOSX = OperatingSystem.isMacOSX();
+    int labelAlignment = macOSX
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
-    boolean smallScreen = getToolkit().getScreenSize().height <= 650;
+    boolean smallScreen = getToolkit().getScreenSize().height <= (macOSX ? 768 : 650);
     int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     if (smallScreen) {
-      standardGap = 3;
+      standardGap = (macOSX ? 4 : 3);
     }
     int checkBoxVecticalGap = (int)(3 * SwingTools.getResolutionScale());
     Insets labelInsets = new Insets(0, 0, standardGap, standardGap);
-    Insets checkBoxLabelInsets = new Insets(0, 0, smallScreen ? 0 : (OperatingSystem.isMacOSX() ? 5 : checkBoxVecticalGap), standardGap);
+    Insets checkBoxLabelInsets = new Insets(0, 0, smallScreen
+        ? (macOSX ? 2 : 0)
+        : (macOSX ? 5 : checkBoxVecticalGap), standardGap);
     Insets labelInsetsWithSpace = new Insets(0, 0, smallScreen ? 2 : 10, standardGap);
     Insets rightComponentInsets = new Insets(0, 0, standardGap, 0);
-    Insets checkBoxInsets = new Insets(0, 0, smallScreen ? 0 : (OperatingSystem.isMacOSX() ? 5 : checkBoxVecticalGap), 0);
+    Insets checkBoxInsets = new Insets(0, 0, smallScreen
+        ? (macOSX ? 2 : 0)
+        : (macOSX ? 5 : checkBoxVecticalGap), 0);
     Insets rightComponentInsetsWithSpace = new Insets(0, 0, smallScreen ? 0 : 10, 0);
     if (this.languageLabel != null) {
       // First row
@@ -1009,7 +1014,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.languageComboBox, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, new Insets(OperatingSystem.isMacOSX() ? 1 : 0, 0, standardGap, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(macOSX ? 1 : 0, 0, standardGap, 0), 0, 0));
       if (this.languageLibraryImportButton != null) {
         add(this.languageLibraryImportButton, new GridBagConstraints(
             2, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
@@ -1023,7 +1028,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.unitComboBox, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.HORIZONTAL, rightComponentInsets, OperatingSystem.isMacOSX() ? -20 : 0, 0));
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, macOSX ? -20 : 0, 0));
       // Keep third row empty (used to contain unit radio buttons)
     }
     if (this.currencyLabel != null) {
