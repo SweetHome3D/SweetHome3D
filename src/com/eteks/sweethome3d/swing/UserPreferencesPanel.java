@@ -261,7 +261,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       }
       Vector<String> currencies = new Vector<String>(currencyMap.keySet());
       Collections.sort(currencies);
-      Currency defaultLocaleCurrency = Currency.getInstance(Locale.getDefault());
+      Locale defaultLocale = Locale.getDefault();
+      Currency defaultLocaleCurrency = defaultLocale.getCountry() != null && defaultLocale.getCountry().length() == 2
+          ? Currency.getInstance(defaultLocale)
+          : null;
       if (defaultLocaleCurrency != null) {
         currencies.add(0, defaultLocaleCurrency.getCurrencyCode()); // Add also the currency of the current locale
       }
