@@ -1,3 +1,5 @@
 eclipse.preferences.version=1
 encoding//install/macosx/Sweet\ Home\ 3D/Contents/Info.plist=UTF-8
+encoding//install/windows/installerInnoSetup.iss=UTF-8
+encoding//install/windows/signedInstallerInnoSetup.iss=UTF-8
 encoding/<project>=ISO-8859-1

@@ -1,9 +1,9 @@
-; installerInnoSetup.iss
+﻿; installerInnoSetup.iss
 ;
 ; Sweet Home 3D, Copyright (c) 2007-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
 ; SweetHome3D-6.0-windows.exe setup program creator
-; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
+; This UTF-8 BOM encoded script requires Inno Setup Unicode available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
 ; + a jre... subdirectory containing a dump of Windows JRE without the files mentioned 
@@ -56,7 +56,7 @@ Name: "greek"; MessagesFile: "compiler:Languages\Greek.isl"
 Name: "japanese"; Messagesfile: "compiler:Languages\Japanese.isl"
 Name: "swedish"; MessagesFile: "Swedish.isl"
 Name: "chinesesimp"; Messagesfile: "ChineseSimplified.isl"
-Name: "chinesestrad"; Messagesfile: "ChineseTraditional.isl"
+Name: "chinesetrad"; Messagesfile: "ChineseTraditional.isl"
 Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 
 [Tasks]
@@ -82,7 +82,8 @@ Source: "build\lib\Furniture.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\Textures.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\Examples.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\Help.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
-Source: "build\lib\batik-svgpathparser-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
+Source: "build\lib\batik-svgpathparser-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion 
+Source: "build\lib\jeksparser-calculator*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\sunflow-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\freehep-vectorgraphics-svg-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "build\lib\iText-*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
@@ -139,25 +140,43 @@ ArchitectureLabel=Architecture:
 french.ArchitectureLabel=Architecture :
 spanish.ArchitectureLabel=Arquitectura:
 italian.ArchitectureLabel=Architettura:
-dutch.ArchitectureLabel=Architectuur:
+dutch.ArchitectureLabel=Programmatuur opbouw:
 german.ArchitectureLabel=Architektur:
-portuguese.ArchitectureLabel=Arquitetura:
-brazilianportuguese.ArchitectureLabel=Arquitetura:
+portuguese.ArchitectureLabel=Arquitectura:
+brazilianportuguese.ArchitectureLabel=Arquitectura:
+swedish.ArchitectureLabel=Arkitektur:
+greek.ArchitectureLabel=Αρχιτεκτονική:
+bulgarian.ArchitectureLabel=Архитектура:
+russian.ArchitectureLabel=Архитектура:
+chinesesimp.ArchitectureLabel=安装于:
+chinesetrad.ArchitectureLabel=安裝於:
+japanese.ArchitectureLabel=建築様式:
 
 UninstallExistingVersionCheckBox=Uninstall previously installed version
-french.UninstallExistingVersionCheckBox=D�sinstaller la version install�e pr�c�demment
+french.UninstallExistingVersionCheckBox=Désinstaller la version installée précédemment
+spanish.UninstallExistingVersionCheckBox=Desinstalar la anterior versión instalada
+italian.UninstallExistingVersionCheckBox=Disinstalla versioni precedentemente installate
+dutch.UninstallExistingVersionCheckBox=Verwijder eerder geïnstalleerde versie
+portuguese.UninstallExistingVersionCheckBox=Desinstalar a versão anterior
+brazilianportuguese.UninstallExistingVersionCheckBox=Desinstalar a versão anterior
+swedish.UninstallExistingVersionCheckBox=Avinstallera föregående version
+greek.UninstallExistingVersionCheckBox=Απεγκατάσταση προηγούμενης έκδοσης
+bulgarian.UninstallExistingVersionCheckBox=Деинсталирай предишната версия
+russian.UninstallExistingVersionCheckBox=Деинсталлировать предыдущую версию
+chinesesimp.UninstallExistingVersionCheckBox=卸除以前安装的版本
+chinesetrad.UninstallExistingVersionCheckBox=卸載以前安裝的版本
+japanese.UninstallExistingVersionCheckBox=前インストールバージョン削除
 
 SweetHome3DComment=Arrange the furniture of your house
-french.SweetHome3DComment=Am�nagez les meubles de votre logement
+french.SweetHome3DComment=Aménagez les meubles de votre logement
 portuguese.SweetHome3DComment=Organiza as mobilias da sua casa
 brazilianportuguese.SweetHome3DComment=Organiza as mobilias da sua casa
 czech.SweetHome3DComment=Sestavte si design interieru vaseho domu
 polish.SweetHome3DComment=Zaprojektuj wnetrze swojego domu
 hungarian.SweetHome3DComment=Keszitse el lakasanak belso kialakitasat!
-chinesesimp.SweetHome3DComment=����������ܰС��
 
 UnpackingMessage=Unpacking %1...
-french.UnpackingMessage=D�compression du fichier %1...
+french.UnpackingMessage=Décompression du fichier %1...
 
 [Registry]
 Root: HKCR; Subkey: ".sh3d"; ValueType: string; ValueName: ""; ValueData: "eTeks Sweet Home 3D"; Flags: uninsdeletevalue
