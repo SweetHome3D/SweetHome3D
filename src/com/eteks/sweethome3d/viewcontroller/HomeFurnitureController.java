@@ -619,7 +619,6 @@ public class HomeFurnitureController implements Controller {
           this.wallHeight = editedDoorOrWindow.getWallHeight();
           this.wallTop = editedDoorOrWindow.getWallTop();
           this.sashes = editedDoorOrWindow.getSashes();
-
         }
       }
       setModelTransformations(modelTransformations);
@@ -1917,6 +1916,7 @@ public class HomeFurnitureController implements Controller {
         }
 
         if (piece instanceof HomeDoorOrWindow
+            && modifiedFurniture.length == 1
             && !Arrays.deepEquals(piece.getModelTransformations(),
                     modelTransformations != null && modelTransformations.length > 0 ? modelTransformations : null)) {
           HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
