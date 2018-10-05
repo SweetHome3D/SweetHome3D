@@ -820,13 +820,13 @@
   <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/10.6/SweetHome3D-version directory. -->
   <target name="macosx10.6Bundle" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Mac OS X application bundle">
-  	<!-- Build Sweet Home 3D version for Mac OS X 10.6 based on Apple Java -->
-  	<mkdir dir="install/macosx/10.6/SweetHome3D-${version}"/>
-  	<copy todir="install/macosx/10.6/SweetHome3D-${version}/Sweet Home 3D.app">
+    <!-- Build Sweet Home 3D version for Mac OS X 10.6 based on Apple Java -->
+    <mkdir dir="install/macosx/10.6/SweetHome3D-${version}"/>
+    <copy todir="install/macosx/10.6/SweetHome3D-${version}/Sweet Home 3D.app">
       <fileset dir="install/macosx/10.6/Sweet Home 3D"/>
     </copy>
-  	<!-- Copy ICNS files of Mac OS X standard version -->
-  	<copy todir="install/macosx/10.6/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources">
+    <!-- Copy ICNS files of Mac OS X standard version -->
+    <copy todir="install/macosx/10.6/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources">
       <fileset dir="install/macosx/Sweet Home 3D/Contents/Resources"/>
     </copy>
 
@@ -868,7 +868,7 @@
         <include name="*.jnilib"/>
       </fileset>
     </copy>
-  	
+  
     <!-- Copy COPYING.TXT and licenses texts to install/macosx/10.6/SweetHome3D-version/ -->
     <copy file="COPYING.TXT" todir="install/macosx/10.6/SweetHome3D-${version}"/>
     <copy file="LICENSE.TXT" todir="install/macosx/10.6/SweetHome3D-${version}" />
@@ -1117,10 +1117,8 @@
          to install/linux/x86/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/x86/SweetHome3D-${version}/lib"/>
     <!-- Copy SweetHome3D commands -->
-    <copy todir="install/linux/x86/SweetHome3D-${version}"
-          file="install/linux/SweetHome3D"/>
-    <copy todir="install/linux/x86/SweetHome3D-${version}"
-          file="install/linux/SweetHome3D-Java3D-1_5_2"/>
+    <copy todir="install/linux/x86/SweetHome3D-${version}" file="install/linux/SweetHome3D"/>
+    <copy todir="install/linux/x86/SweetHome3D-${version}" file="install/linux/SweetHome3D-Java3D-1_5_2"/>
 
     <!-- Copy SweetHome3D JARs and its direct libs
          to install/linux/x86/SweetHome3D-version/lib -->
@@ -1234,10 +1232,10 @@
          to install/linux/x64/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/x64/SweetHome3D-${version}/lib"/>
     <!-- Copy SweetHome3D commands -->
-    <copy todir="install/linux/x64/SweetHome3D-${version}"
-          file="install/linux/SweetHome3D"/>
-    <copy todir="install/linux/x64/SweetHome3D-${version}"
-          file="install/linux/SweetHome3D-Java3D-1_5_2"/>
+    <copy todir="install/linux/x64/SweetHome3D-${version}" file="install/linux/SweetHome3D" />
+    <copy todir="install/linux/x64/SweetHome3D-${version}" file="install/linux/SweetHome3D-Java3D-1_5_2"/>
+  	<!-- Change max memory Java parameter -->
+    <replace dir="install/linux/x64" token=" -Xmx1024m " value=" -Xmx2g "/>
 
     <!-- Copy SweetHome3D JARs and its direct libs
          to install/linux/x64/SweetHome3D-version/lib -->
