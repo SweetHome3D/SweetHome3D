@@ -1500,7 +1500,7 @@ public class VideoPanel extends JPanel implements DialogView {
         // Confirm the stop if a rendering has been running for more than 30 s
         && (!confirmStop
             || System.currentTimeMillis() - this.videoCreationStartTime < MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING
-            || JOptionPane.showConfirmDialog(getRootPane(),
+            || JOptionPane.showConfirmDialog(this,
                   this.preferences.getLocalizedString(VideoPanel.class, "confirmStopCreation.message"),
                   this.preferences.getLocalizedString(VideoPanel.class, "confirmStopCreation.title"),
                   JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
