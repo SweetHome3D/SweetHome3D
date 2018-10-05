@@ -1,0 +1,29 @@
+# curtains.mtl
+#
+# Sweet Home 3D, Copyright (c) 2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
+#
+# This file is distributed at your choice, under the CC-BY Creative Commons Attribution 3.0 Unported license 
+# available at http://creativecommons.org/licenses/by/3.0/ or under the terms of the GNU General Public License 
+# as published by the Free Software Foundation and available at http://www.gnu.org/copyleft/gpl.txt
+#
+
+newmtl Left
+Ka 0.4 0.4 0.4
+Kd 0.1881 0.2786 0.2898
+Ks 0 0 0
+illum 2
+Ns 1
+
+newmtl Right
+Ka 0.4 0.4 0.4
+Kd 0.1881 0.2786 0.2898
+Ks 0 0 0
+illum 2
+Ns 1
+
+newmtl Rod
+Ka 0.9551 0.9551 0.9551
+Kd 0.6163 0.6163 0.6163
+Ks 0.3 0.3 0.3
+illum 2
+Ns 60.0
