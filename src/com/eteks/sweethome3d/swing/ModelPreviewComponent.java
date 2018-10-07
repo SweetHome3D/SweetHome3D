@@ -45,6 +45,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.MemoryImageSource;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -366,10 +367,29 @@ public class ModelPreviewComponent extends JComponent {
         private Transform3D    translationToOrigin;
         private BoundingBox    modelBounds;
 
+        private Point getMouseLocation(MouseEvent ev) {
+          if (!OperatingSystem.isMacOSX()
+              && OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+            try {
+              // Dirty hack that scales mouse coordinates with xcale and yscale private fields of Canvas3D
+              Field xscaleField = Canvas3D.class.getDeclaredField("xscale");
+              xscaleField.setAccessible(true);
+              double xscale = (Double)(xscaleField.get(ev.getSource()));
+              Field yscaleField = Canvas3D.class.getDeclaredField("yscale");
+              yscaleField.setAccessible(true);
+              double yscale = (Double)(yscaleField.get(ev.getSource()));
+              return new Point((int)(ev.getX() * xscale), (int)(ev.getY() * yscale));
+            } catch (Exception ex) {
+            }
+          }
+          return ev.getPoint();
+        }
+
         @Override
         public void mousePressed(MouseEvent ev) {
-          this.xLastMouseMove = ev.getX();
-          this.yLastMouseMove = ev.getY();
+          Point mouseLocation = getMouseLocation(ev);
+          this.xLastMouseMove = mouseLocation.x;
+          this.yLastMouseMove = mouseLocation.y;
           this.pickedTransformGroup = null;
           this.pivotCenterPixel = null;
           this.boundedPitch = true;
@@ -385,7 +405,7 @@ public class ModelPreviewComponent extends JComponent {
             }
             PickCanvas pickCanvas = new PickCanvas(canvas, getModelNode());
             pickCanvas.setMode(PickCanvas.GEOMETRY);
-            pickCanvas.setShapeLocation(ev.getX(), ev.getY());
+            pickCanvas.setShapeLocation(mouseLocation.x, mouseLocation.y);
             PickResult result = pickCanvas.pickClosest();
             if (result != null) {
               this.pickedTransformGroup = (TransformGroup)result.getNode(PickResult.TRANSFORM_GROUP);
@@ -510,15 +530,16 @@ public class ModelPreviewComponent extends JComponent {
 
         @Override
         public void mouseDragged(MouseEvent ev) {
+          Point mouseLocation = getMouseLocation(ev);
           if (getModelNode() != null) {
             if (this.pivotCenterPixel != null) {
               String transformationName = (String)this.pickedTransformGroup.getUserData();
               Transform3D additionalTransform = new Transform3D();
               if (transformationName.startsWith(ModelManager.RAIL_PREFIX)) {
                 additionalTransform.setTranslation(new Vector3f(0, 0,
-                    (float)Point2D.distance(ev.getX(), ev.getY(), this.xLastMouseMove, this.yLastMouseMove) * Math.signum(this.xLastMouseMove - ev.getX())));
+                    (float)Point2D.distance(mouseLocation.x, mouseLocation.y, this.xLastMouseMove, this.yLastMouseMove) * Math.signum(this.xLastMouseMove - mouseLocation.x)));
               } else {
-                double angle = Math.atan2(this.pivotCenterPixel.y - ev.getY(), ev.getX() - this.pivotCenterPixel.x)
+                double angle = Math.atan2(this.pivotCenterPixel.y - mouseLocation.y, mouseLocation.x - this.pivotCenterPixel.x)
                     - Math.atan2(this.pivotCenterPixel.y - this.yLastMouseMove, this.xLastMouseMove - this.pivotCenterPixel.x);
                 additionalTransform.rotZ(angle);
               }
@@ -574,15 +595,15 @@ public class ModelPreviewComponent extends JComponent {
             } else {
               if (yawChangeSupported) {
                 // Mouse move along X axis changes yaw
-                setViewYaw(getViewYaw() - ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove));
+                setViewYaw(getViewYaw() - ANGLE_FACTOR * (mouseLocation.x - this.xLastMouseMove));
               }
 
               if (scaleChangeSupported && ev.isAltDown()) {
                 // Mouse move along Y axis with Alt down changes scale
-                setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp((ev.getY() - this.yLastMouseMove) * ZOOM_FACTOR))));
+                setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp((mouseLocation.y - this.yLastMouseMove) * ZOOM_FACTOR))));
               } else if (pitchChangeSupported && !ev.isAltDown()) {
                 // Mouse move along Y axis changes pitch
-                float viewPitch = getViewPitch() - ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove);
+                float viewPitch = getViewPitch() - ANGLE_FACTOR * (mouseLocation.y - this.yLastMouseMove);
                 if (this.boundedPitch) {
                   setViewPitch(Math.max(-(float)Math.PI / 4, Math.min(0, viewPitch)));
                 } else {
@@ -592,8 +613,8 @@ public class ModelPreviewComponent extends JComponent {
               }
             }
           }
-          this.xLastMouseMove = ev.getX();
-          this.yLastMouseMove = ev.getY();
+          this.xLastMouseMove = mouseLocation.x;
+          this.yLastMouseMove = mouseLocation.y;
         }
       };
 
