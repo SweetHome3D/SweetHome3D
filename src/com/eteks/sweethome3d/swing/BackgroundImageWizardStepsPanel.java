@@ -509,7 +509,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           try {
             // Check image is less than 10 million pixels
             Dimension size = SwingTools.getImageSizeInPixels(imageContent);
-            if (size.width * (long)size.height > LARGE_IMAGE_PIXEL_COUNT_THRESHOLD) {
+            if (size != null
+                && size.width * (long)size.height > LARGE_IMAGE_PIXEL_COUNT_THRESHOLD) {
               imageContent = readAndReduceImage(imageContent, size, preferences);
               if (imageContent == null) {
                 return;
