@@ -562,10 +562,10 @@ public class ModelMaterialsComponent extends JButton implements View {
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
           GridBagConstraints.NONE, new Insets(0, 0, standardGap, 10), 0, 0));
       float resolutionScale = SwingTools.getResolutionScale();
-      this.previewComponent.setPreferredSize(new Dimension((int)(150 * resolutionScale), (int)(150 * resolutionScale)));
+      this.previewComponent.setPreferredSize(new Dimension((int)(250 * resolutionScale), (int)(250 * resolutionScale)));
       add(this.previewComponent, new GridBagConstraints(
-          0, 1, 1, 7, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
+          0, 1, 1, 7, 0.5, 1, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(2, 0, 0, 15), 0, 0));
 
       // Materials list
       add(this.materialsLabel, new GridBagConstraints(
@@ -575,7 +575,7 @@ public class ModelMaterialsComponent extends JButton implements View {
       Dimension preferredSize = scrollPane.getPreferredSize();
       scrollPane.setPreferredSize(new Dimension(Math.min(200, preferredSize.width), preferredSize.height));
       add(scrollPane, new GridBagConstraints(
-          1, 1, 1, 7, 1, 1, GridBagConstraints.CENTER,
+          1, 1, 1, 7, 0.5, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 15), 0, 0));
       SwingTools.installFocusBorder(this.materialsList);
 
