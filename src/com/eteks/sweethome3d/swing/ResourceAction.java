@@ -71,6 +71,7 @@ public class ResourceAction extends AbstractAction {
                         boolean enabled) {
     putValue(RESOURCE_CLASS, resourceClass);
     putValue(RESOURCE_PREFIX, actionPrefix);
+    putValue(VISIBLE, Boolean.TRUE);
 
     readActionProperties(preferences, resourceClass, actionPrefix);
     setEnabled(enabled);
@@ -140,7 +141,6 @@ public class ResourceAction extends AbstractAction {
     if (mnemonicKey != null) {
       putValue(MNEMONIC_KEY, Integer.valueOf(KeyStroke.getKeyStroke(mnemonicKey).getKeyCode()));
     }
-    putValue(VISIBLE, Boolean.TRUE);
   }
 
   /**
