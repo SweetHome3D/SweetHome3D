@@ -368,7 +368,7 @@ begin
   uninstallExistingVersionCheckBox.Caption := CustomMessage('UninstallExistingVersionCheckBox');
   uninstallExistingVersionCheckBox.Height := architecturePanel.Height;
   uninstallExistingVersionCheckBox.Width := 600;
-  uninstallExistingVersionCheckBox.Checked := true;
+  uninstallExistingVersionCheckBox.Checked := Is64BitInstallMode;
   uninstallExistingVersionCheckBox.Visible := GetExistingVersionUninstallPath <> '';
   uninstallExistingVersionCheckBox.Parent := page;
 end;
