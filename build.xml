@@ -793,6 +793,7 @@
       <arg value="${password}"/>
       <arg value="/t"/>
       <arg value="${timestampAuthorityURL}"/>
+      <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x86-d3d.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x86.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-java3d-1.5.2-x64.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-x86.exe"/>
