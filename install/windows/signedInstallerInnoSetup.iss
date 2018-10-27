@@ -47,6 +47,7 @@ ArchitecturesInstallIn64BitMode=x64
 ; <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
 ;    <arg value="/sSignToolPgm=$$qC:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} $p"/>
 ;    <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
+; </exec>  
 SignTool=SignToolPgm /d $qSweet Home 3D Installer$q /du $qhttp://www.sweethome3d.com/$q $f
 SignedUninstaller=yes
 
