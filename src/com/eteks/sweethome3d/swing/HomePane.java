@@ -3706,31 +3706,33 @@ public class HomePane extends JRootPane implements HomeView {
         null, options, useSelectedHome);
     switch (option) {
       // Convert showOptionDialog answer to SaveAnswer enum constants
-      case JOptionPane.YES_OPTION:
+      case JOptionPane.YES_OPTION :
         Content homeContent = ((HomeDescriptor)homeExamplesList.getSelectedValue()).getContent();
         return homeContent instanceof URLContent
             ? ((URLContent)homeContent).getURL().toString()
             : null;
-      case JOptionPane.NO_OPTION:
-        String findModelsUrl = preferences.getLocalizedString(HomePane.class, "findMoreExamples.url");
-        boolean documentShown = false;
-        try {
-          // Display Find more demos (gallery) page in browser
-          documentShown = SwingTools.showDocumentInBrowser(new URL(findModelsUrl));
-        } catch (MalformedURLException ex) {
-          // Document isn't shown
-        }
-        if (!documentShown) {
-          // If the document wasn't shown, display a message
-          // with a copiable URL in a message box
-          JTextArea findMoreExamplesMessageTextArea = new JTextArea(preferences.getLocalizedString(
-              HomePane.class, "findMoreExamplesMessage.text"));
-          String findMoreExamplesTitle = preferences.getLocalizedString(
-              HomePane.class, "findMoreExamplesMessage.title");
-          findMoreExamplesMessageTextArea.setEditable(false);
-          findMoreExamplesMessageTextArea.setOpaque(false);
-          JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this),
-              findMoreExamplesMessageTextArea, findMoreExamplesTitle, JOptionPane.INFORMATION_MESSAGE);
+      case JOptionPane.NO_OPTION :
+        if (findMoreExamples.length() > 0) {
+          String findModelsUrl = preferences.getLocalizedString(HomePane.class, "findMoreExamples.url");
+          boolean documentShown = false;
+          try {
+            // Display Find more demos (gallery) page in browser
+            documentShown = SwingTools.showDocumentInBrowser(new URL(findModelsUrl));
+          } catch (MalformedURLException ex) {
+            // Document isn't shown
+          }
+          if (!documentShown) {
+            // If the document wasn't shown, display a message
+            // with a copiable URL in a message box
+            JTextArea findMoreExamplesMessageTextArea = new JTextArea(preferences.getLocalizedString(
+                HomePane.class, "findMoreExamplesMessage.text"));
+            String findMoreExamplesTitle = preferences.getLocalizedString(
+                HomePane.class, "findMoreExamplesMessage.title");
+            findMoreExamplesMessageTextArea.setEditable(false);
+            findMoreExamplesMessageTextArea.setOpaque(false);
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this),
+                findMoreExamplesMessageTextArea, findMoreExamplesTitle, JOptionPane.INFORMATION_MESSAGE);
+          }
         }
         // No break
       default :
