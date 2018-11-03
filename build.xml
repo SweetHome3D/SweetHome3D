@@ -1432,7 +1432,7 @@
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
     <!-- Copy Mac OS X application bundle using a different Info.plist file -->
     <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app">
-      <fileset dir="install/macosx/Sweet Home 3D"/>
+      <fileset dir="install/macosx/10.6/Sweet Home 3D"/>
     </copy>
     <copy file="install/portable/Info.plist" todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents" overwrite="true"/>
     <!-- Change executable permission of SweetHome3D lost during copy task -->
