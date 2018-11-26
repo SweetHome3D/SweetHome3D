@@ -3657,7 +3657,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns <code>true</code> if the given item can be viewed in the plan at the selected level.
    */
-  private boolean isViewableAtSelectedLevel(Elevatable item) {
+  protected boolean isViewableAtSelectedLevel(Elevatable item) {
     Level level = item.getLevel();
     return level == null
         || (level.isViewable()
