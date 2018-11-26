@@ -81,11 +81,11 @@ public class UserPreferencesPanelTest extends TestCase {
   /**
    * Tests user preferences panel.
    */
-  public void testUserPreferencesPanel() 
+  public void testUserPreferencesPanel()
        throws RecorderException, NoSuchFieldException, IllegalAccessException {
     // 0. Keep a copy of current preferences
     UserPreferences previousPreferences = new FileUserPreferences();
-    
+
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences defaultPreferences = new DefaultUserPreferences();
@@ -106,30 +106,30 @@ public class UserPreferencesPanelTest extends TestCase {
         defaultPreferences.getNewWallThickness());
     preferences.setNewWallHeight(
         defaultPreferences.getNewWallHeight());
-    
+
     // 2. Create a user preferences panel
-    UserPreferencesController controller = 
+    UserPreferencesController controller =
         new UserPreferencesController(preferences, new SwingViewFactory(), null);
     UserPreferencesPanel panel = (UserPreferencesPanel)controller.getView();
-    JComboBox unitComboBox = 
+    JComboBox unitComboBox =
         (JComboBox)TestUtilities.getField(panel, "unitComboBox");
-    JCheckBox    magnetismCheckBox = 
+    JCheckBox    magnetismCheckBox =
         (JCheckBox)TestUtilities.getField(panel, "magnetismCheckBox");
-    JCheckBox    rulersCheckBox = 
+    JCheckBox    rulersCheckBox =
         (JCheckBox)TestUtilities.getField(panel, "rulersCheckBox");
-    JCheckBox    gridCheckBox = 
+    JCheckBox    gridCheckBox =
         (JCheckBox)TestUtilities.getField(panel, "gridCheckBox");
-    JRadioButton catalogIconRadioButton = 
+    JRadioButton catalogIconRadioButton =
       (JRadioButton)TestUtilities.getField(panel, "catalogIconRadioButton");
-    JRadioButton topViewRadioButton = 
+    JRadioButton topViewRadioButton =
         (JRadioButton)TestUtilities.getField(panel, "topViewRadioButton");
-    JRadioButton monochromeRadioButton = 
+    JRadioButton monochromeRadioButton =
         (JRadioButton)TestUtilities.getField(panel, "monochromeRadioButton");
-    JRadioButton floorColorOrTextureRadioButton = 
+    JRadioButton floorColorOrTextureRadioButton =
         (JRadioButton)TestUtilities.getField(panel, "floorColorOrTextureRadioButton");
-    JSpinner newWallThicknessSpinner = 
+    JSpinner newWallThicknessSpinner =
         (JSpinner)TestUtilities.getField(panel, "newWallThicknessSpinner");
-    JSpinner newHomeWallHeightSpinner = 
+    JSpinner newHomeWallHeightSpinner =
         (JSpinner)TestUtilities.getField(panel, "newWallHeightSpinner");
     // Check panel components value
     assertEquals("Centimeter isn't the current unit", LengthUnit.CENTIMETER, unitComboBox.getSelectedItem());
@@ -141,11 +141,11 @@ public class UserPreferencesPanelTest extends TestCase {
     assertFalse("Top view button is selected",  topViewRadioButton.isSelected() != macOSXOrWindows);
     assertTrue("Monochrome radio button isn't selected", monochromeRadioButton.isSelected() != macOSXOrWindows);
     assertFalse("Floor color radio button is selected",  floorColorOrTextureRadioButton.isSelected() != macOSXOrWindows);
-    assertEquals("Wrong default thickness", 
+    assertEquals("Wrong default thickness",
         newWallThicknessSpinner.getValue(), defaultPreferences.getNewWallThickness());
-    assertEquals("Wrong default wall height", 
+    assertEquals("Wrong default wall height",
         newHomeWallHeightSpinner.getValue(), defaultPreferences.getNewWallHeight());
-    
+
     // 3. Change panel values
     unitComboBox.setSelectedItem(LengthUnit.INCH);
     magnetismCheckBox.setSelected(false);
@@ -155,35 +155,35 @@ public class UserPreferencesPanelTest extends TestCase {
     monochromeRadioButton.setSelected(true);
     ((DefaultEditor)newWallThicknessSpinner.getEditor()).getTextField().setText("1\u215C\"");
     ((DefaultEditor)newHomeWallHeightSpinner.getEditor()).getTextField().setText("8'4,25");
-    
+
     // 4. Retrieve panel values into preferences
     controller.modifyUserPreferences();
     // Check preferences value
     assertPreferencesEqual(LengthUnit.INCH, false, false, false,
         false, false,
-        LengthUnit.inchToCentimeter(1.375f), 
-        LengthUnit.inchToCentimeter(100.25f), 
+        LengthUnit.inchToCentimeter(1.375f),
+        LengthUnit.inchToCentimeter(100.25f),
         preferences);
-    
+
     // 5. Save preferences and read them in an other system preferences object
     preferences.write();
     UserPreferences readPreferences = new FileUserPreferences();
     // Check if readPreferences and preferences have the same values
     assertPreferencesEqual(preferences.getLengthUnit(),
-        preferences.isMagnetismEnabled(), 
-        preferences.isRulersVisible(), 
-        preferences.isGridVisible(), 
-        preferences.isFurnitureViewedFromTop(), 
-        preferences.isRoomFloorColoredOrTextured(), 
-        preferences.getNewWallThickness(),  
+        preferences.isMagnetismEnabled(),
+        preferences.isRulersVisible(),
+        preferences.isGridVisible(),
+        preferences.isFurnitureViewedFromTop(),
+        preferences.isRoomFloorColoredOrTextured(),
+        preferences.getNewWallThickness(),
         preferences.getNewWallHeight(), readPreferences);
-    
+
     // Restore previous preferences
     previousPreferences.write();
   }
-  
+
   /**
-   * Asserts values in parameter are the same as the ones 
+   * Asserts values in parameter are the same as the ones
    * stored in <code>preferences</code>.
    */
   private void assertPreferencesEqual(LengthUnit unit,
@@ -195,7 +195,7 @@ public class UserPreferencesPanelTest extends TestCase {
                                       float newWallThickness,
                                       float newHomeWallHeight,
                                       UserPreferences preferences) {
-    
+
     assertEquals("Wrong unit", unit, preferences.getLengthUnit());
     assertEquals("Wrong magnestism", magnetism,
         preferences.isMagnetismEnabled());
@@ -207,12 +207,12 @@ public class UserPreferencesPanelTest extends TestCase {
         preferences.isFurnitureViewedFromTop());
     assertEquals("Wrong room rendering", floorColorOrTexture,
         preferences.isRoomFloorColoredOrTextured());
-    assertEquals("Wrong new wall thickness", newWallThickness, 
+    assertEquals("Wrong new wall thickness", newWallThickness,
         preferences.getNewWallThickness());
     assertEquals("Wrong new home wall height", newHomeWallHeight,
         preferences.getNewWallHeight());
   }
-  
+
   /**
    * Tests length unit conversions.
    */
@@ -223,33 +223,33 @@ public class UserPreferencesPanelTest extends TestCase {
     assertEquals("Wrong conversion", "1,02", LengthUnit.METER.getFormat().format(102));
     // \u00a0 is a no-break space
     assertEquals("Wrong conversion", "1\u00a0020", LengthUnit.MILLIMETER.getFormat().format(102));
-    assertEquals("Wrong conversion", "0'11\"", 
+    assertEquals("Wrong conversion", "0'11\"",
         LengthUnit.INCH.getFormat().format(LengthUnit.inchToCentimeter(11)));
-    assertEquals("Wrong conversion", "1'11\"", 
+    assertEquals("Wrong conversion", "1'11\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12)));
-    assertEquals("Wrong conversion", "1'11\u215b\"", 
+    assertEquals("Wrong conversion", "1'11\u215b\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12 + 0.125f)));
-    assertEquals("Wrong conversion", "-1'11\u215b\"", 
+    assertEquals("Wrong conversion", "-1'11\u215b\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-(11 + 12 + 0.125f))));
-    assertEquals("Wrong conversion", "-0'11\u215b\"", 
+    assertEquals("Wrong conversion", "-0'11\u215b\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-(11 + 0.125f))));
-    assertEquals("Wrong conversion", "-0'0\u215b\"", 
+    assertEquals("Wrong conversion", "-0'0\u215b\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-0.125f)));
-    assertEquals("Wrong conversion", "-1'", 
+    assertEquals("Wrong conversion", "-1'",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(-12)));
-    
+
     // Test formats with unit
     assertEquals("Wrong conversion", "102 cm", LengthUnit.CENTIMETER.getFormatWithUnit().format(102));
     assertEquals("Wrong conversion", "1,02 m", LengthUnit.METER.getFormatWithUnit().format(102));
     // \u00a0 is a no-break space
     assertEquals("Wrong conversion", "1\u00a0020 mm", LengthUnit.MILLIMETER.getFormatWithUnit().format(102));
-    assertEquals("Wrong conversion", "0'11\"", 
+    assertEquals("Wrong conversion", "0'11\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11)));
-    assertEquals("Wrong conversion", "1'11\"", 
+    assertEquals("Wrong conversion", "1'11\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12)));
-    assertEquals("Wrong conversion", "1'11\u215b\"", 
+    assertEquals("Wrong conversion", "1'11\u215b\"",
         LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12 + 0.125f)));
-    
+
     // Test parsing
     assertEquals("Wrong parsing", 102f, LengthUnit.CENTIMETER.getFormat().parseObject("102"));
     assertEquals("Wrong parsing", 102f, LengthUnit.METER.getFormat().parseObject("1,02"));
@@ -313,27 +313,24 @@ public class UserPreferencesPanelTest extends TestCase {
       // Expected a failure
     }
     try {
-      LengthUnit.INCH.getFormat().parseObject("10A'");
-      fail("10A' not a number");
-    } catch (Exception ex) {
-      // Expected a failure
-    }
-    try {
       LengthUnit.INCH.getFormat().parseObject("10,2'");
       fail("10,2' not a number"); // Accept fraction part only for inches
     } catch (Exception ex) {
       // Expected a failure
     }
     ParsePosition parsePosition = new ParsePosition(0);
+    LengthUnit.INCH.getFormat().parseObject("10A'", parsePosition);
+    assertEquals("Wrong parse position", "10A'".indexOf('A'), parsePosition.getIndex());
+    parsePosition = new ParsePosition(0);
     LengthUnit.INCH.getFormat().parseObject("10'2A", parsePosition);
     assertEquals("Wrong parse position", "10'2A".indexOf('A'), parsePosition.getIndex());
     parsePosition = new ParsePosition(0);
     LengthUnit.INCH.getFormat().parseObject("0,03/8", parsePosition);
     assertEquals("Wrong parse position", "0,03/8".indexOf('/'), parsePosition.getIndex());
   }
-  
+
   /**
-   * Tests language changes on the GUI. 
+   * Tests language changes on the GUI.
    */
   public void testLanguageChange() {
     Locale defaultLocale = Locale.getDefault();
@@ -352,10 +349,10 @@ public class UserPreferencesPanelTest extends TestCase {
     SwingViewFactory viewFactory = new SwingViewFactory();
     FileContentManager contentManager = new FileContentManager(preferences);
     UndoableEditSupport undoableEditSupport = new UndoableEditSupport();
-    
+
     for (String language : preferences.getSupportedLanguages()) {
       preferences.setLanguage(language);
-      // Instantiate all views available in Sweet Home 3D 
+      // Instantiate all views available in Sweet Home 3D
       HomeController homeController = new HomeController(home, preferences, viewFactory, contentManager);
       homeController.getView();
       preferences.setFurnitureCatalogViewedInTree(false);
@@ -365,7 +362,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new FurnitureController(home, preferences, viewFactory).getView();
       new PlanController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new HomeController3D(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
-      
+
       new PageSetupController(home, preferences, viewFactory, undoableEditSupport).getView();
       new PrintPreviewController(home, preferences, homeController, viewFactory).getView();
       new UserPreferencesController(preferences, viewFactory, contentManager).getView();
@@ -380,19 +377,19 @@ public class UserPreferencesPanelTest extends TestCase {
       new Home3DAttributesController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new PhotoController(home, preferences, homeController.getHomeController3D().getView(), viewFactory, contentManager).getView();
       new VideoController(home, preferences, viewFactory, contentManager).getView();
-      
+
       new TextureChoiceController("", preferences, viewFactory, contentManager).getView();
       new ModelMaterialsController("", preferences, viewFactory, contentManager).getView();
-      new ThreadedTaskController(new Callable<Void>() { 
+      new ThreadedTaskController(new Callable<Void>() {
           public Void call() throws Exception {
             return null;
           }
         }, "", null, preferences, viewFactory).getView();
-      
+
       new BackgroundImageWizardController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new ImportedFurnitureWizardController(preferences, viewFactory, contentManager).getView();
       new ImportedTextureWizardController(preferences, viewFactory, contentManager).getView();
-      
+
       new HelpController(preferences, viewFactory).getView();
       Locale.setDefault(defaultLocale);
     }

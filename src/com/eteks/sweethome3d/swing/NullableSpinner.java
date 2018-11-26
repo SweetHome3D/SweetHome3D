@@ -463,7 +463,14 @@ public class NullableSpinner extends AutoCommitSpinner {
      */
     @Override
     Format getFormat() {
-      return this.preferences.getLengthUnit().getFormat();
+      return getLengthUnit().getFormat();
+    }
+
+    /**
+     * Returns the length unit of this format.
+     */
+    LengthUnit getLengthUnit() {
+      return this.preferences.getLengthUnit();
     }
   }
 }

@@ -46,6 +46,7 @@ import com.eteks.parser.CompilationException;
 import com.eteks.parser.Function;
 import com.eteks.parser.Interpreter;
 import com.eteks.parser.Syntax;
+import com.eteks.sweethome3d.model.LengthUnit;
 
 /**
  * A spinner which commits its value during edition and selects
@@ -57,7 +58,7 @@ public class AutoCommitSpinner extends JSpinner {
    * Creates a spinner with a given <code>model</code>.
    */
   public AutoCommitSpinner(SpinnerModel model) {
-    this(model, null);
+    this(model, (Format)null);
   }
 
   /**
@@ -224,24 +225,27 @@ public class AutoCommitSpinner extends JSpinner {
    */
   private class CalculatorFormat extends DecimalFormat {
     private DecimalFormat    numberFormat;
-    private CalculatorParser parser;
 
     private CalculatorFormat(DecimalFormat numberFormat) {
       super(numberFormat.toPattern());
       this.numberFormat = numberFormat;
-      this.parser = new CalculatorParser(new CalculatorSyntax(numberFormat));
     }
 
     @Override
     public Number parse(String text, ParsePosition pos) {
       final String parsedText = text.substring(pos.getIndex());
       Number number = this.numberFormat.parse(text, pos);
-      if ((number == null || pos.getIndex() != text.length())
-          && parsedText.indexOf('\'') == -1
-          && parsedText.indexOf('"') == -1) {
+      if (number == null || pos.getIndex() != text.length()) {
+        LengthUnit lengthUnit = getModel() instanceof NullableSpinner.NullableSpinnerLengthModel
+            ? ((NullableSpinner.NullableSpinnerLengthModel)getModel()).getLengthUnit()
+            : null;
+        CalculatorParser parser = new CalculatorParser(new CalculatorSyntax(this.numberFormat, lengthUnit));
         try {
           // Try to parse with Jeks Parser
-          number = (Double)this.parser.computeExpression(parsedText, new CalculatorInterpreter());
+          number = (Number)parser.computeExpression(parsedText, new CalculatorInterpreter());
+          if (number != null && lengthUnit != null) {
+            number = lengthUnit.unitToCentimeter(number.floatValue());
+          }
           pos.setIndex(text.length());
         } catch (CompilationException ex) {
           // Keep default value
@@ -276,14 +280,20 @@ public class AutoCommitSpinner extends JSpinner {
    */
   private static class CalculatorSyntax implements Syntax {
     private final DecimalFormat format;
+    private final LengthUnit    lengthUnit;
 
-    private CalculatorSyntax(DecimalFormat format) {
+    private CalculatorSyntax(DecimalFormat format,
+                             LengthUnit    lengthUnit) {
       this.format = format;
+      this.lengthUnit = lengthUnit;
     }
 
     public Object getLiteral(String expression, StringBuffer extractedString) {
       ParsePosition position = new ParsePosition(0);
       Number literal = this.format.parse(expression, position);
+      if (literal != null && this.lengthUnit != null) {
+        literal = this.lengthUnit.centimeterToUnit(literal.floatValue());
+      }
       extractedString.append(expression, 0, position.getIndex());
       return literal;
     }
@@ -378,7 +388,7 @@ public class AutoCommitSpinner extends JSpinner {
     }
 
     public String getDelimiters() {
-      return " \t\n\r-+*/().";
+      return " \t\n\r-+*/^().";
     }
 
     public boolean isCaseSensitive() {

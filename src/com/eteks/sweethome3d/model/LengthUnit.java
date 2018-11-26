@@ -37,12 +37,12 @@ public enum LengthUnit {
    * @since 2.0
    */
   MILLIMETER {
-    private Locale        formatLocale;  
+    private Locale        formatLocale;
     private String        name;
     private DecimalFormat lengthFormatWithUnit;
     private DecimalFormat lengthFormat;
     private DecimalFormat areaFormatWithUnit;
-    
+
     @Override
     public Format getFormatWithUnit() {
       checkLocaleChange();
@@ -60,20 +60,20 @@ public enum LengthUnit {
       checkLocaleChange();
       return this.lengthFormat;
     }
-    
+
     @Override
     public String getName() {
       checkLocaleChange();
       return this.name;
     }
-    
+
     private void checkLocaleChange() {
       // Instantiate formats if locale changed
       if (!Locale.getDefault().equals(this.formatLocale)) {
-        this.formatLocale = Locale.getDefault();  
+        this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("millimeterUnit");
-        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0 " + this.name, 10);          
+        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0 " + this.name, 10);
         this.lengthFormat = new MeterFamilyFormat("#,##0", 10);
         String squareMeterUnit = resource.getString("squareMeterUnit");
         this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
@@ -89,7 +89,7 @@ public enum LengthUnit {
     public float getMinimumLength() {
       return 0.1f;
     }
-    
+
     @Override
     public float getMaximumLength() {
       return 100000f;
@@ -104,18 +104,18 @@ public enum LengthUnit {
     public float unitToCentimeter(float length) {
       return length / 10;
     }
-  }, 
-  
+  },
+
   /**
    * Centimeter unit.
    */
   CENTIMETER {
-    private Locale        formatLocale;  
+    private Locale        formatLocale;
     private String        name;
     private DecimalFormat lengthFormatWithUnit;
     private DecimalFormat lengthFormat;
     private DecimalFormat areaFormatWithUnit;
-    
+
     @Override
     public Format getFormatWithUnit() {
       checkLocaleChange();
@@ -133,20 +133,20 @@ public enum LengthUnit {
       checkLocaleChange();
       return this.lengthFormat;
     }
-    
+
     @Override
     public String getName() {
       checkLocaleChange();
       return this.name;
     }
-    
+
     private void checkLocaleChange() {
       // Instantiate formats if locale changed
       if (!Locale.getDefault().equals(this.formatLocale)) {
-        this.formatLocale = Locale.getDefault();  
+        this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("centimeterUnit");
-        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.# " + this.name, 1);          
+        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.# " + this.name, 1);
         this.lengthFormat = new MeterFamilyFormat("#,##0.#", 1);
         String squareMeterUnit = resource.getString("squareMeterUnit");
         this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
@@ -162,7 +162,7 @@ public enum LengthUnit {
     public float getMinimumLength() {
       return 0.1f;
     }
-    
+
     @Override
     public float getMaximumLength() {
       return 100000f;
@@ -177,19 +177,19 @@ public enum LengthUnit {
     public float unitToCentimeter(float length) {
       return length;
     }
-  }, 
-  
+  },
+
   /**
    * Meter unit.
    * @since 2.0
    */
   METER {
-    private Locale        formatLocale;  
+    private Locale        formatLocale;
     private String        name;
     private DecimalFormat lengthFormatWithUnit;
     private DecimalFormat lengthFormat;
     private DecimalFormat areaFormatWithUnit;
-    
+
     @Override
     public Format getFormatWithUnit() {
       checkLocaleChange();
@@ -207,20 +207,20 @@ public enum LengthUnit {
       checkLocaleChange();
       return this.lengthFormat;
     }
-    
+
     @Override
     public String getName() {
       checkLocaleChange();
       return this.name;
     }
-    
+
     private void checkLocaleChange() {
       // Instantiate formats if locale changed
       if (!Locale.getDefault().equals(this.formatLocale)) {
-        this.formatLocale = Locale.getDefault();  
+        this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("meterUnit");
-        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.00# " + this.name, 0.01f);          
+        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.00# " + this.name, 0.01f);
         this.lengthFormat = new MeterFamilyFormat("#,##0.00#", 0.01f);
         String squareMeterUnit = resource.getString("squareMeterUnit");
         this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
@@ -251,8 +251,8 @@ public enum LengthUnit {
     public float unitToCentimeter(float length) {
       return length * 100;
     }
-  }, 
-  
+  },
+
   /**
    * Foot/Inch unit followed by fractions.
    */
@@ -278,20 +278,20 @@ public enum LengthUnit {
       checkLocaleChange();
       return this.areaFormatWithUnit;
     }
-    
+
     @Override
     public String getName() {
       checkLocaleChange();
       return this.name;
     }
-    
+
     private void checkLocaleChange() {
       // Instantiate format if locale changed
       if (!Locale.getDefault().equals(this.formatLocale)) {
-        this.formatLocale = Locale.getDefault();  
+        this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
-        
+
         // Create format for feet and inches
         final MessageFormat positiveFootFormat = new MessageFormat(resource.getString("footFormat"));
         final MessageFormat positiveFootInchFormat = new MessageFormat(resource.getString("footInchFormat"));
@@ -303,25 +303,25 @@ public enum LengthUnit {
         final NumberFormat  footNumberFormat = NumberFormat.getIntegerInstance();
         final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
         final char [] inchFractionCharacters = {'\u215b',   // 1/8
-                                                '\u00bc',   // 1/4  
+                                                '\u00bc',   // 1/4
                                                 '\u215c',   // 3/8
                                                 '\u00bd',   // 1/2
                                                 '\u215d',   // 5/8
                                                 '\u00be',   // 3/4
-                                                '\u215e'};  // 7/8        
+                                                '\u215e'};  // 7/8
         final String [] inchFractionStrings  = {"1/8",
-                                                "1/4",  
+                                                "1/4",
                                                 "3/8",
                                                 "1/2",
                                                 "5/8",
                                                 "3/4",
-                                                "7/8"};         
+                                                "7/8"};
         this.lengthFormat = new DecimalFormat("0.000\"") {
             @Override
             public StringBuffer format(double number, StringBuffer result,
                                        FieldPosition fieldPosition) {
               float absoluteValue = Math.abs((float)number);
-              double feet = Math.floor(centimeterToFoot(absoluteValue));              
+              double feet = Math.floor(centimeterToFoot(absoluteValue));
               float remainingInches = centimeterToInch((float)absoluteValue - footToCentimeter((float)feet));
               if (remainingInches >= 11.9375f) {
                 feet++;
@@ -333,11 +333,11 @@ public enum LengthUnit {
                 // Try to format decimals with 1/8, 1/4, 1/2 fractions first
                 int integerPart = (int)Math.floor(remainingInches);
                 float fractionPart = remainingInches - integerPart;
-                int eighth = Math.round(fractionPart * 8); 
+                int eighth = Math.round(fractionPart * 8);
                 if (eighth == 0 || eighth == 8) {
                   (number >= 0 ? positiveFootInchFormat : negativeFootInchFormat).format(
                       new Object [] {feet, Math.round(remainingInches * 8) / 8f}, result, fieldPosition);
-                } else { 
+                } else {
                   (number >= 0 ? positiveFootInchEighthFormat : negativeFootInchEighthFormat).format(
                       new Object [] {feet, integerPart, inchFractionCharacters [eighth - 1]}, result, fieldPosition);
                 }
@@ -347,7 +347,7 @@ public enum LengthUnit {
               }
               return result;
             }
-            
+
             @Override
             public Number parse(String text, ParsePosition parsePosition) {
               double value = 0;
@@ -355,8 +355,9 @@ public enum LengthUnit {
               skipWhiteSpaces(text, numberPosition);
               // Parse feet
               int quoteIndex = text.indexOf('\'', parsePosition.getIndex());
-              boolean negative = numberPosition.getIndex() < text.length()  
+              boolean negative = numberPosition.getIndex() < text.length()
                   && text.charAt(numberPosition.getIndex()) == this.getDecimalFormatSymbols().getMinusSign();
+              boolean footValue = false;
               if (quoteIndex != -1) {
                 Number feet = footNumberFormat.parse(text, numberPosition);
                 if (feet == null) {
@@ -364,29 +365,46 @@ public enum LengthUnit {
                   return null;
                 }
                 skipWhiteSpaces(text, numberPosition);
-                if (numberPosition.getIndex() != quoteIndex) {
-                  parsePosition.setErrorIndex(numberPosition.getIndex());
-                  return null;
-                }
-                value = footToCentimeter(feet.intValue());                
-                numberPosition = new ParsePosition(quoteIndex + 1);
-                skipWhiteSpaces(text, numberPosition);
-                // Test optional foot inch separator
-                if (numberPosition.getIndex() < text.length()
-                    && footInchSeparator.indexOf(text.charAt(numberPosition.getIndex())) >= 0) {
-                  numberPosition.setIndex(numberPosition.getIndex() + 1);
+                if (numberPosition.getIndex() == quoteIndex) {
+                  value = footToCentimeter(feet.intValue());
+                  footValue = true;
+                  numberPosition = new ParsePosition(quoteIndex + 1);
                   skipWhiteSpaces(text, numberPosition);
+                  // Test optional foot inch separator
+                  if (numberPosition.getIndex() < text.length()
+                      && footInchSeparator.indexOf(text.charAt(numberPosition.getIndex())) >= 0) {
+                    numberPosition.setIndex(numberPosition.getIndex() + 1);
+                    skipWhiteSpaces(text, numberPosition);
+                  }
+                  if (numberPosition.getIndex() == text.length()) {
+                    parsePosition.setIndex(text.length());
+                    return value;
+                  }
+                } else {
+                  if (getDecimalFormatSymbols().getDecimalSeparator() == text.charAt(numberPosition.getIndex())) {
+                    ParsePosition decimalNumberPosition = new ParsePosition(parsePosition.getIndex());
+                    if (inchNumberFormat.parse(text, decimalNumberPosition) != null
+                        && decimalNumberPosition.getIndex() == quoteIndex) {
+                      // Don't allow a decimal number in front of a quote
+                      parsePosition.setErrorIndex(numberPosition.getErrorIndex());
+                      return null;
+                    }
+                  }
+
+                  // Try to parse beginning as inches
+                  numberPosition.setIndex(parsePosition.getIndex());
                 }
-                if (numberPosition.getIndex() == text.length()) {
-                  parsePosition.setIndex(text.length());
-                  return value;
-                }
-              } 
+              }
               // Parse inches
               Number inches = inchNumberFormat.parse(text, numberPosition);
               if (inches == null) {
-                parsePosition.setErrorIndex(numberPosition.getErrorIndex());
-                return null;
+                if (footValue) {
+                  parsePosition.setIndex(numberPosition.getIndex());
+                  return value;
+                } else {
+                  parsePosition.setErrorIndex(numberPosition.getErrorIndex());
+                  return null;
+                }
               }
               if (negative) {
                 if (quoteIndex == -1) {
@@ -408,15 +426,15 @@ public enum LengthUnit {
                 return value;
               }
 
-              char fractionChar = text.charAt(numberPosition.getIndex());    
-              String fractionString = text.length() - numberPosition.getIndex() >= 3 
+              char fractionChar = text.charAt(numberPosition.getIndex());
+              String fractionString = text.length() - numberPosition.getIndex() >= 3
                   ? text.substring(numberPosition.getIndex(), numberPosition.getIndex() + 3)
                   : null;
               for (int i = 0; i < inchFractionCharacters.length; i++) {
                 if (inchFractionCharacters [i] == fractionChar
                     || inchFractionStrings [i].equals(fractionString)) {
                   // Check no decimal fraction was specified
-                  int lastDecimalSeparatorIndex = text.lastIndexOf(getDecimalFormatSymbols().getDecimalSeparator(), 
+                  int lastDecimalSeparatorIndex = text.lastIndexOf(getDecimalFormatSymbols().getDecimalSeparator(),
                       numberPosition.getIndex() - 1);
                   if (lastDecimalSeparatorIndex > quoteIndex) {
                     return null;
@@ -426,10 +444,10 @@ public enum LengthUnit {
                     } else {
                       value += inchToCentimeter((i + 1) / 8f);
                     }
-                    parsePosition.setIndex(numberPosition.getIndex() 
+                    parsePosition.setIndex(numberPosition.getIndex()
                         + (inchFractionCharacters [i] == fractionChar ? 1 : 3));
                     skipWhiteSpaces(text, parsePosition);
-                    if (parsePosition.getIndex() < text.length() 
+                    if (parsePosition.getIndex() < text.length()
                         && text.charAt(parsePosition.getIndex()) == '\"') {
                       parsePosition.setIndex(parsePosition.getIndex() + 1);
                     }
@@ -437,13 +455,13 @@ public enum LengthUnit {
                   }
                 }
               }
-              
+
               parsePosition.setIndex(numberPosition.getIndex());
               return value;
             }
-            
+
             /**
-             * Increases the index of <code>fieldPosition</code> to skip white spaces. 
+             * Increases the index of <code>fieldPosition</code> to skip white spaces.
              */
             private void skipWhiteSpaces(String text, ParsePosition fieldPosition) {
               while (fieldPosition.getIndex() < text.length()
@@ -452,19 +470,19 @@ public enum LengthUnit {
               }
             }
           };
-        
+
         String squareFootUnit = resource.getString("squareFootUnit");
         this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0 " + squareFootUnit);
       }
     }
-    
+
     @Override
     public float getMagnetizedLength(float length, float maxDelta) {
       return getMagnetizedInchLength(length, maxDelta);
     }
 
     @Override
-    public float getMinimumLength() {        
+    public float getMinimumLength() {
       return LengthUnit.inchToCentimeter(0.125f);
     }
 
@@ -512,20 +530,20 @@ public enum LengthUnit {
       checkLocaleChange();
       return this.areaFormatWithUnit;
     }
-    
+
     @Override
     public String getName() {
       checkLocaleChange();
       return this.name;
     }
-    
+
     private void checkLocaleChange() {
       // Instantiate format if locale changed
       if (!Locale.getDefault().equals(this.formatLocale)) {
-        this.formatLocale = Locale.getDefault();  
+        this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("inchUnit");
-        
+
         // Create formats for inches with decimals
         class InchDecimalsFormat extends DecimalFormat {
           private final MessageFormat inchDecimalsFormat;
@@ -558,7 +576,7 @@ public enum LengthUnit {
             double value = inchToCentimeter(inches.floatValue());
             // Parse "
             skipWhiteSpaces(text, numberPosition);
-            if (numberPosition.getIndex() < text.length() 
+            if (numberPosition.getIndex() < text.length()
                 && text.charAt(numberPosition.getIndex()) == '\"') {
               parsePosition.setIndex(numberPosition.getIndex() + 1);
             } else {
@@ -568,7 +586,7 @@ public enum LengthUnit {
           }
 
           /**
-           * Increases the index of <code>fieldPosition</code> to skip white spaces. 
+           * Increases the index of <code>fieldPosition</code> to skip white spaces.
            */
           private void skipWhiteSpaces(String text, ParsePosition fieldPosition) {
             while (fieldPosition.getIndex() < text.length()
@@ -579,19 +597,19 @@ public enum LengthUnit {
         }
         this.lengthFormat = new InchDecimalsFormat(new MessageFormat(resource.getString("inchDecimalsFormat")));
         this.lengthFormatWithUnit = new InchDecimalsFormat(new MessageFormat(resource.getString("inchDecimalsFormatWithUnit")));
-        
+
         String squareFootUnit = resource.getString("squareFootUnit");
         this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0.## " + squareFootUnit);
       }
     }
-    
+
     @Override
     public float getMagnetizedLength(float length, float maxDelta) {
       return getMagnetizedInchLength(length, maxDelta);
     }
 
     @Override
-    public float getMinimumLength() {        
+    public float getMinimumLength() {
       return LengthUnit.inchToCentimeter(0.125f);
     }
 
@@ -624,30 +642,30 @@ public enum LengthUnit {
   public static float centimeterToFoot(float length) {
     return length / 2.54f / 12;
   }
-  
+
   /**
    * Returns the <code>length</code> given in inches converted to centimeters.
    */
   public static float inchToCentimeter(float length) {
     return length * 2.54f;
   }
-  
+
   /**
    * Returns the <code>length</code> given in feet converted to centimeters.
    */
   public static float footToCentimeter(float length) {
     return length * 2.54f * 12;
   }
-  
+
   /**
    * Returns a format able to format lengths with their localized unit.
    */
-  public abstract Format getFormatWithUnit(); 
+  public abstract Format getFormatWithUnit();
 
   /**
    * Returns a format able to format lengths.
    */
-  public abstract Format getFormat(); 
+  public abstract Format getFormat();
 
   /**
    * A decimal format for meter family units.
@@ -658,14 +676,14 @@ public enum LengthUnit {
     public MeterFamilyFormat(String pattern, float unitMultiplier) {
       super(pattern);
       this.unitMultiplier = unitMultiplier;
-      
+
     }
 
     @Override
     public StringBuffer format(double number, StringBuffer result,
                                FieldPosition fieldPosition) {
       // Convert centimeter to millimeter
-      return super.format(number * this.unitMultiplier, result, fieldPosition);                
+      return super.format(number * this.unitMultiplier, result, fieldPosition);
     }
 
     @Override
@@ -673,7 +691,7 @@ public enum LengthUnit {
                                FieldPosition fieldPosition) {
       return format((double)number, result, fieldPosition);
     }
-    
+
     @Override
     public Number parse(String text, ParsePosition pos) {
       Number number = super.parse(text, pos);
@@ -684,7 +702,7 @@ public enum LengthUnit {
       }
     }
   }
-  
+
   /**
    * Returns a format able to format areas with their localized unit.
    */
@@ -697,15 +715,15 @@ public enum LengthUnit {
     public SquareMeterAreaFormatWithUnit(String squareMeterUnit) {
       super("#,##0.## " + squareMeterUnit);
     }
-    
+
     @Override
     public StringBuffer format(double number, StringBuffer result,
                                FieldPosition fieldPosition) {
       // Convert square centimeter to square meter
-      return super.format(number / 10000, result, fieldPosition);                
+      return super.format(number / 10000, result, fieldPosition);
     }
   }
-  
+
   /**
    * A decimal format for square foot.
    */
@@ -713,22 +731,22 @@ public enum LengthUnit {
     public SquareFootAreaFormatWithUnit(String pattern) {
       super(pattern);
     }
-    
+
     @Override
     public StringBuffer format(double number, StringBuffer result,
                                FieldPosition fieldPosition) {
       // Convert square centimeter to square foot
-      return super.format(number / 929.0304, result, fieldPosition);                
+      return super.format(number / 929.0304, result, fieldPosition);
     }
   }
-  
+
   /**
    * Returns a localized name of this unit.
    */
   public abstract String getName();
-  
+
   /**
-   * Returns the value close to the given <code>length</code> in centimeter under magnetism. 
+   * Returns the value close to the given <code>length</code> in centimeter under magnetism.
    */
   public abstract float getMagnetizedLength(float length, float maxDelta);
 
@@ -749,7 +767,7 @@ public enum LengthUnit {
       precision = 1;
     } else if  (maxDelta > 0.5f) {
       precision = 0.5f;
-    } 
+    }
     float magnetizedLength = Math.round(length / precision) * precision;
     if (magnetizedLength == 0 && length > 0) {
       return length;
@@ -757,7 +775,7 @@ public enum LengthUnit {
       return magnetizedLength;
     }
   }
-  
+
   /**
    * Returns the value close to the given length under magnetism for inch units.
    */
@@ -789,13 +807,13 @@ public enum LengthUnit {
    * Returns the minimum value for length in centimeter.
    */
   public abstract float getMinimumLength();
-  
+
   /**
    * Returns the maximum value for length in centimeter.
    * @since 3.4
    */
   public abstract float getMaximumLength();
-  
+
   /**
    * Returns the maximum value for elevation in centimeter.
    * @since 3.4
@@ -803,16 +821,16 @@ public enum LengthUnit {
   public float getMaximumElevation() {
     return getMaximumLength() / 10;
   }
-  
+
   /**
-   * Returns the <code>length</code> given in centimeters converted 
+   * Returns the <code>length</code> given in centimeters converted
    * to a value expressed in this unit.
    * @since 2.0
    */
   public abstract float centimeterToUnit(float length);
 
   /**
-   * Returns the <code>length</code> given in this unit converted 
+   * Returns the <code>length</code> given in this unit converted
    * to a value expressed in centimeter.
    * @since 2.0
    */
