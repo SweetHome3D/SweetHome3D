@@ -58,14 +58,23 @@ public class AutoCommitSpinner extends JSpinner {
    * Creates a spinner with a given <code>model</code>.
    */
   public AutoCommitSpinner(SpinnerModel model) {
-    this(model, (Format)null);
+    this(model, null);
+  }
+
+  /**
+   * Creates a spinner with a given <code>model</code> and <code>format</code>, which will allow math expressions.
+   */
+  public AutoCommitSpinner(SpinnerModel model,
+                           Format format) {
+    this(model, format, true);
   }
 
   /**
    * Creates a spinner with a given <code>model</code> and <code>format</code>.
    */
   public AutoCommitSpinner(SpinnerModel model,
-                           Format format) {
+                           Format format,
+                           final boolean allowMathExpressions) {
     super(model);
     JComponent editor = getEditor();
     if (editor instanceof JSpinner.DefaultEditor) {
@@ -112,11 +121,13 @@ public class AutoCommitSpinner extends JSpinner {
                   final DecimalFormat noGroupingFormat = (DecimalFormat)format.clone();
                   noGroupingFormat.setGroupingUsed(false);
                   try {
-                    return new CalculatorFormat(noGroupingFormat);
+                    if (allowMathExpressions) {
+                      return new CalculatorFormat(noGroupingFormat);
+                    }
                   } catch (LinkageError ex) {
-                    // Don't allow formulas if Jeks Parser library isn't available
-                    return noGroupingFormat;
+                    // Don't allow math expressions if Jeks Parser library isn't available
                   }
+                  return noGroupingFormat;
                 } else {
                   return format;
                 }

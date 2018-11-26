@@ -1308,7 +1308,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private static class AutoCommitLengthSpinner extends AutoCommitSpinner {
     public AutoCommitLengthSpinner(SpinnerModel model,
                                    final UserPreferencesController controller) {
-      super(model, controller.getUnit().getFormat());
+      super(model, controller.getUnit().getFormat(), false);
       // Add a listener to update format when unit changes
       controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
         new PropertyChangeListener () {
