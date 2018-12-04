@@ -274,7 +274,12 @@ public class ContentDigestManager {
         // Prefer to retrieve entries in zip files with ZipFile class because it runs much faster
         ZipFile zipFile = null;
         try {
-          zipFile = new ZipFile(new File(zipUrl.toURI()));
+          try {
+            zipFile = new ZipFile(new File(zipUrl.toURI()));
+          } catch (IllegalArgumentException ex) {
+            // Try a second way to be able to access to files on Windows servers
+            zipFile = new ZipFile(new File(zipUrl.getPath()));
+          }          
           for (Enumeration<? extends ZipEntry> enumEntries = zipFile.entries(); enumEntries.hasMoreElements(); ) {
             ZipEntry entry = enumEntries.nextElement();
             zipUrlEntries.add(new ZipEntryData(entry.getName(), entry.getSize()));

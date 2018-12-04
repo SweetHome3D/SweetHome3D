@@ -474,7 +474,14 @@ public class OBJWriter extends FilterWriter {
       URL jarFileUrl = urlConnection.getJarFileURL();
       if (jarFileUrl.getProtocol().equalsIgnoreCase("file")) {
         try {
-          if (new File(jarFileUrl.toURI()).canWrite()) {
+          File file;
+          try {
+            file = new File(jarFileUrl.toURI());
+          } catch (IllegalArgumentException ex) {
+            // Try a second way to be able to access to files on Windows servers
+            file = new File(jarFileUrl.getPath());
+          }
+          if (file.canWrite()) {
             // Refuse to use caches to be able to delete the writable files accessed with jar protocol under Windows, 
             // as suggested in http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6962459 
             connection.setUseCaches(false);
