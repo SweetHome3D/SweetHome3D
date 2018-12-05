@@ -35,6 +35,7 @@ import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.GraphicsConfigTemplate3D;
@@ -69,17 +70,19 @@ public class Component3DManager {
   private Object                 renderingErrorListener;
   private Boolean                offScreenImageSupported;
   private GraphicsConfiguration  defaultScreenConfiguration;
+  private GraphicsConfiguration  defaultOffScreenConfiguration;
   private int                    depthSize;
 
   private Component3DManager() {
     if (!GraphicsEnvironment.isHeadless()) {
-      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();
+      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D(false);
       GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
       this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
       if (this.defaultScreenConfiguration == null) {
         template = new GraphicsConfigTemplate3D();
         this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
       }
+      this.defaultOffScreenConfiguration = this.defaultScreenConfiguration;
       this.depthSize = template.getDepthSize();
     } else {
       this.offScreenImageSupported = Boolean.FALSE;
@@ -89,25 +92,27 @@ public class Component3DManager {
   /**
    * Returns the template to configure the graphics of canvas 3D.
    */
-  private GraphicsConfigTemplate3D createGraphicsConfigurationTemplate3D() {
+  private GraphicsConfigTemplate3D createGraphicsConfigurationTemplate3D(boolean ignoreDepthSize) {
     if (System.getProperty("j3d.implicitAntialiasing") == null) {
       System.setProperty("j3d.implicitAntialiasing", "true");
     }
     // Retrieve graphics configuration once
     GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
 
-    // Request depth size equal to 24 if supported
-    int preferredDepthSize = 24;
-    try {
-      preferredDepthSize = Integer.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.depthSize", "24"));
-    } catch (NumberFormatException ex) {
-      // Keep 24
-    }
-    int defaultDepthSize = template.getDepthSize();
-    template.setDepthSize(preferredDepthSize);
-    if (!template.isGraphicsConfigSupported(
-        GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration())) {
-      template.setDepthSize(defaultDepthSize);
+    if (!ignoreDepthSize) {
+      // Request depth size equal to 24 if supported
+      int preferredDepthSize = 24;
+      try {
+        preferredDepthSize = Integer.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.depthSize", "24"));
+      } catch (NumberFormatException ex) {
+        // Keep 24
+      }
+      int defaultDepthSize = template.getDepthSize();
+      template.setDepthSize(preferredDepthSize);
+      if (!template.isGraphicsConfigSupported(
+          GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration())) {
+        template.setDepthSize(defaultDepthSize);
+      }
     }
 
     // Try to get antialiasing
@@ -208,19 +213,29 @@ public class Component3DManager {
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   private Canvas3D getCanvas3D(GraphicsConfiguration deviceConfiguration,
+                               GraphicsConfiguration defaultConfiguration,
                                boolean offscreen,
                                final RenderingObserver renderingObserver) {
     GraphicsConfiguration configuration;
     if (GraphicsEnvironment.isHeadless()) {
       configuration = null;
-    } else if (deviceConfiguration == null
-               || deviceConfiguration.getDevice() == this.defaultScreenConfiguration.getDevice()) {
-      configuration = this.defaultScreenConfiguration;
+    } else if (defaultConfiguration != null
+               && (deviceConfiguration == null
+                   || deviceConfiguration.getDevice() == defaultConfiguration.getDevice())) {
+      configuration = defaultConfiguration;
     } else {
-      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();
-      configuration = deviceConfiguration.getDevice().getBestConfiguration(template);
+      // Ignore depth size if configuration is null in offscreen mode
+      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D(
+          offscreen && defaultConfiguration == null);
+      GraphicsDevice device;
+      if (deviceConfiguration != null) {
+        device = deviceConfiguration.getDevice();
+      } else {
+        device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+      }
+      configuration = device.getBestConfiguration(template);
       if (configuration == null) {
-        configuration = deviceConfiguration.getDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
+        configuration = device.getBestConfiguration(new GraphicsConfigTemplate3D());
       }
     }
     if (configuration == null) {
@@ -307,7 +322,7 @@ public class Component3DManager {
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   public Canvas3D getOnscreenCanvas3D(RenderingObserver renderingObserver) {
-    return getCanvas3D(null, false, renderingObserver);
+    return getCanvas3D(null, this.defaultScreenConfiguration, false, renderingObserver);
   }
 
   /**
@@ -319,7 +334,7 @@ public class Component3DManager {
    */
   public Canvas3D getOnscreenCanvas3D(GraphicsConfiguration deviceConfiguration,
                                       RenderingObserver renderingObserver) {
-    return getCanvas3D(deviceConfiguration, false, renderingObserver);
+    return getCanvas3D(deviceConfiguration, this.defaultScreenConfiguration, false, renderingObserver);
   }
 
   /**
@@ -328,7 +343,7 @@ public class Component3DManager {
    *    To avoid this exception, call {@link #isOffScreenImageSupported() isOffScreenImageSupported()} first.
    */
   public Canvas3D getOffScreenCanvas3D(int width, int height) {
-    Canvas3D offScreenCanvas = getCanvas3D(null, true, null);
+    Canvas3D offScreenCanvas = getCanvas3D(null, this.defaultOffScreenConfiguration, true, null);
     // Configure canvas 3D for offscreen
     Screen3D screen3D = offScreenCanvas.getScreen3D();
     screen3D.setSize(width, height);
@@ -371,6 +386,17 @@ public class Component3DManager {
       // If latch count becomes equal to 0 during the past instructions or in the coming 10 milliseconds,
       // this means that a rendering error happened
       if (latch.await(10, TimeUnit.MILLISECONDS)) {
+        if (this.defaultOffScreenConfiguration == this.defaultScreenConfiguration) {
+          Logger.getAnonymousLogger().warning("Depth size not supported for off screen rendering");
+          // Try again ignoring depth size before concluding off screen rendering doesn't work
+          GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D(true);
+          GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+          this.defaultOffScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
+          if (this.defaultOffScreenConfiguration == this.defaultScreenConfiguration) {
+            this.defaultOffScreenConfiguration = null;
+          }
+          return getOffScreenImage(view, width, height);
+        }
         throw new IllegalRenderingStateException("Off screen rendering unavailable");
       }
 
