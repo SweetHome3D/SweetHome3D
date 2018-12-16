@@ -324,7 +324,9 @@ public class Wall3D extends Object3DBranch {
             intersectionArea = new Area(wallSideShape);
             intersectionArea.intersect(pieceArea);
           }
-          if (!intersectionArea.isEmpty()) {
+          if (!intersectionArea.isEmpty()
+              && (!wall.isTrapezoidal()
+                  || pieceElevation < getMaxElevationAtWallIntersection(intersectionArea, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta))) {
             windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
             intersectingDoorOrWindows.add(piece);
             // Remove from wall area the piece shape
@@ -883,6 +885,23 @@ public class Wall3D extends Object3DBranch {
     }
     normalGenerator.generateNormals(geometryInfo);
     return geometryInfo.getIndexedGeometryArray();
+  }
+
+  /**
+   * Returns the maximum wall elevation of each point of the given intersection.
+   */
+  private float getMaxElevationAtWallIntersection(Area pieceWallIntersection, double cosWallYawAngle,
+                                                  double sinWallYawAngle, double topLineAlpha,
+                                                  double topLineBeta) {
+    float maxElevation = Float.NEGATIVE_INFINITY;
+    for (PathIterator it = pieceWallIntersection.getPathIterator(null); !it.isDone(); it.next()) {
+      float [] wallPoint = new float[2];
+      if (it.currentSegment(wallPoint) != PathIterator.SEG_CLOSE) {
+        maxElevation = Math.max(maxElevation, getWallPointElevation(wallPoint [0], wallPoint [1],
+              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+      }
+    }
+    return maxElevation;
   }
 
   /**
