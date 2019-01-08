@@ -740,7 +740,7 @@ public class HomeXMLHandler extends DefaultHandler {
       this.lightSources.add((LightSource)resolveObject(lightSource, name, attributesMap));
     } else if ("backgroundImage".equals(name)) {
       BackgroundImage backgroundImage = new BackgroundImage(
-          parseContent(attributesMap.get("image"), null),
+          parseContent(attributesMap.get("image"), null, false),
           parseFloat(attributesMap, "scaleDistance"),
           parseFloat(attributesMap, "scaleDistanceXStart"),
           parseFloat(attributesMap, "scaleDistanceYStart"),
@@ -1153,9 +1153,9 @@ public class HomeXMLHandler extends DefaultHandler {
           tags,
           parseOptionalLong(attributes, "creationDate"),
           parseOptionalFloat(attributes, "grade"),
-          parseContent(attributes.get("icon"), catalogId),
-          parseContent(attributes.get("planIcon"), catalogId),
-          parseContent(attributes.get("model"), catalogId),
+          parseContent(attributes.get("icon"), catalogId, false),
+          parseContent(attributes.get("planIcon"), catalogId, false),
+          parseContent(attributes.get("model"), catalogId, false),
           parseFloat(attributes, "width"),
           parseFloat(attributes, "depth"),
           parseFloat(attributes, "height"),
@@ -1187,9 +1187,9 @@ public class HomeXMLHandler extends DefaultHandler {
           tags,
           parseOptionalLong(attributes, "creationDate"),
           parseOptionalFloat(attributes, "grade"),
-          parseContent(attributes.get("icon"), catalogId),
-          parseContent(attributes.get("planIcon"), catalogId),
-          parseContent(attributes.get("model"), catalogId),
+          parseContent(attributes.get("icon"), catalogId, false),
+          parseContent(attributes.get("planIcon"), catalogId, false),
+          parseContent(attributes.get("model"), catalogId, false),
           parseFloat(attributes, "width"),
           parseFloat(attributes, "depth"),
           parseFloat(attributes, "height"),
@@ -1218,9 +1218,9 @@ public class HomeXMLHandler extends DefaultHandler {
           tags,
           parseOptionalLong(attributes, "creationDate"),
           parseOptionalFloat(attributes, "grade"),
-          parseContent(attributes.get("icon"), catalogId),
-          parseContent(attributes.get("planIcon"), catalogId),
-          parseContent(attributes.get("model"), catalogId),
+          parseContent(attributes.get("icon"), catalogId, false),
+          parseContent(attributes.get("planIcon"), catalogId, false),
+          parseContent(attributes.get("model"), catalogId, false),
           parseFloat(attributes, "width"),
           parseFloat(attributes, "depth"),
           parseFloat(attributes, "height"),
@@ -1677,7 +1677,7 @@ public class HomeXMLHandler extends DefaultHandler {
     String catalogId = attributes.get("catalogId");
     HomeTexture texture = new HomeTexture(new CatalogTexture(catalogId,
                                attributes.get("name"),
-                               parseContent(attributes.get("image"), catalogId),
+                               parseContent(attributes.get("image"), catalogId, true),
                                parseFloat(attributes, "width"),
                                parseFloat(attributes, "height"),
                                attributes.get("creator")),
@@ -1805,7 +1805,7 @@ public class HomeXMLHandler extends DefaultHandler {
   /**
    * Returns the content object matching the given string.
    */
-  private Content parseContent(String contentFile, String catalogId) throws SAXException {
+  private Content parseContent(String contentFile, String catalogId, boolean textureId) throws SAXException {
     if (contentFile != null) {
       try {
         return new ResourceURLContent(new URL(contentFile), contentFile.startsWith("jar:"));
@@ -1818,24 +1818,27 @@ public class HomeXMLHandler extends DefaultHandler {
           }
         } else if (catalogId != null && this.preferences != null) {
           // Try to find a resource matching contentFile among catalogs
-          for (FurnitureCategory category : this.preferences.getFurnitureCatalog().getCategories()) {
-            for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-              if (catalogId.equals(piece.getId())) {
-                if (isSameContent(contentFile, piece.getIcon())) {
-                  return piece.getIcon();
-                } else if (isSameContent(contentFile, piece.getPlanIcon())) {
-                  return piece.getPlanIcon();
-                } else if (isSameContent(contentFile, piece.getModel())) {
-                  return piece.getModel();
+          if (textureId) {
+            for (TexturesCategory category : this.preferences.getTexturesCatalog().getCategories()) {
+              for (CatalogTexture texture : category.getTextures()) {
+                if (catalogId.equals(texture.getId())
+                    && isSameContent(contentFile, texture.getIcon())) {
+                  return texture.getIcon();
                 }
               }
             }
-          }
-          for (TexturesCategory category : this.preferences.getTexturesCatalog().getCategories()) {
-            for (CatalogTexture texture : category.getTextures()) {
-              if (catalogId.equals(texture.getId())
-                  && isSameContent(contentFile, texture.getIcon())) {
-                return texture.getIcon();
+          } else {
+            for (FurnitureCategory category : this.preferences.getFurnitureCatalog().getCategories()) {
+              for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+                if (catalogId.equals(piece.getId())) {
+                  if (isSameContent(contentFile, piece.getIcon())) {
+                    return piece.getIcon();
+                  } else if (isSameContent(contentFile, piece.getPlanIcon())) {
+                    return piece.getPlanIcon();
+                  } else if (isSameContent(contentFile, piece.getModel())) {
+                    return piece.getModel();
+                  }
+                }
               }
             }
           }
