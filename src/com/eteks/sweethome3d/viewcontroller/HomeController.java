@@ -1760,6 +1760,7 @@ public class HomeController implements Controller {
       polylineController.setStartArrowStyle(clipboardPolyline.getStartArrowStyle());
       polylineController.setEndArrowStyle(clipboardPolyline.getEndArrowStyle());
       polylineController.setDashStyle(clipboardPolyline.getDashStyle());
+      polylineController.setDashPattern(clipboardPolyline.getDashPattern());
       polylineController.setDashOffset(clipboardPolyline.getDashOffset());
       polylineController.setColor(clipboardPolyline.getColor());
       polylineController.modifyPolylines();
@@ -1769,9 +1770,11 @@ public class HomeController implements Controller {
       labelController.setColor(clipboardLabel.getColor());
       TextStyle labelStyle = clipboardLabel.getStyle();
       if (labelStyle != null) {
+        labelController.setAlignment(labelStyle.getAlignment());
         labelController.setFontName(labelStyle.getFontName());
         labelController.setFontSize(labelStyle.getFontSize());
       } else {
+        labelController.setAlignment(null);
         labelController.setFontName(null);
         labelController.setFontSize(this.preferences.getDefaultTextStyle(Label.class).getFontSize());
       }
@@ -1898,7 +1901,7 @@ public class HomeController implements Controller {
               if (!(ex instanceof InterruptedRecorderException)) {
                 ex.printStackTrace();
                 if (ex instanceof RecorderException) {
-                  String message = preferences.getLocalizedString(HomeController.class, 
+                  String message = preferences.getLocalizedString(HomeController.class,
                       "openError", exampleName, ex);
                   getView().showError(message);
                 }
@@ -2002,7 +2005,7 @@ public class HomeController implements Controller {
               } else {
                 ex.printStackTrace();
                 if (ex instanceof RecorderException) {
-                  String message = preferences.getLocalizedString(HomeController.class, 
+                  String message = preferences.getLocalizedString(HomeController.class,
                       "openError", homeName, ex);
                   getView().showError(message);
                 }
