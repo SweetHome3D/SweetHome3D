@@ -1758,71 +1758,29 @@ public class OBJLoader extends LoaderBase implements Loader {
         }
       }
     } else if ("map_Kd".equals(tokenizer.sval)) {
-      // Read material texture map_Kd name
-      // Search last parameter that matches image file name
-      String imageFileName = null;
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {
-        if (tokenizer.ttype == StreamTokenizer.TT_WORD) {
-          imageFileName = tokenizer.sval;
-        }
-      }
-
-      if (imageFileName != null) {
-        InputStream in = null;
-        try {
-          URL textureImageUrl = baseUrl != null
-              ? new URL(baseUrl, imageFileName.replace("%", "%25").replace("#", "%23"))
-              : new File(imageFileName).toURI().toURL();
-          // Check texture image wasn't already loaded
-          Texture texture = null;
-          for (Appearance appearance : appearances.values()) {
-            Texture appearanceTexture = appearance.getTexture();
-            if (appearanceTexture != null
-                && textureImageUrl.equals(appearanceTexture.getUserData())) {
-              currentAppearance.setTexture(appearanceTexture);
-              texture = appearanceTexture;
-            }
+      // Read material texture map_Kd -options args fileName
+      // Search image file in the last word or in all words that follow map_Kd to tolerate file names containing spaces
+      tokenizer.wordChars(' ', ' ');
+      int mapKdOptionsToken = tokenizer.nextToken();
+      tokenizer.whitespaceChars(' ', ' ');
+      if (mapKdOptionsToken == StreamTokenizer.TT_WORD) {
+        String mapKdOptionsString = tokenizer.sval.trim();
+        String [] mapKdOptions = mapKdOptionsString.split(" ");
+        if (mapKdOptions.length > 0) {
+          // First try to handle last word as image file name
+          Texture texture = readTexture(mapKdOptions [mapKdOptions.length - 1], appearances, baseUrl, useCaches);
+          if (texture == null
+              && mapKdOptions.length > 1) {
+            // Even if not in format specifications, give a chance to file names with spaces ignoring other options
+            texture = readTexture(mapKdOptionsString, appearances, baseUrl, useCaches);
           }
-          if (texture == null) {
-            in = openStream(textureImageUrl, useCaches);
-            BufferedImage textureImage = null;
-            try {
-              textureImage = ImageIO.read(in);
-            } catch (ConcurrentModificationException ex) {
-              // Try to read the image once more,
-              // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
-              in.close();
-              in = openStream(textureImageUrl, useCaches);
-              textureImage = ImageIO.read(in);
-            }
-
-            if (textureImage != null) {
-              TextureLoader textureLoader = new TextureLoader(textureImage);
-              texture = textureLoader.getTexture();
-              // Keep in user data the URL of the texture image
-              texture.setUserData(textureImageUrl);
-              currentAppearance.setTexture(texture);
-            }
-          }
-        } catch (IOException ex) {
-          // Ignore images at other format
-        } catch (RuntimeException ex) {
-          // Take into account exceptions of Java 3D 1.5 ImageException class
-          // in such a way program can run in Java 3D 1.3.1
-          if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
-            // Ignore images not supported by TextureLoader
-          } else {
-            throw ex;
-          }
-        } finally {
-          if (in != null) {
-            in.close();
+          if (texture != null) {
+            currentAppearance.setTexture(texture);
           }
         }
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());
       }
-      tokenizer.pushBack();
     } else {
       int token;
       do {
@@ -1837,6 +1795,64 @@ public class OBJLoader extends LoaderBase implements Loader {
     }
 
     return currentAppearance;
+  }
+
+  /**
+   * Returns the texture matching the image file in parameter.
+   */
+  private static Texture readTexture(String imageFileName,
+                                     Map<String, Appearance> appearances,
+                                     URL baseUrl,
+                                     Boolean useCaches) throws IOException {
+    InputStream in = null;
+    try {
+      URL textureImageUrl = baseUrl != null
+          ? new URL(baseUrl, imageFileName.replace("%", "%25").replace("#", "%23"))
+          : new File(imageFileName).toURI().toURL();
+      // Check texture image wasn't already loaded
+      for (Appearance appearance : appearances.values()) {
+        Texture appearanceTexture = appearance.getTexture();
+        if (appearanceTexture != null
+            && textureImageUrl.equals(appearanceTexture.getUserData())) {
+          return appearanceTexture;
+        }
+      }
+
+      in = openStream(textureImageUrl, useCaches);
+      BufferedImage textureImage = null;
+      try {
+        textureImage = ImageIO.read(in);
+      } catch (ConcurrentModificationException ex) {
+        // Try to read the image once more,
+        // see unfixed Java bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6986863
+        in.close();
+        in = openStream(textureImageUrl, useCaches);
+        textureImage = ImageIO.read(in);
+      }
+
+      if (textureImage != null) {
+        TextureLoader textureLoader = new TextureLoader(textureImage);
+        Texture texture = textureLoader.getTexture();
+        // Keep in user data the URL of the texture image
+        texture.setUserData(textureImageUrl);
+        return texture;
+      }
+    } catch (IOException ex) {
+      // Ignore images at other format
+    } catch (RuntimeException ex) {
+      // Take into account exceptions of Java 3D 1.5 ImageException class
+      // in such a way program can run in Java 3D 1.3.1
+      if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
+        // Ignore images not supported by TextureLoader
+      } else {
+        throw ex;
+      }
+    } finally {
+      if (in != null) {
+        in.close();
+      }
+    }
+    return null;
   }
 
   /**
