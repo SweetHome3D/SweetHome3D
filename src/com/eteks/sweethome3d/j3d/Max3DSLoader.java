@@ -102,7 +102,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     LINEAR_COLOR_24(0x0012),
     LINEAR_COLOR_FLOAT(0x0013),
     PERCENTAGE_INT(0x0030),
-    FLOAT_PERCENTAGE(0x0031),
+    PERCENTAGE_FLOAT(0x0031),
 
     EDITOR_DATA(0x3D3D),
     MESH_VERSION(0x3D3E),
@@ -1212,6 +1212,9 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       switch (in.readChunkHeader().getID()) {
         case PERCENTAGE_INT :
           percentage = in.readLittleEndianShort() / 100.f;
+          break;
+        case PERCENTAGE_FLOAT :
+          percentage = in.readLittleEndianFloat();
           break;
         default :
           in.readUntilChunkEnd();
