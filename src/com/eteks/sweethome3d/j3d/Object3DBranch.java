@@ -393,10 +393,9 @@ public abstract class Object3DBranch extends BranchGroup {
           // Combine the areas at their closest points
           List<float []> closestHolePoints = holesInArea.get(closestHolePointsIndex);
           if (minDistance != 0) {
-            float [] enclosingAreaPointJoiningHole = enclosingAreaPartPoints.get(areaClosestPointIndex);
             // Store the point joining enclosing area to the current hole to avoid reusing it for next hole
-            lastEnclosingAreaPointJoiningHoles = enclosingAreaPointJoiningHole;
-            enclosingAreaPartPoints.add(areaClosestPointIndex, enclosingAreaPointJoiningHole);
+            lastEnclosingAreaPointJoiningHoles = enclosingAreaPartPoints.get(areaClosestPointIndex);
+            enclosingAreaPartPoints.add(areaClosestPointIndex, lastEnclosingAreaPointJoiningHoles);
             enclosingAreaPartPoints.add(++areaClosestPointIndex, closestHolePoints.get(closestPointIndex));
           }
           List<float []> lastPartPoints = closestHolePoints.subList(closestPointIndex, closestHolePoints.size());
