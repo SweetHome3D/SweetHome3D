@@ -176,14 +176,16 @@ public class ModelManager {
    */
   public static final String    HINGE_PREFIX                = "sweethome3d_hinge_";
   public static final String    OPENING_ON_HINGE_PREFIX     = "sweethome3d_opening_on_hinge_";
-  public static final String    WINDOW_PANE_ON_HINGE_PREFIX = "sweethome3d_window_pane_on_hinge_";
+  public static final String    WINDOW_PANE_ON_HINGE_PREFIX = WINDOW_PANE_SHAPE_PREFIX + "_on_hinge_";
+  public static final String    MIRROR_ON_HINGE_PREFIX      = MIRROR_SHAPE_PREFIX + "_on_hinge_";
   /**
    * <code>Node</code> user data prefix for rail / sliding opening joints.
    */
   public static final String    UNIQUE_RAIL_PREFIX          = "sweethome3d_unique_rail";
   public static final String    RAIL_PREFIX                 = "sweethome3d_rail_";
   public static final String    OPENING_ON_RAIL_PREFIX      = "sweethome3d_opening_on_rail_";
-  public static final String    WINDOW_PANE_ON_RAIL_PREFIX  = "sweethome3d_window_pane_on_rail_";
+  public static final String    WINDOW_PANE_ON_RAIL_PREFIX  = WINDOW_PANE_SHAPE_PREFIX + "_on_rail_";
+  public static final String    MIRROR_ON_RAIL_PREFIX       = MIRROR_SHAPE_PREFIX + "_on_rail_";
   /**
    * Deformable group suffix.
    */
@@ -1061,9 +1063,7 @@ public class ModelManager {
         ((Node)value).setUserData(name);
       }
       if (value instanceof Shape3D
-          && (name.startsWith(WINDOW_PANE_SHAPE_PREFIX)
-              || name.startsWith(WINDOW_PANE_ON_HINGE_PREFIX)
-              || name.startsWith(WINDOW_PANE_ON_RAIL_PREFIX))) {
+          && name.startsWith(WINDOW_PANE_SHAPE_PREFIX)) {
         Shape3D shape = (Shape3D)value;
         Appearance appearance = shape.getAppearance();
         if (appearance == null) {
@@ -1174,17 +1174,18 @@ public class ModelManager {
       group.addChild(pelvisGroup);
     } else {
       // Reorganize rotating openings
-      updateSimpleDeformableModelHierarchy(group, null, HINGE_PREFIX, OPENING_ON_HINGE_PREFIX, WINDOW_PANE_ON_HINGE_PREFIX);
-      updateSimpleDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null);
+      updateSimpleDeformableModelHierarchy(group, null, HINGE_PREFIX, OPENING_ON_HINGE_PREFIX, WINDOW_PANE_ON_HINGE_PREFIX, MIRROR_ON_HINGE_PREFIX);
+      updateSimpleDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null, null);
       // Reorganize sliding openings
-      updateSimpleDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX);
+      updateSimpleDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX, MIRROR_ON_RAIL_PREFIX);
     }
   }
 
   private void updateSimpleDeformableModelHierarchy(Group group, String uniqueReferenceNodePrefix, String referenceNodePrefix,
-                                                    String openingPrefix, String openingPanePrefix) {
+                                                    String openingPrefix, String openingPanePrefix, String openingMirrorPrefix) {
     if (containsNode(group, openingPrefix + 1)
-        || (openingPanePrefix != null && containsNode(group, openingPanePrefix + 1))) {
+        || (openingPanePrefix != null && containsNode(group, openingPanePrefix + 1))
+        || (openingMirrorPrefix != null && containsNode(group, openingMirrorPrefix + 1))) {
       if (containsNode(group, referenceNodePrefix + 1)) {
         // Reorganize openings with multiple reference nodes
         int i = 1;
@@ -1192,13 +1193,15 @@ public class ModelManager {
           Node referenceNode = extractNodes(group, referenceNodePrefix + i, null);
           Node opening = extractNodes(group, openingPrefix + i, null);
           Node openingPane = openingPanePrefix != null ? extractNodes(group, openingPanePrefix + i, null) : null;
-          TransformGroup openingGroup = createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane);
+          Node openingMirror = openingMirrorPrefix != null ? extractNodes(group, openingMirrorPrefix + i, null) : null;
+          TransformGroup openingGroup = createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane, openingMirror);
           group.addChild(referenceNode);
           group.addChild(openingGroup);
           i++;
         } while (containsNode(group, referenceNodePrefix + i)
             && (containsNode(group, openingPrefix + i)
-                || (openingPanePrefix != null && containsNode(group, openingPanePrefix + i))));
+                || (openingPanePrefix != null && containsNode(group, openingPanePrefix + i))
+                || (openingMirrorPrefix != null && containsNode(group, openingMirrorPrefix + i))));
       } else if (uniqueReferenceNodePrefix != null
                  && containsNode(group, uniqueReferenceNodePrefix)) {
         // Reorganize openings with a unique reference node
@@ -1208,10 +1211,12 @@ public class ModelManager {
         do {
           Node opening = extractNodes(group, openingPrefix + i, null);
           Node openingPane = extractNodes(group, openingPanePrefix + i, null);
-          group.addChild(createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane));
+          Node openingMirror = extractNodes(group, openingMirrorPrefix + i, null);
+          group.addChild(createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane, openingMirror));
           i++;
         } while (containsNode(group, openingPrefix + i)
-                 || containsNode(group, openingPanePrefix + i));
+                 || containsNode(group, openingPanePrefix + i)
+                 || containsNode(group, openingMirrorPrefix + i));
       }
     }
   }
