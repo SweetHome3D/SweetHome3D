@@ -378,7 +378,7 @@ public abstract class Object3DBranch extends BranchGroup {
               for (int l = 0; l < enclosingAreaPartPoints.size() && minDistance > 0; l++) {
                 float distance = (float)Point2D.distanceSq(holePoints.get(k) [0], holePoints.get(k) [1],
                     enclosingAreaPartPoints.get(l) [0], enclosingAreaPartPoints.get(l) [1]);
-                if (distance < minDistance) {
+                if (distance <= minDistance) {
                   minDistance = distance;
                   closestHolePointsIndex = j;
                   closestPointIndex = k;
