@@ -366,6 +366,7 @@ public abstract class Object3DBranch extends BranchGroup {
           }
         }
 
+        float [] lastEnclosingAreaPointJoiningHoles = null;
         while (!holesInArea.isEmpty()) {
           // Search the closest points in the enclosing area and the holes
           float minDistance = Float.MAX_VALUE;
@@ -376,9 +377,11 @@ public abstract class Object3DBranch extends BranchGroup {
             List<float []> holePoints = holesInArea.get(j);
             for (int k = 0; k < holePoints.size() && minDistance > 0; k++) {
               for (int l = 0; l < enclosingAreaPartPoints.size() && minDistance > 0; l++) {
+                float [] enclosingAreaPartPoint = enclosingAreaPartPoints.get(l);
                 float distance = (float)Point2D.distanceSq(holePoints.get(k) [0], holePoints.get(k) [1],
-                    enclosingAreaPartPoints.get(l) [0], enclosingAreaPartPoints.get(l) [1]);
-                if (distance <= minDistance) {
+                    enclosingAreaPartPoint [0], enclosingAreaPartPoint [1]);
+                if (distance < minDistance
+                    && lastEnclosingAreaPointJoiningHoles != enclosingAreaPartPoint) {
                   minDistance = distance;
                   closestHolePointsIndex = j;
                   closestPointIndex = k;
@@ -390,7 +393,10 @@ public abstract class Object3DBranch extends BranchGroup {
           // Combine the areas at their closest points
           List<float []> closestHolePoints = holesInArea.get(closestHolePointsIndex);
           if (minDistance != 0) {
-            enclosingAreaPartPoints.add(areaClosestPointIndex, enclosingAreaPartPoints.get(areaClosestPointIndex));
+            float [] enclosingAreaPointJoiningHole = enclosingAreaPartPoints.get(areaClosestPointIndex);
+            // Store the point joining enclosing area to the current hole to avoid reusing it for next hole
+            lastEnclosingAreaPointJoiningHoles = enclosingAreaPointJoiningHole;
+            enclosingAreaPartPoints.add(areaClosestPointIndex, enclosingAreaPointJoiningHole);
             enclosingAreaPartPoints.add(++areaClosestPointIndex, closestHolePoints.get(closestPointIndex));
           }
           List<float []> lastPartPoints = closestHolePoints.subList(closestPointIndex, closestHolePoints.size());
