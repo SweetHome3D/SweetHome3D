@@ -4244,7 +4244,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.clip(pieceShape2D);
     AffineTransform previousTransform = g2D.getTransform();
     // Translate to piece center
-    final Rectangle bounds = pieceShape2D.getBounds();
+    final Rectangle2D bounds = pieceShape2D.getBounds2D();
     g2D.translate(bounds.getCenterX(), bounds.getCenterY());
     float pieceDepth = piece.getDepthInPlan();
     if (piece instanceof HomeDoorOrWindow) {
@@ -4299,7 +4299,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       AffineTransform previousTransform = g2D.getTransform();
       // Translate to piece center
-      final Rectangle bounds = pieceShape2D.getBounds();
+      final Rectangle2D bounds = pieceShape2D.getBounds2D();
       g2D.translate(bounds.getCenterX(), bounds.getCenterY());
       g2D.rotate(piece.getAngle());
       float pieceDepth = piece.getDepthInPlan();
