@@ -120,15 +120,16 @@ public class Label3D extends Object3DBranch {
 
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
+        g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         FontMetrics fontMetrics = g2D.getFontMetrics(font);
-        g2D.dispose();
 
         String [] lines = text.split("\n");
         float [] lineWidths = new float [lines.length];
         float textWidth = -Float.MAX_VALUE;
         float baseLineShift = 0;
         for (int i = 0; i < lines.length; i++) {
-          Rectangle2D lineBounds = fontMetrics.getStringBounds(lines [i], null);
+          Rectangle2D lineBounds = fontMetrics.getStringBounds(lines [i], g2D);
           if (i == 0) {
             baseLineShift = -(float)lineBounds.getY() + fontMetrics.getHeight() * (lines.length - 1);
           }
@@ -138,6 +139,7 @@ public class Label3D extends Object3DBranch {
           }
           textWidth = Math.max(lineWidths [i], textWidth);
         }
+        g2D.dispose();
 
         float textHeight = (float)fontMetrics.getHeight() * lines.length + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);

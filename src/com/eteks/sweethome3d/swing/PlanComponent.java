@@ -1733,7 +1733,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         }
       }
-      Rectangle2D homeItemsBounds = getItemsBounds(getGraphics(), getPaintedItems());
+      Graphics2D g = (Graphics2D)getGraphics();
+      if (g != null) {
+        setRenderingHints(g);
+      }
+      Rectangle2D homeItemsBounds = getItemsBounds(g, getPaintedItems());
       if (homeItemsBounds != null) {
         this.planBoundsCache.add(homeItemsBounds);
       }
@@ -1919,8 +1923,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     FontMetrics fontMetrics = getFontMetrics(getFont(), style);
     Rectangle2D textBounds = null;
     String [] lines = text.split("\n");
+    Graphics2D g = (Graphics2D)getGraphics();
+    if (g != null) {
+      setRenderingHints(g);
+    }
     for (int i = 0; i < lines.length; i++) {
-      Rectangle2D lineBounds = fontMetrics.getStringBounds(lines [i], null);
+      Rectangle2D lineBounds = fontMetrics.getStringBounds(lines [i], g);
       if (textBounds == null
           || textBounds.getWidth() < lineBounds.getWidth()) {
         textBounds = lineBounds;
@@ -2087,7 +2095,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   public float getPrintPreferredScale(float preferredWidth, float preferredHeight) {
     List<Selectable> printedItems = getPaintedItems();
-    Rectangle2D printedItemBounds = getItemsBounds(getGraphics(), printedItems);
+    Graphics2D g = (Graphics2D)getGraphics();
+    if (g != null) {
+      setRenderingHints(g);
+    }
+    Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
     if (printedItemBounds != null) {
       float extraMargin = getStrokeWidthExtraMargin(printedItems, PaintMode.PRINT);
       // Compute the largest integer scale possible
@@ -3202,7 +3214,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float [] lineWidths = new float [lines.length];
     float textWidth = -Float.MAX_VALUE;
     for (int i = 0; i < lines.length; i++) {
-      lineWidths [i] = (float)fontMetrics.getStringBounds(lines [i], null).getWidth();
+      lineWidths [i] = (float)fontMetrics.getStringBounds(lines [i], g2D).getWidth();
       textWidth = Math.max(lineWidths [i], textWidth);
     }
     BasicStroke stroke = null;
@@ -5393,12 +5405,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the bounds of the selected items.
    */
   private Rectangle2D getSelectionBounds(boolean includeCamera) {
+    Graphics2D g = (Graphics2D)getGraphics();
+    setRenderingHints(g);
     if (includeCamera) {
-      return getItemsBounds(getGraphics(), this.home.getSelectedItems());
+      return getItemsBounds(g, this.home.getSelectedItems());
     } else {
       List<Selectable> selectedItems = new ArrayList<Selectable>(this.home.getSelectedItems());
       selectedItems.remove(this.home.getCamera());
-      return getItemsBounds(getGraphics(), selectedItems);
+      return getItemsBounds(g, selectedItems);
     }
   }
 
