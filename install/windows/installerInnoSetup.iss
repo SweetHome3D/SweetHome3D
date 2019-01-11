@@ -1,6 +1,6 @@
 ﻿; installerInnoSetup.iss
 ;
-; Sweet Home 3D, Copyright (c) 2007-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>
+; Sweet Home 3D, Copyright (c) 2007-2019 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
 ; SweetHome3D-6.0-windows.exe setup program creator
 ; This UTF-8 BOM encoded script requires Inno Setup Unicode available at http://www.jrsoftware.org/isinfo.php
@@ -15,7 +15,7 @@
 DisableWelcomePage=no
 AppName=Sweet Home 3D
 AppVersion=6.0
-AppCopyright=Copyright (c) 2007-2018 eTeks
+AppCopyright=Copyright (c) 2007-2019 eTeks
 AppVerName=Sweet Home 3D version 6.0
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
@@ -34,7 +34,7 @@ ExtraDiskSpaceRequired=107000000
 VersionInfoVersion=6.0.0.0
 VersionInfoTextVersion=6.0
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007-2018 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2019 eTeks
 VersionInfoCompany=eTeks
 ; Install in 64 bit mode if possible
 ArchitecturesInstallIn64BitMode=x64

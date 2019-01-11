@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!-- build.xml
 
-     Sweet Home 3D, Copyright (c) 2007-2018 Emmanuel PUYBARET / eTeks <info@eteks.com>.
+     Sweet Home 3D, Copyright (c) 2007-2019 Emmanuel PUYBARET / eTeks <info@eteks.com>.
 
      Ant build file. Available targets :
      - build       : Builds SweetHome3D.jar file in build directory
@@ -1533,7 +1533,7 @@
       <footer><![CDATA[<a href='http://www.sweethome3d.com' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
       <bottom><![CDATA[<table align='center'><tr>
                        <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.com/images/eteks.gif' border='0'><a></td>
-                       <td>&copy; Copyrights 2006-2018 Emmanuel PUYBARET / <a href='http://www.eteks.com' target='_parent'>eTeks</a>
+                       <td>&copy; Copyrights 2006-2019 Emmanuel PUYBARET / <a href='http://www.eteks.com' target='_parent'>eTeks</a>
                            <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
       <link href="http://docs.oracle.com/javase/1.5.1/docs/api/"/>
       <link href="http://download.java.net/media/java3d/javadoc/1.5.3/"/>
