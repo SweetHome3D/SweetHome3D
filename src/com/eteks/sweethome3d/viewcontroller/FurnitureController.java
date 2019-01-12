@@ -395,11 +395,36 @@ public class FurnitureController implements Controller {
    * Updates the selected furniture in home.
    */
   public void setSelectedFurniture(List<HomePieceOfFurniture> selectedFurniture) {
+    setSelectedFurniture(selectedFurniture, true);
+  }
+
+  /**
+   * Updates the selected furniture in home, unselecting all other kinds of selected objects
+   * when <code>resetSelection</code> is <code>true</code>.
+   * @since 6.1
+   */
+  public void setSelectedFurniture(List<HomePieceOfFurniture> selectedFurniture, boolean resetSelection) {
     if (this.home.isBasePlanLocked()) {
       selectedFurniture = getFurnitureNotPartOfBasePlan(selectedFurniture);
     }
-    this.home.setSelectedItems(selectedFurniture);
-    this.home.setAllLevelsSelection(false);
+    if (resetSelection) {
+      this.home.setSelectedItems(selectedFurniture);
+      this.home.setAllLevelsSelection(false);
+    } else {
+      List<Selectable> selectedItems = new ArrayList<Selectable>(this.home.getSelectedItems());
+      selectedFurniture = new ArrayList<HomePieceOfFurniture>(selectedFurniture);
+      for (int i = selectedItems.size() - 1; i >= 0; i--) {
+        Selectable item = selectedItems.get(i);
+        int index = selectedFurniture.indexOf(item);
+        if (index >= 0) {
+          selectedFurniture.remove(index);
+        } else if (item instanceof HomePieceOfFurniture) {
+          selectedItems.remove(i);
+        }
+      }
+      selectedItems.addAll(selectedFurniture);
+      this.home.setSelectedItems(selectedItems);
+    }
   }
 
   /**
