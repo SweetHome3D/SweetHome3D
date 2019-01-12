@@ -87,7 +87,6 @@ import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -715,16 +714,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             if (HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
               sortedLevelFurniture = null;
             }
-            if (controller == null || !controller.isModificationState()) {
-              invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
-            } else {
-              // Delay computing of new top view icon
-              controller.addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, new PropertyChangeListener() {
-                  public void propertyChange(PropertyChangeEvent ev2) {
-                    invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
-                    controller.removePropertyChangeListener(PlanController.Property.MODIFICATION_STATE, this);
-                  }
-                });
+            if (!(ev.getSource() instanceof HomeFurnitureGroup)) {
+              // Invalidate top icon only for individual pieces because
+              // groups can't have their own texture, can't be transformed and can't be horizontally rotated
+              if (controller == null || !controller.isModificationState()) {
+                furnitureTopViewIconsCache.remove((HomePieceOfFurniture)ev.getSource());
+              } else {
+                // Delay computing of new top view icon
+                controller.addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, new PropertyChangeListener() {
+                    public void propertyChange(PropertyChangeEvent ev2) {
+                      furnitureTopViewIconsCache.remove((HomePieceOfFurniture)ev.getSource());
+                      repaint();
+                      controller.removePropertyChangeListener(PlanController.Property.MODIFICATION_STATE, this);
+                    }
+                  });
+              }
             }
             revalidate();
           } else if (furnitureTopViewIconsCache != null
@@ -732,7 +736,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                   || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName()))) {
-            invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
+            // From version 5.2, these changes can happen only for individual pieces because groups
+            // can't have their own color, texture, materials and shininess anymore
+            furnitureTopViewIconsCache.remove((HomePieceOfFurniture)ev.getSource());
+            repaint();
           } else if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
                      || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName())
                      || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
@@ -1048,31 +1055,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_MODEL_ICON_SIZE, preferencesListener);
     preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, preferencesListener);
     preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, preferencesListener);
-  }
-
-  /**
-   * Remove the top view icon of the given piece from cache and repaints this plan.
-   */
-  private void invalidateFurnitureTopViewIcon(HomePieceOfFurniture updatedPiece) {
-    for (HomePieceOfFurniture piece : getFurnitureWithoutGroups(updatedPiece)) {
-      furnitureTopViewIconsCache.remove(piece);
-    }
-    repaint();
-  }
-
-  /**
-   * Returns all the pieces depending on the given <code>piece</code> that are not groups.
-   */
-  private List<HomePieceOfFurniture> getFurnitureWithoutGroups(HomePieceOfFurniture piece) {
-    if (piece instanceof HomeFurnitureGroup) {
-      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
-      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
-        pieces.addAll(getFurnitureWithoutGroups(groupPiece));
-      }
-      return pieces;
-    } else {
-      return Arrays.asList(new HomePieceOfFurniture [] {piece});
-    }
   }
 
   /**
