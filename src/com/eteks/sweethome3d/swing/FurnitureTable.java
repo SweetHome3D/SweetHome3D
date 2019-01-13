@@ -209,6 +209,11 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         public void mousePressed(MouseEvent ev) {
           selectionToggling = (ev.getModifiers() & getToolkit().getMenuShortcutKeyMask()) != 0;
         }
+
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          mousePressed(ev);
+        }
       });
     this.tableSelectionListener = new ListSelectionListener () {
         public void valueChanged(ListSelectionEvent ev) {
@@ -234,6 +239,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
                 // Set the new selection in home with controller
                 controller.setSelectedFurniture(new ArrayList<HomePieceOfFurniture>(selectedFurniture), !selectionToggling);
                 selectionByUser = false;
+                selectionToggling = false;
               }
             });
         }
