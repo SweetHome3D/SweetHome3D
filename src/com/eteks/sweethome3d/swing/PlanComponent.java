@@ -87,6 +87,7 @@ import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -318,7 +319,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<Collection<Wall>, Area>       wallAreasCache;
   private Map<HomeDoorOrWindow, Area>       doorOrWindowWallThicknessAreasCache;
   private Map<HomeTexture, BufferedImage>   floorTextureImagesCache;
-  private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
+  private Map<HomePieceOfFurniture, HomePieceOfFurnitureTopViewIconKey> furnitureTopViewIconKeys;
+  private Map<HomePieceOfFurnitureTopViewIconKey, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
+
 
 
   private static ExecutorService            backgroundImageLoader;
@@ -702,7 +705,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(final PropertyChangeEvent ev) {
-          if (furnitureTopViewIconsCache != null
+          if (furnitureTopViewIconKeys != null
               && (HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.ROLL.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.PITCH.name().equals(ev.getPropertyName())
@@ -718,12 +721,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               // Invalidate top icon only for individual pieces because
               // groups can't have their own texture, can't be transformed and can't be horizontally rotated
               if (controller == null || !controller.isModificationState()) {
-                furnitureTopViewIconsCache.remove((HomePieceOfFurniture)ev.getSource());
+                furnitureTopViewIconKeys.remove((HomePieceOfFurniture)ev.getSource());
               } else {
                 // Delay computing of new top view icon
                 controller.addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, new PropertyChangeListener() {
                     public void propertyChange(PropertyChangeEvent ev2) {
-                      furnitureTopViewIconsCache.remove((HomePieceOfFurniture)ev.getSource());
+                      furnitureTopViewIconKeys.remove((HomePieceOfFurniture)ev.getSource());
                       repaint();
                       controller.removePropertyChangeListener(PlanController.Property.MODIFICATION_STATE, this);
                     }
@@ -731,14 +734,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               }
             }
             revalidate();
-          } else if (furnitureTopViewIconsCache != null
+          } else if (furnitureTopViewIconKeys != null
               && (HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(ev.getPropertyName())
                   || HomePieceOfFurniture.Property.SHININESS.name().equals(ev.getPropertyName()))) {
             // From version 5.2, these changes can happen only for individual pieces because groups
             // can't have their own color, texture, materials and shininess anymore
-            furnitureTopViewIconsCache.remove((HomePieceOfFurniture)ev.getSource());
+            furnitureTopViewIconKeys.remove((HomePieceOfFurniture)ev.getSource());
             repaint();
           } else if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
                      || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName())
@@ -1101,12 +1104,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             planComponent.wallAreasCache = null;
             break;
           case FURNITURE_VIEWED_FROM_TOP :
-            if (planComponent.furnitureTopViewIconsCache != null
+            if (planComponent.furnitureTopViewIconKeys != null
                 && !preferences.isFurnitureViewedFromTop()) {
+              planComponent.furnitureTopViewIconKeys = null;
               planComponent.furnitureTopViewIconsCache = null;
             }
             break;
           case FURNITURE_MODEL_ICON_SIZE :
+            planComponent.furnitureTopViewIconKeys = null;
             planComponent.furnitureTopViewIconsCache = null;
             break;
           default:
@@ -4256,21 +4261,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                         float planScale,
                                         Color backgroundColor, Color foregroundColor,
                                         PaintMode paintMode) {
-    if (this.furnitureTopViewIconsCache == null) {
-      this.furnitureTopViewIconsCache = new WeakHashMap<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon>();
+    if (this.furnitureTopViewIconKeys == null) {
+      this.furnitureTopViewIconKeys = new WeakHashMap<HomePieceOfFurniture, HomePieceOfFurnitureTopViewIconKey>();
+      this.furnitureTopViewIconsCache = new WeakHashMap<HomePieceOfFurnitureTopViewIconKey, PieceOfFurnitureTopViewIcon>();
     }
-    PieceOfFurnitureTopViewIcon icon = this.furnitureTopViewIconsCache.get(piece);
-    if (icon == null
-        || icon.isWaitIcon()
-           && paintMode != PaintMode.PAINT) {
-      PlanComponent waitingComponent = paintMode == PaintMode.PAINT ? this : null;
-      // Prefer use plan icon if it exists
-      if (piece.getPlanIcon() != null) {
-        icon = new PieceOfFurniturePlanIcon(piece, waitingComponent);
+    HomePieceOfFurnitureTopViewIconKey topViewIconKey = this.furnitureTopViewIconKeys.get(piece);
+    PieceOfFurnitureTopViewIcon icon;
+    if (topViewIconKey == null) {
+      topViewIconKey = new HomePieceOfFurnitureTopViewIconKey(piece.clone());
+      icon = this.furnitureTopViewIconsCache.get(topViewIconKey);
+      if (icon == null
+          || icon.isWaitIcon()
+             && paintMode != PaintMode.PAINT) {
+        PlanComponent waitingComponent = paintMode == PaintMode.PAINT ? this : null;
+        // Prefer use plan icon if it exists
+        if (piece.getPlanIcon() != null) {
+          icon = new PieceOfFurniturePlanIcon(piece, waitingComponent);
+        } else {
+          icon = new PieceOfFurnitureModelIcon(piece, this.object3dFactory, waitingComponent, this.preferences.getFurnitureModelIconSize());
+        }
+        this.furnitureTopViewIconsCache.put(topViewIconKey, icon);
       } else {
-        icon = new PieceOfFurnitureModelIcon(piece, this.object3dFactory, waitingComponent, this.preferences.getFurnitureModelIconSize());
+        // As furnitureTopViewIconKeys and furnitureTopViewIconsCache are both WeakHashMap instances,
+        // use the HomePieceOfFurnitureTopViewIconKey instance that already exists in furnitureTopViewIconsCache
+        // to avoid the deletion of the entry containing the new sibling when a piece is garbage collected
+        for (HomePieceOfFurnitureTopViewIconKey key : furnitureTopViewIconsCache.keySet()) {
+          if (key.equals(topViewIconKey)) {
+            topViewIconKey = key;
+            break;
+          }
+        }
       }
-      this.furnitureTopViewIconsCache.put(piece, icon);
+      this.furnitureTopViewIconKeys.put(piece, topViewIconKey);
+    } else {
+      icon = this.furnitureTopViewIconsCache.get(topViewIconKey);
     }
 
     if (icon.isWaitIcon() || icon.isErrorIcon()) {
@@ -6660,6 +6684,79 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           Math.max(0.001f, (float)(upper.x - lower.x)), // width in plan
           Math.max(0.001f, (float)(upper.z - lower.z)), // depth in plan
           Math.max(0.001f, (float)(upper.y - lower.y))}; // height in plan
+    }
+  }
+
+  /**
+   * A map key used to compare furniture with the same top view icon.
+   */
+  private static class HomePieceOfFurnitureTopViewIconKey {
+    private HomePieceOfFurniture piece;
+    private int                  hashCode;
+
+    public HomePieceOfFurnitureTopViewIconKey(HomePieceOfFurniture piece) {
+      this.piece = piece;
+      this.hashCode = (piece.getPlanIcon() != null ? piece.getPlanIcon().hashCode() : piece.getModel().hashCode())
+          + (piece.getColor() != null ? 37 * this.piece.getColor().hashCode() : 1234);
+      if (this.piece.isHorizontallyRotated()
+          || this.piece.getTexture() != null) {
+        this.hashCode +=
+              (piece.getTexture() != null ? 37 * this.piece.getTexture().hashCode() : 0)
+            + 37 * Float.valueOf(piece.getWidthInPlan()).hashCode()
+            + 37 * Float.valueOf(piece.getDepthInPlan()).hashCode()
+            + 37 * Float.valueOf(piece.getHeightInPlan()).hashCode();
+      }
+      if (this.piece.getPlanIcon() != null) {
+        this.hashCode +=
+              37 * Arrays.deepHashCode(piece.getModelRotation())
+            + 37 * Boolean.valueOf(piece.isModelCenteredAtOrigin()).hashCode()
+            + 37 * Boolean.valueOf(piece.isBackFaceShown()).hashCode()
+            + 37 * Float.valueOf(piece.getPitch()).hashCode()
+            + 37 * Float.valueOf(piece.getRoll()).hashCode()
+            + 37 * Arrays.hashCode(piece.getModelTransformations())
+            + 37 * Arrays.hashCode(piece.getModelMaterials())
+            + (piece.getShininess() != null ? 37 * this.piece.getShininess().hashCode() : 3456);
+      }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof HomePieceOfFurnitureTopViewIconKey) {
+        HomePieceOfFurniture piece2 = ((HomePieceOfFurnitureTopViewIconKey)obj).piece;
+        // Test all furniture data that could make change the plan icon
+        // (see HomePieceOfFurniture3D and PlanComponent#addModelListeners for changes conditions)
+        return (this.piece.getPlanIcon() != null
+                  ? this.piece.getPlanIcon().equals(piece2.getPlanIcon())
+                  : this.piece.getModel().equals(piece2.getModel()))
+            && (this.piece.getColor() == piece2.getColor()
+                || this.piece.getColor() != null && this.piece.getColor().equals(piece2.getColor()))
+            && (this.piece.getTexture() == piece2.getTexture()
+                || this.piece.getTexture() != null && this.piece.getTexture().equals(piece2.getTexture()))
+            && (!this.piece.isHorizontallyRotated()
+                    && !piece2.isHorizontallyRotated()
+                    && this.piece.getTexture() == null
+                    && piece2.getTexture() == null
+                || this.piece.getWidthInPlan() == piece2.getWidthInPlan()
+                    && this.piece.getDepthInPlan() == piece2.getDepthInPlan()
+                    && this.piece.getHeightInPlan() == piece2.getHeightInPlan())
+            && (this.piece.getPlanIcon() != null
+                || Arrays.deepEquals(this.piece.getModelRotation(), piece2.getModelRotation())
+                    && this.piece.isModelCenteredAtOrigin() == piece2.isModelCenteredAtOrigin()
+                    && this.piece.isBackFaceShown() == piece2.isBackFaceShown()
+                    && this.piece.getPitch() == piece2.getPitch()
+                    && this.piece.getRoll() == piece2.getRoll()
+                    && Arrays.equals(this.piece.getModelTransformations(), piece2.getModelTransformations())
+                    && Arrays.equals(this.piece.getModelMaterials(), piece2.getModelMaterials())
+                    && (this.piece.getShininess() == piece2.getShininess()
+                        || this.piece.getShininess() != null && this.piece.getShininess().equals(piece2.getShininess())));
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      return this.hashCode;
     }
   }
 }
