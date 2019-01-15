@@ -4003,19 +4003,65 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays an about dialog.
    */
   public void showAboutDialog() {
+    final JTextComponent messagePane = createEditorPane(getAboutMessage());
+    messagePane.setOpaque(false);
+    // Run a time that will update About message after a garbage collection
+    Timer updateTimer = new Timer(1000, new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          if (messagePane.isShowing()) {
+            System.gc();
+            messagePane.setText(getAboutMessage());
+          }
+        }
+      });
+    updateTimer.start();
+
+    String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
+    Icon   icon  = new ImageIcon(HomePane.class.getResource(
+        this.preferences.getLocalizedString(HomePane.class, "about.icon")));
+    try {
+      String close = this.preferences.getLocalizedString(HomePane.class, "about.close");
+      String showLibraries = this.preferences.getLocalizedString(HomePane.class, "about.showLibraries");
+      List<Library> libraries = this.preferences.getLibraries();
+      if (!libraries.isEmpty()) {
+        int option = JOptionPane.showOptionDialog(this, messagePane, title,
+              JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
+              icon, new Object [] {close, showLibraries}, close);
+        updateTimer.stop();
+        if (option == JOptionPane.NO_OPTION) {
+          showLibrariesDialog(libraries);
+        }
+        return;
+      }
+    } catch (UnsupportedOperationException ex) {
+      // Environment doesn't support libraries
+    } catch (IllegalArgumentException ex) {
+      // Unknown about.close or about.libraries libraries
+    }
+    JOptionPane.showMessageDialog(this, messagePane, title, JOptionPane.INFORMATION_MESSAGE, icon);
+    updateTimer.stop();
+  }
+
+  /**
+   * Returns the message displayed in the about dialog.
+   */
+  private String getAboutMessage() {
     String messageFormat = this.preferences.getLocalizedString(HomePane.class, "about.message");
     String aboutVersion = this.controller.getVersion();
     String javaVersion = System.getProperty("java.version");
     String dataModel = System.getProperty("sun.arch.data.model");
     if (dataModel != null) {
       try {
-        javaVersion += " / " + Integer.parseInt(dataModel) + " bit";
+        javaVersion += " - " + Integer.parseInt(dataModel) + " bit";
       } catch (NumberFormatException ex) {
         // Don't display data model
       }
     }
-    float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);
-    javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
+    Runtime runtime = Runtime.getRuntime();
+    float usedMemoryGigaByte = Math.max(0.1f, (runtime.totalMemory() - runtime.freeMemory()) / 1073741824f);
+    float maxMemoryGigaByte = Math.max(0.1f, (runtime.maxMemory()) / 1073741824f);
+    DecimalFormat format = new DecimalFormat("#.#");
+    javaVersion += " - " + format.format(usedMemoryGigaByte) + " / " + format.format(maxMemoryGigaByte) + " GB max";
     String java3dVersion = "<i>not available</i>";
     try {
       if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
@@ -4027,37 +4073,13 @@ public class HomePane extends JRootPane implements HomeView {
     } catch (Throwable ex) {
       // No Java 3D libraries
     }
-    String message = String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
-    JComponent messagePane = createEditorPane(message);
-    messagePane.setOpaque(false);
-
-    String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
-    Icon   icon  = new ImageIcon(HomePane.class.getResource(
-        this.preferences.getLocalizedString(HomePane.class, "about.icon")));
-    try {
-      String close = this.preferences.getLocalizedString(HomePane.class, "about.close");
-      String showLibraries = this.preferences.getLocalizedString(HomePane.class, "about.showLibraries");
-      List<Library> libraries = this.preferences.getLibraries();
-      if (!libraries.isEmpty()) {
-        if (JOptionPane.showOptionDialog(this, messagePane, title,
-              JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
-              icon, new Object [] {close, showLibraries}, close) == JOptionPane.NO_OPTION) {
-          showLibrariesDialog(libraries);
-        }
-        return;
-      }
-    } catch (UnsupportedOperationException ex) {
-      // Environment doesn't support libraries
-    } catch (IllegalArgumentException ex) {
-      // Unknown about.close or about.libraries libraries
-    }
-    JOptionPane.showMessageDialog(this, messagePane, title, JOptionPane.INFORMATION_MESSAGE, icon);
+    return String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
   }
 
   /**
    * Returns a component able to display message with active links.
    */
-  private JComponent createEditorPane(String message) {
+  private JTextComponent createEditorPane(String message) {
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setEditable(false);
@@ -4066,12 +4088,12 @@ public class HomePane extends JRootPane implements HomeView {
     }
     // Add a listener that displays hyperlinks content in browser
     messagePane.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(HyperlinkEvent ev) {
-        if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          SwingTools.showDocumentInBrowser(ev.getURL());
+        public void hyperlinkUpdate(HyperlinkEvent ev) {
+          if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            SwingTools.showDocumentInBrowser(ev.getURL());
+          }
         }
-      }
-    });
+      });
     return messagePane;
   }
 
