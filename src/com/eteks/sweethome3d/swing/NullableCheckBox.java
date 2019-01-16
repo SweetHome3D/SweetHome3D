@@ -37,21 +37,21 @@ import javax.swing.event.ChangeListener;
  * display 3 states : <code>null</code>, <code>false</code> and <code>true</code>.
  * @author Emmanuel Puybaret
  */
-public class NullableCheckBox extends JComponent {    
-  /** 
-   * Identifies a change in the check box text. 
+public class NullableCheckBox extends JComponent {
+  /**
+   * Identifies a change in the check box text.
    */
   public static final String TEXT_CHANGED_PROPERTY = "text";
-  /** 
-   * Identifies a change in the check box mnemonic. 
+  /**
+   * Identifies a change in the check box mnemonic.
    */
   public static final String MNEMONIC_CHANGED_PROPERTY = "mnemonic";
-  
+
   private JCheckBox    checkBox;
   private Boolean      value = Boolean.FALSE;
   private boolean      nullable;
   private List<ChangeListener> changeListeners = new ArrayList<ChangeListener>(1);
-  
+
   /**
    * Creates a nullable check box.
    */
@@ -60,41 +60,44 @@ public class NullableCheckBox extends JComponent {
     final Dimension checkBoxSize = new JCheckBox().getPreferredSize();
     // Create a check box that displays a dash upon default check box for a null value
     this.checkBox = new JCheckBox(text) {
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (value == null) {
-          g.drawRect(checkBoxSize.width / 2 - 3, checkBoxSize.height / 2, 6, 1);
-        }
-      }
-    };
-    // Add an item listener to change default checking logic 
-    ItemListener checkBoxListener = new ItemListener() {
-      public void itemStateChanged(ItemEvent ev) {
-        ev.getItemSelectable().removeItemListener(this);
-        // If this check box is nullable
-        if (nullable) {
-          // Checking sequence will be null, true, false
-          if (getValue() == Boolean.FALSE) {
-            setValue(null);
-          } else if (getValue() == null) {
-            setValue(Boolean.TRUE);
-          } else {
-            setValue(Boolean.FALSE);
+        @Override
+        protected void paintComponent(Graphics g) {
+          super.paintComponent(g);
+          if (value == null) {
+            if (!getComponentOrientation().isLeftToRight()) {
+              g.translate(getWidth() - checkBoxSize.width, 0);
+            }
+            g.drawRect(checkBoxSize.width / 2 - 3, checkBoxSize.height / 2, 6, 1);
           }
-        } else {
-          setValue(checkBox.isSelected());
         }
-        ev.getItemSelectable().addItemListener(this);
-      }
-    };
+      };
+    // Add an item listener to change default checking logic
+    ItemListener checkBoxListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          ev.getItemSelectable().removeItemListener(this);
+          // If this check box is nullable
+          if (nullable) {
+            // Checking sequence will be null, true, false
+            if (getValue() == Boolean.FALSE) {
+              setValue(null);
+            } else if (getValue() == null) {
+              setValue(Boolean.TRUE);
+            } else {
+              setValue(Boolean.FALSE);
+            }
+          } else {
+            setValue(checkBox.isSelected());
+          }
+          ev.getItemSelectable().addItemListener(this);
+        }
+      };
     this.checkBox.addItemListener(checkBoxListener);
-    
+
     // Add the check box and its label to this component
     setLayout(new GridLayout());
     add(this.checkBox);
   }
-  
+
   /**
    * Returns <code>null</code>, <code>Boolean.TRUE</code> or <code>Boolean.FALSE</code>.
    */
@@ -103,7 +106,7 @@ public class NullableCheckBox extends JComponent {
   }
 
   /**
-   * Sets displayed value in check box. 
+   * Sets displayed value in check box.
    * @param value <code>null</code>, <code>Boolean.TRUE</code> or <code>Boolean.FALSE</code>
    */
   public void setValue(Boolean value) {
@@ -121,7 +124,7 @@ public class NullableCheckBox extends JComponent {
       fireStateChanged();
     }
   }
-  
+
   /**
    * Returns <code>true</code> if this check box is nullable.
    */
@@ -138,10 +141,10 @@ public class NullableCheckBox extends JComponent {
       setValue(Boolean.FALSE);
     }
   }
-  
+
   /**
    * Sets the mnemonic of this component.
-   * @param mnemonic a <code>VK_...</code> code defined in <code>java.awt.event.KeyEvent</code>. 
+   * @param mnemonic a <code>VK_...</code> code defined in <code>java.awt.event.KeyEvent</code>.
    */
   public void setMnemonic(int mnemonic) {
     int oldMnemonic = this.checkBox.getMnemonic();
@@ -150,7 +153,7 @@ public class NullableCheckBox extends JComponent {
       firePropertyChange(MNEMONIC_CHANGED_PROPERTY, oldMnemonic, mnemonic);
     }
   }
-  
+
   /**
    * Returns the mnemonic of this component.
    */
@@ -160,7 +163,7 @@ public class NullableCheckBox extends JComponent {
 
   /**
    * Sets the text of this component.
-   * @param text a <code>VK_...</code> code defined in <code>java.awt.event.KeyEvent</code>. 
+   * @param text a <code>VK_...</code> code defined in <code>java.awt.event.KeyEvent</code>.
    */
   public void setText(String text) {
     String oldText = this.checkBox.getText();
@@ -169,14 +172,14 @@ public class NullableCheckBox extends JComponent {
       firePropertyChange(TEXT_CHANGED_PROPERTY, oldText, text);
     }
   }
-  
+
   /**
    * Returns the text of this component.
    */
   public String getText() {
     return this.checkBox.getText();
   }
-  
+
   /**
    * Sets the tool tip text displayed by this check box.
    */
@@ -196,7 +199,7 @@ public class NullableCheckBox extends JComponent {
   public boolean isEnabled() {
     return this.checkBox.isEnabled();
   }
-  
+
   /**
    * Adds a listener to this component.
    */
@@ -217,7 +220,7 @@ public class NullableCheckBox extends JComponent {
   private void fireStateChanged() {
     if (!this.changeListeners.isEmpty()) {
       ChangeEvent changeEvent = new ChangeEvent(this);
-      // Work on a copy of changeListeners to ensure a listener 
+      // Work on a copy of changeListeners to ensure a listener
       // can modify safely listeners list
       ChangeListener [] listeners = this.changeListeners.
         toArray(new ChangeListener [this.changeListeners.size()]);

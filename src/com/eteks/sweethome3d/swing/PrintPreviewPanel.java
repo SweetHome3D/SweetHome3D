@@ -72,7 +72,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
    * @param printPreviewController the controller of this panel
    */
   public PrintPreviewPanel(Home home,
-                           UserPreferences preferences, 
+                           UserPreferences preferences,
                            HomeController homeController,
                            PrintPreviewController printPreviewController) {
     super(new ProportionalLayout());
@@ -85,7 +85,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Creates actions.  
+   * Creates actions.
    */
   private void createActions(UserPreferences preferences) {
     // Show previous page action
@@ -112,7 +112,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Installs keys bound to actions. 
+   * Installs keys bound to actions.
    */
   private void installKeyboardActions() {
     InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
@@ -150,16 +150,16 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
           }
         },
         BorderFactory.createLineBorder(Color.BLACK)));
-    
+
     this.pageLabel = new JLabel();
-    
+
     this.toolBar = new JToolBar() {
         public void applyComponentOrientation(ComponentOrientation orientation) {
-          // Ignore orientation 
+          // Ignore orientation
         }
       };
     this.toolBar.setFloatable(false);
-    ActionMap actions = getActionMap();    
+    ActionMap actions = getActionMap();
     if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
       // Add buttons with higher insets to ensure the top and bottom of segmented buttons are correctly drawn
       class HigherInsetsButton extends JButton {
@@ -182,24 +182,24 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
       this.toolBar.add(actions.get(ActionType.SHOW_NEXT_PAGE));
     }
     updateToolBarButtonsStyle(this.toolBar);
-    
+
     this.toolBar.add(Box.createHorizontalStrut(20));
     this.toolBar.add(this.pageLabel);
-    
+
     // Remove focusable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
-      toolBar.getComponentAtIndex(i).setFocusable(false);      
+      toolBar.getComponentAtIndex(i).setFocusable(false);
     }
   }
-  
+
   /**
-   * Under Mac OS X 10.5 use segmented buttons with properties 
+   * Under Mac OS X 10.5 use segmented buttons with properties
    * depending on toolbar orientation.
    */
   private void updateToolBarButtonsStyle(JToolBar toolBar) {
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
+      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account
       JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
       previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       previousButton.putClientProperty("JButton.segmentPosition", "first");
@@ -208,9 +208,9 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
       nextButton.putClientProperty("JButton.segmentPosition", "last");
     }
   }
-    
+
   /**
-   * Layouts panel components in panel with their labels. 
+   * Layouts panel components in panel with their labels.
    */
   private void layoutComponents() {
     // Add toolbar at top in a flow layout panel to make it centered
@@ -225,27 +225,26 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
    * Updates components.
    */
   private void updateComponents() {
-    ActionMap actions = getActionMap();    
+    ActionMap actions = getActionMap();
     actions.get(ActionType.SHOW_PREVIOUS_PAGE).setEnabled(this.printableComponent.getPage() > 0);
     actions.get(ActionType.SHOW_NEXT_PAGE).setEnabled(
         this.printableComponent.getPage() < this.printableComponent.getPageCount() - 1);
     this.pageLabel.setText(preferences.getLocalizedString(
-        PrintPreviewPanel.class, "pageLabel.text", 
+        PrintPreviewPanel.class, "pageLabel.text",
         this.printableComponent.getPage() + 1, this.printableComponent.getPageCount()));
   }
 
   /**
-   * Displays this panel in a modal resizable dialog box. 
+   * Displays this panel in a modal resizable dialog box.
    */
   public void displayView(View parentView) {
     String dialogTitle = preferences.getLocalizedString(PrintPreviewPanel.class, "printPreview.title");
-    JOptionPane optionPane = new JOptionPane(this, 
-        JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
-    if (parentView != null) {
-      optionPane.setComponentOrientation(((JComponent)parentView).getComponentOrientation());
-    }
+    JOptionPane optionPane = new JOptionPane(this,
+        JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION);
     JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
-    dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
+    dialog.applyComponentOrientation(parentView != null
+        ? ((JComponent)parentView).getComponentOrientation()
+        : ComponentOrientation.getOrientation(Locale.getDefault()));
     dialog.setResizable(true);
     // Pack again because resize decorations may have changed dialog preferred size
     dialog.pack();

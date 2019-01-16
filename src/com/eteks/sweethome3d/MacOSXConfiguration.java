@@ -663,146 +663,150 @@ class MacOSXConfiguration {
    */
   public static void installToolBar(final JRootPane rootPane) {
     List<JToolBar> toolBars = SwingTools.findChildren(rootPane, JToolBar.class);
-    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7.0_12")
-        && toolBars.size() == 1) {
-      rootPane.putClientProperty("apple.awt.brushMetalLook", true);
+    if (toolBars.size() == 1) {
       final JToolBar toolBar = toolBars.get(0);
-      toolBar.setFloatable(false);
-      toolBar.setBorder(new AbstractBorder() {
-          private final Color TOP_GRADIENT_COLOR_ACTIVATED_FRAME = OperatingSystem.isMacOSXYosemiteOrSuperior()
-              ? new Color(212, 212, 212)
-              : new Color(222, 222, 222);
-          private final Color BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME = OperatingSystem.isMacOSXYosemiteOrSuperior()
-              ? new Color(209, 209, 209)
-              : new Color(178, 178, 178);
-          private final Color TOP_GRADIENT_COLOR_DEACTIVATED_FRAME  = new Color(244, 244, 244);
-          private final Color BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME = TOP_GRADIENT_COLOR_ACTIVATED_FRAME;
+      // Bars used to manage floating system under Java 6, and gradient rendering of the tool bar
+      // forbids to use the floating system under further Java versions
+      toolBar.setFloatable(toolBar.isFloatable() && toolBar.getComponentOrientation().isLeftToRight());
+      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.7.0_12")) {
+        toolBar.setFloatable(false);
+        rootPane.putClientProperty("apple.awt.brushMetalLook", true);
+        toolBar.setBorder(new AbstractBorder() {
+            private final Color TOP_GRADIENT_COLOR_ACTIVATED_FRAME = OperatingSystem.isMacOSXYosemiteOrSuperior()
+                ? new Color(212, 212, 212)
+                : new Color(222, 222, 222);
+            private final Color BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME = OperatingSystem.isMacOSXYosemiteOrSuperior()
+                ? new Color(209, 209, 209)
+                : new Color(178, 178, 178);
+            private final Color TOP_GRADIENT_COLOR_DEACTIVATED_FRAME  = new Color(244, 244, 244);
+            private final Color BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME = TOP_GRADIENT_COLOR_ACTIVATED_FRAME;
 
-          @Override
-          public boolean isBorderOpaque() {
-            return true;
-          }
+            @Override
+            public boolean isBorderOpaque() {
+              return true;
+            }
 
-          @Override
-          public Insets getBorderInsets(Component c) {
-            return new Insets(-4, 4, 0, 4);
-          }
+            @Override
+            public Insets getBorderInsets(Component c) {
+              return new Insets(-4, 4, 0, 4);
+            }
 
-          @Override
-          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            // Paint the tool bar with a gradient different if the frame is activated or not
-            Component root = SwingUtilities.getRoot(rootPane);
-            boolean active = ((JFrame)root).isActive();
-            ((Graphics2D)g).setPaint(new GradientPaint(0, y,
-                active ? TOP_GRADIENT_COLOR_ACTIVATED_FRAME : TOP_GRADIENT_COLOR_DEACTIVATED_FRAME,
-                0, y + height - 1,
-                active ? BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME : BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME));
-            g.fillRect(x, y, x + width, y + height);
-          }
-        });
+            @Override
+            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+              // Paint the tool bar with a gradient different if the frame is activated or not
+              Component root = SwingUtilities.getRoot(rootPane);
+              boolean active = ((JFrame)root).isActive();
+              ((Graphics2D)g).setPaint(new GradientPaint(0, y,
+                  active ? TOP_GRADIENT_COLOR_ACTIVATED_FRAME : TOP_GRADIENT_COLOR_DEACTIVATED_FRAME,
+                  0, y + height - 1,
+                  active ? BOTTOM_GRADIENT_COLOR_ACTIVATED_FRAME : BOTTOM_GRADIENT_COLOR_DEACTIVATED_FRAME));
+              g.fillRect(x, y, x + width, y + height);
+            }
+          });
 
-      // Manage frame moves when the user clicks in the tool bar background
-      final MouseInputAdapter mouseListener = new MouseInputAdapter() {
-          private Point lastLocation;
+        // Manage frame moves when the user clicks in the tool bar background
+        final MouseInputAdapter mouseListener = new MouseInputAdapter() {
+            private Point lastLocation;
 
-          @Override
-          public void mousePressed(MouseEvent ev) {
-            this.lastLocation = ev.getPoint();
-            SwingUtilities.convertPointToScreen(this.lastLocation, ev.getComponent());
-          }
+            @Override
+            public void mousePressed(MouseEvent ev) {
+              this.lastLocation = ev.getPoint();
+              SwingUtilities.convertPointToScreen(this.lastLocation, ev.getComponent());
+            }
 
-          @Override
-          public void mouseDragged(MouseEvent ev) {
-            Point newLocation = ev.getPoint();
-            SwingUtilities.convertPointToScreen(newLocation, ev.getComponent());
-            Component root = SwingUtilities.getRoot(rootPane);
-            root.setLocation(root.getX() + newLocation.x - this.lastLocation.x,
-                root.getY() + newLocation.y - this.lastLocation.y);
-            this.lastLocation = newLocation;
-          }
-        };
-      toolBar.addMouseListener(mouseListener);
-      toolBar.addMouseMotionListener(mouseListener);
+            @Override
+            public void mouseDragged(MouseEvent ev) {
+              Point newLocation = ev.getPoint();
+              SwingUtilities.convertPointToScreen(newLocation, ev.getComponent());
+              Component root = SwingUtilities.getRoot(rootPane);
+              root.setLocation(root.getX() + newLocation.x - this.lastLocation.x,
+                  root.getY() + newLocation.y - this.lastLocation.y);
+              this.lastLocation = newLocation;
+            }
+          };
+        toolBar.addMouseListener(mouseListener);
+        toolBar.addMouseMotionListener(mouseListener);
 
-      toolBar.addAncestorListener(new AncestorListener() {
-          private Object fullScreenListener;
+        toolBar.addAncestorListener(new AncestorListener() {
+            private Object fullScreenListener;
 
-          public void ancestorAdded(AncestorEvent ev) {
-            ((Window)SwingUtilities.getRoot(toolBar)).addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowActivated(WindowEvent ev) {
-                  toolBar.repaint();
-                }
-
-                @Override
-                public void windowDeactivated(WindowEvent ev) {
-                  toolBar.repaint();
-                }
-              });
-            toolBar.repaint();
-
-            try {
-              Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
-              this.fullScreenListener = new FullScreenAdapter() {
-                  public void windowEnteredFullScreen(FullScreenEvent ev) {
-                    fullScreen = true;
-                    toolBar.removeMouseListener(mouseListener);
-                    toolBar.removeMouseMotionListener(mouseListener);
+            public void ancestorAdded(AncestorEvent ev) {
+              ((Window)SwingUtilities.getRoot(toolBar)).addWindowListener(new WindowAdapter() {
+                  @Override
+                  public void windowActivated(WindowEvent ev) {
+                    toolBar.repaint();
                   }
 
-                  public void windowExitedFullScreen(FullScreenEvent ev) {
-                    fullScreen = false;
-                    toolBar.addMouseListener(mouseListener);
-                    toolBar.addMouseMotionListener(mouseListener);
+                  @Override
+                  public void windowDeactivated(WindowEvent ev) {
+                    toolBar.repaint();
                   }
-                };
-              FullScreenUtilities.addFullScreenListenerTo((Window)SwingUtilities.getRoot(rootPane),
-                  (FullScreenListener)this.fullScreenListener);
-            } catch (ClassNotFoundException ex) {
-              // If FullScreenUtilities isn't supported, ignore mouse listener switch
+                });
+              toolBar.repaint();
+
+              try {
+                Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
+                this.fullScreenListener = new FullScreenAdapter() {
+                    public void windowEnteredFullScreen(FullScreenEvent ev) {
+                      fullScreen = true;
+                      toolBar.removeMouseListener(mouseListener);
+                      toolBar.removeMouseMotionListener(mouseListener);
+                    }
+
+                    public void windowExitedFullScreen(FullScreenEvent ev) {
+                      fullScreen = false;
+                      toolBar.addMouseListener(mouseListener);
+                      toolBar.addMouseMotionListener(mouseListener);
+                    }
+                  };
+                FullScreenUtilities.addFullScreenListenerTo((Window)SwingUtilities.getRoot(rootPane),
+                    (FullScreenListener)this.fullScreenListener);
+              } catch (ClassNotFoundException ex) {
+                // If FullScreenUtilities isn't supported, ignore mouse listener switch
+              }
             }
-          }
 
-          public void ancestorMoved(AncestorEvent ev) {
-          }
-
-          public void ancestorRemoved(AncestorEvent ev) {
-            toolBar.removeAncestorListener(this);
-            try {
-              Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
-              FullScreenUtilities.removeFullScreenListenerFrom((Window)SwingUtilities.getRoot(rootPane),
-                  (FullScreenListener)this.fullScreenListener);
-            } catch (ClassNotFoundException ex) {
-              // If FullScreenUtilities isn't supported, ignore mouse listener switch
+            public void ancestorMoved(AncestorEvent ev) {
             }
+
+            public void ancestorRemoved(AncestorEvent ev) {
+              toolBar.removeAncestorListener(this);
+              try {
+                Class fullScreenUtilitiesClass = Class.forName("com.apple.eawt.FullScreenUtilities");
+                FullScreenUtilities.removeFullScreenListenerFrom((Window)SwingUtilities.getRoot(rootPane),
+                    (FullScreenListener)this.fullScreenListener);
+              } catch (ClassNotFoundException ex) {
+                // If FullScreenUtilities isn't supported, ignore mouse listener switch
+              }
+            }
+          });
+
+        // Empty left, bottom and right borders of sibling split pane
+        List<JSplitPane> siblings = SwingTools.findChildren((JComponent)toolBar.getParent(), JSplitPane.class);
+        if (siblings.size() >= 1) {
+          JComponent siblingComponent = siblings.get(0);
+          if (siblingComponent.getParent() == toolBar.getParent()) {
+            Border border = siblingComponent.getBorder();
+            final Insets borderInsets = border.getBorderInsets(siblingComponent);
+            final Insets filledBorderInsets = new Insets(1, 0, 0, 0);
+            siblingComponent.setBorder(new CompoundBorder(border,
+                new AbstractBorder() {
+                  @Override
+                  public Insets getBorderInsets(Component c) {
+                    return filledBorderInsets;
+                  }
+
+                  @Override
+                  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+                    Color background = c.getBackground();
+                    g.setColor(background);
+                    g.fillRect(x, y, width, 1);
+                    g.fillRect(x - borderInsets.left, y, borderInsets.left, height + borderInsets.bottom);
+                    g.fillRect(x + width, y, borderInsets.right, height + borderInsets.bottom);
+                    g.fillRect(x, y + height, width, borderInsets.bottom);
+                  }
+                }));
           }
-        });
-
-      // Empty left, bottom and right borders of sibling split pane
-      List<JSplitPane> siblings = SwingTools.findChildren((JComponent)toolBar.getParent(), JSplitPane.class);
-      if (siblings.size() >= 1) {
-        JComponent siblingComponent = siblings.get(0);
-        if (siblingComponent.getParent() == toolBar.getParent()) {
-          Border border = siblingComponent.getBorder();
-          final Insets borderInsets = border.getBorderInsets(siblingComponent);
-          final Insets filledBorderInsets = new Insets(1, 0, 0, 0);
-          siblingComponent.setBorder(new CompoundBorder(border,
-              new AbstractBorder() {
-                @Override
-                public Insets getBorderInsets(Component c) {
-                  return filledBorderInsets;
-                }
-
-                @Override
-                public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-                  Color background = c.getBackground();
-                  g.setColor(background);
-                  g.fillRect(x, y, width, 1);
-                  g.fillRect(x - borderInsets.left, y, borderInsets.left, height + borderInsets.bottom);
-                  g.fillRect(x + width, y, borderInsets.right, height + borderInsets.bottom);
-                  g.fillRect(x, y + height, width, borderInsets.bottom);
-                }
-              }));
         }
       }
     }

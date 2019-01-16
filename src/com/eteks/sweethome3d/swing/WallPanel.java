@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -37,6 +38,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
@@ -1184,10 +1186,10 @@ public class WallPanel extends JPanel implements DialogView {
       JOptionPane optionPane = new JOptionPane(this,
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
       JComponent parentComponent = SwingUtilities.getRootPane((JComponent)parentView);
-      if (parentView != null) {
-        optionPane.setComponentOrientation(parentComponent.getComponentOrientation());
-      }
       JDialog dialog = optionPane.createDialog(parentComponent, this.dialogTitle);
+      dialog.applyComponentOrientation(parentComponent != null
+          ? parentComponent.getComponentOrientation()
+          : ComponentOrientation.getOrientation(Locale.getDefault()));
       Dimension screenSize = getToolkit().getScreenSize();
       Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
       // Check dialog isn't too high

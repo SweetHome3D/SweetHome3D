@@ -68,6 +68,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -620,10 +621,13 @@ public class VideoPanel extends JPanel implements DialogView {
           float valueToTick = valueUnderMouse - (float)Math.floor(valueUnderMouse);
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
+            URL imageUrl = new ResourceURLContent(VideoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL();
+            String imageHtmlCell = "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='" + imageUrl + "'></td>";
+            String description = preferences.getLocalizedString(PhotoSizeAndQualityPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text");
+            boolean leftToRightOrientation = qualitySlider.getComponentOrientation().isLeftToRight();
+            String descriptionHtmlCell = "<td align='" + (leftToRightOrientation ? "left" : "right") + "'>" + description + "</td>";
             return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='"
-                + new ResourceURLContent(VideoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
-                + "<td>" + preferences.getLocalizedString(VideoPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
+                + (leftToRightOrientation ? imageHtmlCell + descriptionHtmlCell : descriptionHtmlCell + imageHtmlCell)
                 + "</tr></table>";
           } else {
             return null;
@@ -820,9 +824,9 @@ public class VideoPanel extends JPanel implements DialogView {
               VideoPanel.class, "bestLabel.text")).getPreferredSize().width / 2;
     int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
     return qualitySlider.getMinimum()
-        + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight()
-                          ? fastLabelOffset
-                          : bestLabelOffset))
+        + (float)(qualitySlider.getComponentOrientation().isLeftToRight()
+                    ? x - fastLabelOffset
+                    : sliderWidth - x + bestLabelOffset)
         / sliderWidth * (qualitySlider.getMaximum() - qualitySlider.getMinimum());
   }
 
@@ -904,7 +908,7 @@ public class VideoPanel extends JPanel implements DialogView {
       if (videoPanel == null) {
         preferences.removePropertyChangeListener(UserPreferences.Property.LANGUAGE, this);
       } else {
-        videoPanel.setComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+        videoPanel.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         videoPanel.setComponentTexts(preferences);
         videoPanel.setMnemonics(preferences);
       }
@@ -1027,10 +1031,10 @@ public class VideoPanel extends JPanel implements DialogView {
       final JOptionPane optionPane = new JOptionPane(this,
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
           null, new Object [] {this.createButton, this.saveButton, this.closeButton}, this.createButton);
-      if (parentView != null) {
-        optionPane.setComponentOrientation(((JComponent)parentView).getComponentOrientation());
-      }
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
+      dialog.applyComponentOrientation(parentView != null
+          ? ((JComponent)parentView).getComponentOrientation()
+          : ComponentOrientation.getOrientation(Locale.getDefault()));
       dialog.setModal(false);
 
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);

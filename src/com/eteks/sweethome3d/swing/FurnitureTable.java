@@ -546,7 +546,12 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
 
       // Show information in a popup
       Rectangle cellRectangle = getCellRect(row, column, true);
-      Point p = new Point(cellRectangle.x + cellRectangle.width, cellRectangle.y);
+      Point p = new Point(cellRectangle.x, cellRectangle.y);
+      if (getComponentOrientation().isLeftToRight()) {
+        p.translate(cellRectangle.width, 0);
+      } else {
+        p.translate(-informationPane.getWidth(), 0);
+      }
       SwingUtilities.convertPointToScreen(p, this);
       try {
         this.informationPopupRemovalListener = new AWTEventListener() {
@@ -1393,9 +1398,11 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         public Component getTableCellRendererComponent(JTable table,
              Object value, boolean isSelected, boolean hasFocus,
              int row, int column) {
-          return super.getTableCellRendererComponent(table,
+          Component component = super.getTableCellRendererComponent(table,
               value != null  ? ((HomePieceOfFurniture)value).getCatalogId()  : null,
               isSelected, hasFocus, row, column);
+          component.setComponentOrientation(table.getComponentOrientation());
+          return component;
         }
       };
     }
@@ -1413,8 +1420,10 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
           Level level = value != null
               ? piece.getLevel()
               : null;
-          return super.getTableCellRendererComponent(
+          Component component = super.getTableCellRendererComponent(
               table, level != null  ? level.getName()  : null, isSelected, hasFocus, row, column);
+          component.setComponentOrientation(table.getComponentOrientation());
+          return component;
         }
       };
     }
@@ -1465,8 +1474,10 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
               }
             }
           }
-          return super.getTableCellRendererComponent(
+          Component component = super.getTableCellRendererComponent(
               table, creator, isSelected, hasFocus, row, column);
+          component.setComponentOrientation(table.getComponentOrientation());
+          return component;
         }
       };
     }
@@ -1907,6 +1918,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
             } else {
               label.setIcon(null);
             }
+            label.setComponentOrientation(table.getComponentOrientation());
             return label;
           }
         };
@@ -1959,7 +1971,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
           this.groupRendererComponent.setBackground(table.getBackground());
         }
         this.renderedRow = row;
-
+        this.groupRendererComponent.applyComponentOrientation(table.getComponentOrientation());
         return this.groupRendererComponent;
       } else {
         if (this.noGroupRendererComponent == null) {
@@ -1990,6 +2002,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         this.noGroupRendererComponent.setBackground(this.nameRendererLabel.getBackground());
         this.noGroupRendererComponent.setBorder(this.nameRendererLabel.getBorder());
         this.nameRendererLabel.setBorder(null);
+        this.noGroupRendererComponent.applyComponentOrientation(table.getComponentOrientation());
         return this.noGroupRendererComponent;
       }
     }
@@ -2015,6 +2028,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
                   iconContent = piece.getIcon();
                 }
                 setIcon(IconManager.getInstance().getIcon(iconContent, table.getRowHeight() - table.getRowMargin(), table));
+                setHorizontalAlignment(LEFT); // Required for correct display in right to left orientation
                 setBackgroundSelectionColor(table.getSelectionBackground());
                 setBackgroundNonSelectionColor(table.getBackground());
                 setTextSelectionColor(table.getSelectionForeground());
@@ -2116,6 +2130,9 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
       prepareTree(table);
       Rectangle cellBounds = table.getCellRect(row, column, true);
       Rectangle pathBounds = this.nameRendererTree.getPathBounds(this.nameRendererTree.getPathForRow(row));
+      if (!table.getComponentOrientation().isLeftToRight()) {
+        cellBounds.x += cellBounds.width - pathBounds.x;
+      }
       cellBounds.width = pathBounds.x;
       return cellBounds;
     }

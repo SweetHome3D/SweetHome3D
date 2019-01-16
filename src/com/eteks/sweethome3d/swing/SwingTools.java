@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -457,10 +458,8 @@ public class SwingTools {
     JOptionPane optionPane = new JOptionPane(messageComponent,
         JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
     parentComponent = SwingUtilities.getRootPane(parentComponent);
-    if (parentComponent != null) {
-      optionPane.setComponentOrientation(parentComponent.getComponentOrientation());
-    }
     final JDialog dialog = optionPane.createDialog(parentComponent, title);
+    dialog.applyComponentOrientation(parentComponent.getComponentOrientation());
     if (focusedComponent != null) {
       // Add a listener that transfer focus to focusedComponent when dialog is shown
       dialog.addComponentListener(new ComponentAdapter() {
@@ -508,10 +507,10 @@ public class SwingTools {
                                        final JComponent focusedComponent) {
     JOptionPane optionPane = new JOptionPane(messageComponent, messageType, JOptionPane.DEFAULT_OPTION);
     parentComponent = SwingUtilities.getRootPane(parentComponent);
-    if (parentComponent != null) {
-      optionPane.setComponentOrientation(parentComponent.getComponentOrientation());
-    }
     final JDialog dialog = optionPane.createDialog(parentComponent, title);
+    dialog.applyComponentOrientation(parentComponent != null
+        ? parentComponent.getComponentOrientation()
+        : ComponentOrientation.getOrientation(Locale.getDefault()));
     if (focusedComponent != null) {
       // Add a listener that transfer focus to focusedComponent when dialog is shown
       dialog.addComponentListener(new ComponentAdapter() {

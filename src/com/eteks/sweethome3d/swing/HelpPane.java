@@ -210,8 +210,9 @@ public class HelpPane extends JRootPane implements HelpView {
         // Update frame title and search label with new locale
         if (helpPane.frame != null) {
           helpPane.frame.setTitle(preferences.getLocalizedString(HelpPane.class, "helpFrame.title"));
-          helpPane.frame.applyComponentOrientation(
-              ComponentOrientation.getOrientation(Locale.getDefault()));
+          helpPane.frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+          helpPane.helpEditorPane.setComponentOrientation("RTL".equals(preferences.getLocalizedString(HelpPane.class, "helpEditorPane.textOrientation"))
+              ? ComponentOrientation.RIGHT_TO_LEFT : ComponentOrientation.LEFT_TO_RIGHT);
         }
         helpPane.searchLabel.setText(SwingTools.getLocalizedLabelText(preferences, HelpPane.class, "searchLabel.text"));
         helpPane.searchTextField.setText("");
@@ -483,9 +484,9 @@ public class HelpPane extends JRootPane implements HelpView {
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      previousButton.putClientProperty("JButton.segmentPosition", "first");
+      previousButton.putClientProperty("JButton.segmentPosition", orientation.isLeftToRight() ? "first" : "last");
       nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      nextButton.putClientProperty("JButton.segmentPosition", "last");
+      nextButton.putClientProperty("JButton.segmentPosition", orientation.isLeftToRight() ? "last" : "first");
     }
     toolBar.revalidate();
   }
@@ -536,6 +537,8 @@ public class HelpPane extends JRootPane implements HelpView {
           this.preferences.getLocalizedString(HelpPane.class, "helpFrame.icon"))).getImage());
       this.frame.setTitle(this.preferences.getLocalizedString(HelpPane.class, "helpFrame.title"));
       this.frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+      this.helpEditorPane.setComponentOrientation("RTL".equals(this.preferences.getLocalizedString(HelpPane.class, "helpEditorPane.textOrientation"))
+          ? ComponentOrientation.RIGHT_TO_LEFT : ComponentOrientation.LEFT_TO_RIGHT);
       // Compute frame size and location
       computeFrameBounds(this.frame);
       // Just hide help frame when user close it

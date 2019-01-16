@@ -37,6 +37,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.util.Locale;
 
 import javax.swing.DefaultListCellRenderer;
@@ -232,10 +233,13 @@ public class PhotoSizeAndQualityPanel extends JPanel {
           float valueToTick = valueUnderMouse - (float)Math.floor(valueUnderMouse);
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
+            URL imageUrl = new ResourceURLContent(PhotoSizeAndQualityPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL();
+            String imageHtmlCell = "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='" + imageUrl + "'></td>";
+            String description = preferences.getLocalizedString(PhotoSizeAndQualityPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text");
+            boolean leftToRightOrientation = qualitySlider.getComponentOrientation().isLeftToRight();
+            String descriptionHtmlCell = "<td align='" + (leftToRightOrientation ? "left" : "right") + "'>" + description + "</td>";
             return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='"
-                + new ResourceURLContent(PhotoSizeAndQualityPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
-                + "<td>" + preferences.getLocalizedString(PhotoSizeAndQualityPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
+                + (leftToRightOrientation ? imageHtmlCell + descriptionHtmlCell : descriptionHtmlCell + imageHtmlCell)
                 + "</tr></table>";
           } else {
             return null;
@@ -315,9 +319,9 @@ public class PhotoSizeAndQualityPanel extends JPanel {
     int bestLabelOffset = 0;
     int sliderWidth = qualitySlider.getWidth() - fastLabelOffset - bestLabelOffset;
     return qualitySlider.getMinimum()
-        + (float)(x - (qualitySlider.getComponentOrientation().isLeftToRight()
-                          ? fastLabelOffset
-                          : bestLabelOffset))
+        + (float)(qualitySlider.getComponentOrientation().isLeftToRight()
+                      ? x - fastLabelOffset
+                      : sliderWidth - x + bestLabelOffset)
         / sliderWidth * (qualitySlider.getMaximum() - qualitySlider.getMinimum());
   }
 
@@ -379,7 +383,7 @@ public class PhotoSizeAndQualityPanel extends JPanel {
       if (photoPanel == null) {
         preferences.removePropertyChangeListener(UserPreferences.Property.LANGUAGE, this);
       } else {
-        photoPanel.setComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+        photoPanel.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         photoPanel.setComponentTexts(preferences);
         photoPanel.setMnemonics(preferences);
       }

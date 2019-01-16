@@ -2534,11 +2534,31 @@ public class HomePane extends JRootPane implements HomeView {
     } else if (planView3DPane == null) {
       return catalogFurniturePane;
     } else {
-      final JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, catalogFurniturePane, planView3DPane);
+      boolean leftToRightOrientation = ComponentOrientation.getOrientation(Locale.getDefault()).isLeftToRight();
+      final JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+          leftToRightOrientation ? catalogFurniturePane  : planView3DPane,
+          leftToRightOrientation ? planView3DPane  : catalogFurniturePane);
       // Set default divider location
-      mainPane.setDividerLocation(360);
-      configureSplitPane(mainPane, home,
-          MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, true, controller);
+      mainPane.setDividerLocation(leftToRightOrientation ? 360 : planView3DPane.getPreferredSize().width);
+      configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY,
+          leftToRightOrientation ? 0.3 : 0.7,
+          true, controller);
+      mainPane.addPropertyChangeListener("componentOrientation", new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (mainPane.getComponentOrientation().isLeftToRight()) {
+              mainPane.setRightComponent(null); // Needed to avoid twice the same child component
+              mainPane.setLeftComponent(catalogFurniturePane);
+              mainPane.setRightComponent(planView3DPane);
+            } else {
+              mainPane.setRightComponent(null);
+              mainPane.setLeftComponent(planView3DPane);
+              mainPane.setRightComponent(catalogFurniturePane);
+            }
+            if (mainPane.isShowing()) {
+              mainPane.setDividerLocation(mainPane.getWidth() - mainPane.getDividerLocation());
+            }
+          }
+        });
       return mainPane;
     }
   }
@@ -2562,19 +2582,19 @@ public class HomePane extends JRootPane implements HomeView {
     }
     // Add a listener to the divider that will keep invisible components hidden when the split pane is resized
     final PropertyChangeListener resizeWeightUpdater = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        if (splitPane.getDividerLocation() <= 0) {
-          splitPane.setResizeWeight(0);
-        } else if (splitPane.getDividerLocation() + splitPane.getDividerSize() >=
-            (splitPane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT
-                ? splitPane.getWidth() - splitPane.getInsets().left
-                : splitPane.getHeight() - splitPane.getInsets().top)) {
-          splitPane.setResizeWeight(1);
-        } else {
-          splitPane.setResizeWeight(defaultResizeWeight);
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (splitPane.getDividerLocation() <= 0) {
+            splitPane.setResizeWeight(0);
+          } else if (splitPane.getDividerLocation() + splitPane.getDividerSize() >=
+              (splitPane.getOrientation() == JSplitPane.HORIZONTAL_SPLIT
+                  ? splitPane.getWidth() - splitPane.getInsets().left
+                  : splitPane.getHeight() - splitPane.getInsets().top)) {
+            splitPane.setResizeWeight(1);
+          } else {
+            splitPane.setResizeWeight(defaultResizeWeight);
+          }
         }
-      }
-    };
+      };
     splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, resizeWeightUpdater);
 
     // Restore divider location previously set
@@ -2583,21 +2603,17 @@ public class HomePane extends JRootPane implements HomeView {
       splitPane.setDividerLocation(dividerLocation.intValue());
       // Update resize weight once split pane location is set
       splitPane.addAncestorListener(new AncestorListener() {
-        private boolean firstCall = true;
-
-        public void ancestorAdded(AncestorEvent ev) {
-          if (this.firstCall) {
-            this.firstCall = false;
+          public void ancestorAdded(AncestorEvent ev) {
             resizeWeightUpdater.propertyChange(null);
+            splitPane.removeAncestorListener(this);
           }
-        }
 
-        public void ancestorRemoved(AncestorEvent ev) {
-        }
+          public void ancestorRemoved(AncestorEvent ev) {
+          }
 
-        public void ancestorMoved(AncestorEvent ev) {
-        }
-      });
+          public void ancestorMoved(AncestorEvent ev) {
+          }
+        });
     }
     splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY,
         new PropertyChangeListener() {
@@ -2776,6 +2792,7 @@ public class HomePane extends JRootPane implements HomeView {
           }
           ((JSplitPane)SwingUtilities.getAncestorOfClass(JSplitPane.class, oldFurnitureCatalogView)).
               setTopComponent(splitPaneTopComponent);
+          newFurnitureCatalogView.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
           this.furnitureCatalogView = new WeakReference<JComponent>(newFurnitureCatalogView);
         }
       }
@@ -4052,7 +4069,7 @@ public class HomePane extends JRootPane implements HomeView {
     String dataModel = System.getProperty("sun.arch.data.model");
     if (dataModel != null) {
       try {
-        javaVersion += " - " + Integer.parseInt(dataModel) + " bit";
+        javaVersion += " - " + Integer.parseInt(dataModel) + "bit"; // Glue "bit" to int value to avoid rendering issues in RTL
       } catch (NumberFormatException ex) {
         // Don't display data model
       }

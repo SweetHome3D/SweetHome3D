@@ -405,7 +405,7 @@ public class PhotosPanel extends JPanel implements DialogView {
       if (photoPanel == null) {
         preferences.removePropertyChangeListener(UserPreferences.Property.LANGUAGE, this);
       } else {
-        photoPanel.setComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+        photoPanel.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         photoPanel.setComponentTexts(preferences);
         photoPanel.setMnemonics(preferences);
       }
@@ -477,10 +477,10 @@ public class PhotosPanel extends JPanel implements DialogView {
       final JOptionPane optionPane = new JOptionPane(this,
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
           null, new Object [] {this.startStopButton, this.closeButton}, this.startStopButton);
-      if (parentView != null) {
-        optionPane.setComponentOrientation(((JComponent)parentView).getComponentOrientation());
-      }
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
+      dialog.applyComponentOrientation(parentView != null
+          ? ((JComponent)parentView).getComponentOrientation()
+          : ComponentOrientation.getOrientation(Locale.getDefault()));
       dialog.setModal(false);
 
       Component homeRoot = SwingUtilities.getRoot((Component)parentView);

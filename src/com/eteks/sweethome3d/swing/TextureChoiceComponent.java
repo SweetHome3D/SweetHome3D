@@ -869,11 +869,10 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE,
           JOptionPane.OK_CANCEL_OPTION);
       JComponent parentComponent = SwingUtilities.getRootPane((JComponent)textureChoiceComponent);
-      if (parentComponent != null) {
-        optionPane.setComponentOrientation(parentComponent.getComponentOrientation());
-      }
       final JDialog dialog = optionPane.createDialog(parentComponent, controller.getDialogTitle());
-      dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+      dialog.applyComponentOrientation(parentComponent != null
+          ? parentComponent.getComponentOrientation()
+          : ComponentOrientation.getOrientation(Locale.getDefault()));
       dialog.setResizable(true);
       // Pack again because resize decorations may have changed dialog preferred size
       dialog.pack();

@@ -94,20 +94,20 @@ public class FurnitureCatalogTree extends JTree implements View {
   }
 
   /**
-   * Creates a tree controlled by <code>controller</code> that displays 
+   * Creates a tree controlled by <code>controller</code> that displays
    * <code>catalog</code> content and its selection.
    */
-  public FurnitureCatalogTree(FurnitureCatalog catalog, 
+  public FurnitureCatalogTree(FurnitureCatalog catalog,
                               FurnitureCatalogController controller) {
     this(catalog, null, controller);
   }
-  
+
   /**
-   * Creates a tree controlled by <code>controller</code> that displays 
+   * Creates a tree controlled by <code>controller</code> that displays
    * <code>catalog</code> content and its selection.
    */
-  public FurnitureCatalogTree(FurnitureCatalog catalog, 
-                              UserPreferences preferences, 
+  public FurnitureCatalogTree(FurnitureCatalog catalog,
+                              UserPreferences preferences,
                               FurnitureCatalogController controller) {
     this.preferences = preferences;
     float resolutionScale = SwingTools.getResolutionScale();
@@ -133,7 +133,7 @@ public class FurnitureCatalogTree extends JTree implements View {
   }
 
   /**
-   * Adds mouse listeners that will initiate a drag operation 
+   * Adds mouse listeners that will initiate a drag operation
    * when the user drags a piece of furniture.
    */
   private void addDragListener() {
@@ -145,9 +145,9 @@ public class FurnitureCatalogTree extends JTree implements View {
           this.canExport = SwingUtilities.isLeftMouseButton(ev)
               && getPathForLocation(ev.getX(), ev.getY()) != null;
         }
-        
+
         public void mouseDragged(MouseEvent ev) {
-          if (this.canExport 
+          if (this.canExport
               && getTransferHandler() != null) {
             getTransferHandler().exportAsDrag(FurnitureCatalogTree.this, ev, DnDConstants.ACTION_COPY);
           }
@@ -155,50 +155,50 @@ public class FurnitureCatalogTree extends JTree implements View {
           this.canExport = false;
         }
       };
-      
+
     addMouseListener(mouseListener);
     addMouseMotionListener(mouseListener);
   }
-  
-  /** 
-   * Adds the listeners that manage selection synchronization in this tree. 
+
+  /**
+   * Adds the listeners that manage selection synchronization in this tree.
    */
-  private void addSelectionListeners(final FurnitureCatalog catalog, 
+  private void addSelectionListeners(final FurnitureCatalog catalog,
                                      final FurnitureCatalogController controller) {
     final SelectionListener modelSelectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent selectionEvent) {
-          updateTreeSelectedFurniture(catalog, controller);        
+          updateTreeSelectedFurniture(catalog, controller);
         }
       };
     this.treeSelectionListener = new TreeSelectionListener () {
         public void valueChanged(TreeSelectionEvent ev) {
-          // Updates selected furniture in catalog from selected nodes in tree. 
+          // Updates selected furniture in catalog from selected nodes in tree.
           controller.removeSelectionListener(modelSelectionListener);
           controller.setSelectedFurniture(getSelectedFurniture());
           controller.addSelectionListener(modelSelectionListener);
         }
       };
-      
+
     controller.addSelectionListener(modelSelectionListener);
     getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
   }
-  
+
   /**
-   * Updates selected nodes in tree from <code>catalog</code> selected furniture. 
+   * Updates selected nodes in tree from <code>catalog</code> selected furniture.
    */
   private void updateTreeSelectedFurniture(FurnitureCatalog catalog,
                                            FurnitureCatalogController controller) {
     if (this.treeSelectionListener != null) {
       getSelectionModel().removeTreeSelectionListener(this.treeSelectionListener);
     }
-    
+
     clearSelection();
     for (CatalogPieceOfFurniture piece : controller.getSelectedFurniture()) {
       TreePath path = new TreePath(new Object [] {catalog, piece.getCategory(), piece});
       addSelectionPath(path);
       scrollRowToVisible(getRowForPath(path));
     }
-    
+
     if (this.treeSelectionListener != null) {
       getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
     }
@@ -210,7 +210,7 @@ public class FurnitureCatalogTree extends JTree implements View {
   private List<CatalogPieceOfFurniture> getSelectedFurniture() {
     // Build the list of selected furniture
     List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
-    TreePath [] selectionPaths = getSelectionPaths(); 
+    TreePath [] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
       for (TreePath path : selectionPaths) {
         // Add to selectedFurniture all the nodes that matches a piece of furniture
@@ -218,10 +218,10 @@ public class FurnitureCatalogTree extends JTree implements View {
           selectedFurniture.add((CatalogPieceOfFurniture)path.getLastPathComponent());
         }
       }
-    }   
+    }
     return selectedFurniture;
   }
-  
+
   /**
    * Adds mouse listeners to modify selected furniture and manage links in piece information.
    */
@@ -245,11 +245,11 @@ public class FurnitureCatalogTree extends JTree implements View {
             }
           }
         }
-        
+
         @Override
         public void mouseMoved(MouseEvent ev) {
           final URL url = getURLAt(ev.getPoint(), (JTree)ev.getSource());
-          EventQueue.invokeLater(new Runnable() {                  
+          EventQueue.invokeLater(new Runnable() {
               public void run() {
                 if (url != null) {
                   setCursor(handCursor);
@@ -273,8 +273,8 @@ public class FurnitureCatalogTree extends JTree implements View {
               rendererComponent.doLayout();
               for (JEditorPane pane : SwingTools.findChildren(rendererComponent, JEditorPane.class)) {
                 Rectangle rowBounds = tree.getRowBounds(row);
-                point.x -= rowBounds.x + pane.getX(); 
-                point.y -= rowBounds.y + pane.getY(); 
+                point.x -= rowBounds.x + pane.getX();
+                point.y -= rowBounds.y + pane.getY();
                 if (point.x > 0 && point.y > 0) {
                   // Search in information pane if point is over a HTML link
                   int position = pane.viewToModel(point);
@@ -320,7 +320,7 @@ public class FurnitureCatalogTree extends JTree implements View {
             scrollPane.getVerticalScrollBar().addAdjustmentListener(this.adjustmentListener);
           }
         }
-        
+
         public void ancestorRemoved(AncestorEvent event) {
           if (this.adjustmentListener != null) {
             ((JScrollPane)((JViewport)getParent()).getParent()).getVerticalScrollBar().
@@ -328,7 +328,7 @@ public class FurnitureCatalogTree extends JTree implements View {
             this.adjustmentListener = null;
           }
         }
-        
+
         public void ancestorMoved(AncestorEvent event) {
         }
       });
@@ -338,7 +338,7 @@ public class FurnitureCatalogTree extends JTree implements View {
    * Returns the tool tip displayed by this tree.
    */
   @Override
-  public JToolTip createToolTip() {    
+  public JToolTip createToolTip() {
     if (this.toolTip.isTipTextComplete()) {
       // Use toolTip object only for its text returned in getToolTipText
       return super.createToolTip();
@@ -363,7 +363,7 @@ public class FurnitureCatalogTree extends JTree implements View {
       return null;
     }
   }
-  
+
   /**
    * Cell renderer for this catalog tree.
    */
@@ -373,65 +373,77 @@ public class FurnitureCatalogTree extends JTree implements View {
     private Font                    modifiablePieceFont;
     private DefaultTreeCellRenderer nameLabel;
     private JEditorPane             informationPane;
-    
+
     public CatalogCellRenderer() {
       setLayout(null);
       this.nameLabel = new DefaultTreeCellRenderer();
       this.informationPane = new JEditorPane("text/html", null);
       this.informationPane.setOpaque(false);
       this.informationPane.setEditable(false);
+      this.informationPane.setBorder(null);
       add(this.nameLabel);
       add(this.informationPane);
     }
-    
-    public Component getTreeCellRendererComponent(JTree tree, 
-        Object value, boolean selected, boolean expanded, 
+
+    public Component getTreeCellRendererComponent(JTree tree,
+        Object value, boolean selected, boolean expanded,
         boolean leaf, int row, boolean hasFocus) {
-      // Configure name label with its icon, background and focus colors 
-      this.nameLabel.getTreeCellRendererComponent( 
+      // Configure name label with its icon, background and focus colors
+      this.nameLabel.getTreeCellRendererComponent(
           tree, value, selected, expanded, leaf, row, hasFocus);
       // Initialize fonts if not done
       if (this.defaultFont == null) {
         this.defaultFont = this.nameLabel.getFont();
-        String bodyRule = "body { font-family: " + this.defaultFont.getFamily() + "; " 
-            + "font-size: " + this.defaultFont.getSize() + "pt; " 
-            + "margin: 0; }";
+        String bodyRule = "body { font-family: " + this.defaultFont.getFamily() + "; "
+            + "font-size: " + this.defaultFont.getSize() + "pt; "
+            + "margin: 0px; }";
         ((HTMLDocument)this.informationPane.getDocument()).getStyleSheet().addRule(bodyRule);
-        this.modifiablePieceFont = 
-            new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());        
+        this.modifiablePieceFont =
+            new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
       }
       // If node is a category, change label text
       if (value instanceof FurnitureCategory) {
         this.nameLabel.setText(((FurnitureCategory)value).getName());
         this.nameLabel.setFont(this.defaultFont);
         this.informationPane.setVisible(false);
-      } 
+      }
       // Else if node is a piece of furniture, change label text and icon
       else if (value instanceof CatalogPieceOfFurniture) {
         CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)value;
         this.nameLabel.setText(piece.getName());
         this.nameLabel.setIcon(getLabelIcon(tree, piece.getIcon()));
-        this.nameLabel.setFont(piece.isModifiable() 
+        this.nameLabel.setFont(piece.isModifiable()
             ? this.modifiablePieceFont : this.defaultFont);
-        
+
         this.informationPane.setVisible(true);
         this.informationPane.setText(piece.getInformation());
+        // Force width required to further get the correct preferred height
+        Dimension informationPreferredSize = this.informationPane.getPreferredSize();
+        this.informationPane.setSize(informationPreferredSize.width, 1000);
       }
       return this;
     }
-    
+
     @Override
     public void doLayout() {
       Dimension namePreferredSize = this.nameLabel.getPreferredSize();
       this.nameLabel.setSize(namePreferredSize);
       if (this.informationPane.isVisible()) {
         Dimension informationPreferredSize = this.informationPane.getPreferredSize();
-        this.informationPane.setBounds(namePreferredSize.width + 2, 
-            Math.max(0, (namePreferredSize.height - informationPreferredSize.height) / 2),
-            informationPreferredSize.width, namePreferredSize.height);
+        int y = Math.max(0, (namePreferredSize.height - informationPreferredSize.height) / 2);
+        if (nameLabel.getComponentOrientation().isLeftToRight()) {
+          this.informationPane.setBounds(namePreferredSize.width, y,
+              informationPreferredSize.width, namePreferredSize.height);
+        } else {
+          this.informationPane.setBounds(0, y,
+              informationPreferredSize.width, namePreferredSize.height);
+          this.nameLabel.setLocation(informationPreferredSize.width + 2, 0);
+        }
+      } else {
+        this.nameLabel.setLocation(0, 0);
       }
     }
-    
+
     @Override
     public Dimension getPreferredSize() {
       Dimension preferredSize = this.nameLabel.getPreferredSize();
@@ -440,24 +452,24 @@ public class FurnitureCatalogTree extends JTree implements View {
       }
       return preferredSize;
     }
-    
+
     /**
      * The following methods are overridden for performance reasons.
      */
     @Override
-    public void revalidate() {      
-    }
-    
-    @Override
-    public void repaint(long tm, int x, int y, int width, int height) {      
+    public void revalidate() {
     }
 
     @Override
-    public void repaint(Rectangle r) {      
+    public void repaint(long tm, int x, int y, int width, int height) {
     }
 
     @Override
-    public void repaint() {      
+    public void repaint(Rectangle r) {
+    }
+
+    @Override
+    public void repaint() {
     }
 
     /**
@@ -477,23 +489,23 @@ public class FurnitureCatalogTree extends JTree implements View {
           ? tree.getRowHeight()
           : DEFAULT_ICON_HEIGHT;
     }
-    
+
     @Override
     protected void paintChildren(Graphics g) {
       // Force text anti aliasing on texts
-      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
           RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
       super.paintChildren(g);
     }
   }
-  
+
   /**
-   * Tree model adaptor to Catalog / Category / PieceOfFurniture classes.  
+   * Tree model adaptor to Catalog / Category / PieceOfFurniture classes.
    */
   private static class CatalogTreeModel implements TreeModel {
     private FurnitureCatalog        catalog;
     private List<TreeModelListener> listeners;
-    
+
     public CatalogTreeModel(FurnitureCatalog catalog) {
       this.catalog = catalog;
       this.listeners = new ArrayList<TreeModelListener>(2);
@@ -518,8 +530,8 @@ public class FurnitureCatalogTree extends JTree implements View {
       } else if (parent instanceof FurnitureCategory) {
         return ((FurnitureCategory)parent).getFurnitureCount();
       } else {
-        // Shouldn't be necessary for other tree items, but javax.swing.plaf.basic.BasicTreeUI$Actions.traverse 
-        // might call getChildCount even for tree leaves   
+        // Shouldn't be necessary for other tree items, but javax.swing.plaf.basic.BasicTreeUI$Actions.traverse
+        // might call getChildCount even for tree leaves
         return 0;
       }
     }
@@ -547,9 +559,9 @@ public class FurnitureCatalogTree extends JTree implements View {
     public void removeTreeModelListener(TreeModelListener l) {
       this.listeners.remove(l);
     }
-    
+
     private void fireTreeNodesInserted(TreeModelEvent treeModelEvent) {
-      // Work on a copy of listeners to ensure a listener 
+      // Work on a copy of listeners to ensure a listener
       // can modify safely listeners list
       TreeModelListener [] listeners = this.listeners.
           toArray(new TreeModelListener [this.listeners.size()]);
@@ -559,7 +571,7 @@ public class FurnitureCatalogTree extends JTree implements View {
     }
 
     private void fireTreeNodesRemoved(TreeModelEvent treeModelEvent) {
-      // Work on a copy of listeners to ensure a listener 
+      // Work on a copy of listeners to ensure a listener
       // can modify safely listeners list
       TreeModelListener [] listeners = this.listeners.
           toArray(new TreeModelListener [this.listeners.size()]);
@@ -567,10 +579,10 @@ public class FurnitureCatalogTree extends JTree implements View {
         listener.treeNodesRemoved(treeModelEvent);
       }
     }
-    
+
     /**
      * Catalog furniture listener bound to this tree model with a weak reference to avoid
-     * strong link between catalog and this tree.  
+     * strong link between catalog and this tree.
      */
     private static class CatalogFurnitureListener implements CollectionListener<CatalogPieceOfFurniture> {
       private WeakReference<CatalogTreeModel>  catalogTreeModel;
@@ -578,7 +590,7 @@ public class FurnitureCatalogTree extends JTree implements View {
       public CatalogFurnitureListener(CatalogTreeModel catalogTreeModel) {
         this.catalogTreeModel = new WeakReference<CatalogTreeModel>(catalogTreeModel);
       }
-      
+
       public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
         // If catalog tree model was garbage collected, remove this listener from catalog
         CatalogTreeModel catalogTreeModel = this.catalogTreeModel.get();
@@ -592,8 +604,8 @@ public class FurnitureCatalogTree extends JTree implements View {
               if (piece.getCategory().getFurnitureCount() == 1) {
                 // Fire nodes inserted for new category
                 catalogTreeModel.fireTreeNodesInserted(new TreeModelEvent(catalogTreeModel,
-                    new Object [] {catalog}, 
-                    new int [] {Collections.binarySearch(catalog.getCategories(), piece.getCategory())}, 
+                    new Object [] {catalog},
+                    new int [] {Collections.binarySearch(catalog.getCategories(), piece.getCategory())},
                     new Object [] {piece.getCategory()}));
               } else {
                 // Fire nodes inserted for new piece
@@ -612,7 +624,7 @@ public class FurnitureCatalogTree extends JTree implements View {
                     new Object [] {piece.getCategory()}));
               } else {
                 // Fire nodes removed for deleted piece
-                catalogTreeModel.fireTreeNodesRemoved(new TreeModelEvent(catalogTreeModel, 
+                catalogTreeModel.fireTreeNodesRemoved(new TreeModelEvent(catalogTreeModel,
                     new Object [] {catalog, piece.getCategory()},
                     new int [] {ev.getIndex()},
                     new Object [] {piece}));
