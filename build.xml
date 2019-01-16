@@ -525,8 +525,8 @@
   </target>
 
   <!-- Builds Sweet Home 3D Windows launcher in install/windows/build directory.
-       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_181,
-                 64 bit JRE 1.8.0_181 and launch4j installed in their default location -->
+       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_202,
+                 64 bit JRE 1.8.0_202 and launch4j installed in their default location -->
   <target name="windowsLauncher" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Windows launcher">
     <!-- Copy SweetHome3D JARs and Windows Java 3D DLLs and JARs for Java 3D
@@ -587,7 +587,7 @@
     <!-- Copy 32 bit JRE to install/windows/build/jre/x86... excluding files mentioned
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x86">
-      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_181">
+      <fileset dir="C:\Program Files (x86)\Java\jre1.8.0_202">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -652,7 +652,7 @@
     <!-- Copy 64 bit JRE to install/windows/build/jre/x64... excluding files mentioned
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
     <copy todir="install/windows/build/jre8/x64">
-      <fileset dir="C:\Program Files\Java\jre1.8.0_181">
+      <fileset dir="C:\Program Files\Java\jre1.8.0_202">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -732,20 +732,20 @@
     </exec>
 
     <!-- Pack largest jars -->
-    <exec executable="C:\Program Files\Java\jre1.8.0_181\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_202\bin\pack200.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.pack.gz"/>
       <arg value="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\lib\SweetHome3D.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_181\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_202\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
     </exec>
     <delete file="${basedir}\install\windows\build\jre8\x86\lib\rt.jar"/>
 
-    <exec executable="C:\Program Files\Java\jre1.8.0_181\bin\pack200.exe" failonerror="yes">
+    <exec executable="C:\Program Files\Java\jre1.8.0_202\bin\pack200.exe" failonerror="yes">
       <arg value="-J-Xmx512m"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.pack.gz"/>
       <arg value="${basedir}\install\windows\build\jre8\x64\lib\rt.jar"/>
@@ -755,8 +755,8 @@
 
   <!-- Builds install/SweetHome3D-version-windows.exe installer able to install SweetHome3D.exe
        with a Windows JRE and Sweet Home 3D libraries.
-       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_181, 
-                 64 bit JRE 1.8.0_181, launch4j and Inno Setup Unicode installed in their default location -->
+       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_202, 
+                 64 bit JRE 1.8.0_202, launch4j and Inno Setup Unicode installed in their default location -->
   <target name="windowsInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
     <!-- Create SweetHome3D-version-windows.exe with Inno Setup Unicode -->
@@ -779,8 +779,8 @@
 
   <!-- Builds install/SweetHome3D-version-windows.exe signed installer able to install SweetHome3D.exe
        with a Windows JRE and Sweet Home 3D libraries.
-       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_181, 
-                 64 bit JRE 1.8.0_181, launch4j, Inno Setup Unicode and SignTool included in Windows platform SDK
+       CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_202, 
+                 64 bit JRE 1.8.0_202, launch4j, Inno Setup Unicode and SignTool included in Windows platform SDK
                  installed in their default location -->
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
@@ -948,7 +948,7 @@
   </target>
 
   <!-- Builds Sweet Home 3D Mac OS X application bundle in install/macosx/SweetHome3D-version directory. 
-       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_181 installed in its default location -->
+       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_202 installed in its default location -->
   <target name="macosxBundle" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds Sweet Home 3D Mac OS X application bundle">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
@@ -1001,7 +1001,7 @@
     <!-- Copy JRE included in JDK to install/macosx/SweetHome3D-version/Contents/Plugins/Java.runtime/Contents/Home   
          excluding unnecessary files mentioned in JDK README.TXT file -->
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/Java.runtime/Contents/Home/jre">
-      <fileset dir="/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home/jre">
+      <fileset dir="/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home/jre">
         <include name="**"/>
         <exclude name="lib/ext/sunec.jar"/>
         <exclude name="lib/ext/sunpkcs11.jar"/>
@@ -1051,7 +1051,7 @@
 
   <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app
        and Sweet Home 3D libraries.
-       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_181 
+       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_202 
                  installed in its default location and Disk Utility -->
   <target name="macosxInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
@@ -1075,7 +1075,7 @@
 
   <!-- Builds install/SweetHome3D-version-macosx.dmg signed archive that contains SweetHome3D.app
        and Sweet Home 3D libraries.
-       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_181 installed in 
+       CAUTION : May be run only under Mac OS X and requires 64 bit JDK 1.8.0_202 installed in 
                  its default location, hdiutil, codesign and a certificate imported in Keychain Access -->
   <target name="macosxSignedInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
@@ -1115,7 +1115,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux 32 bit JRE installed in jre1.8.0_181 -->
+       CAUTION : Requires a Linux 32 bit JRE installed in jre1.8.0_202 -->
   <target name="linux32Installer" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version-linux-x86.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D
@@ -1169,7 +1169,7 @@
     <!-- Copy JRE to install/linux/x86/SweetHome3D-version/jre... excluding files mentioned
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/x86/SweetHome3D-${version}/jre8">
-      <fileset dir="jre1.8.0_181">
+      <fileset dir="jre1.8.0_202">
         <include name="**"/>
         <exclude name="lib/ext/sunec.jar"/>
         <exclude name="lib/ext/sunpkcs11.jar"/>
@@ -1231,7 +1231,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x64.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux 64 bit JRE installed in jre1.8.0_181 -->
+       CAUTION : Requires a Linux 64 bit JRE installed in jre1.8.0_202 -->
   <target name="linux64Installer" depends="application,furniture,textures,examples,help,jogl-java3d"
           description="Builds install/SweetHome3D-version-linux-x64.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D
@@ -1287,7 +1287,7 @@
     <!-- Copy JRE to install/linux/x64/SweetHome3D-version/jre... excluding files mentioned
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/x64/SweetHome3D-${version}/jre8">
-      <fileset dir="jre1.8.0_181/">
+      <fileset dir="jre1.8.0_202/">
         <include name="**"/>
         <exclude name="lib/ext/sunec.jar"/>
         <exclude name="lib/ext/sunpkcs11.jar"/>
