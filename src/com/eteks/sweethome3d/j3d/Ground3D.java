@@ -245,6 +245,9 @@ public class Ground3D extends Object3DBranch {
     }
 
     Area areaRemovedFromGround = new Area();
+    if (backgroundImageRectangle != null) {
+      areaRemovedFromGround.add(new Area(backgroundImageRectangle));
+    }
     // Compute the union of the rooms, the underground walls and furniture areas
     Map<Level, LevelAreas> undergroundLevelAreas = new HashMap<Level, LevelAreas>();
     for (Room room : home.getRooms()) {
@@ -365,9 +368,7 @@ public class Ground3D extends Object3DBranch {
       addAreaGeometry(groundShape, groundTexture, outsideGroundArea, 0);
     }
     groundArea.subtract(areaRemovedFromGround);
-    if (backgroundImageRectangle != null) {
-      groundArea.subtract(new Area(backgroundImageRectangle));
-    }
+
     // Add level areas for ground level at index 0 because it's the highest level in the list
     undergroundAreas.add(0, new LevelAreas(new Level("Ground", 0, 0, 0), groundArea));
     float previousLevelElevation = 0;
