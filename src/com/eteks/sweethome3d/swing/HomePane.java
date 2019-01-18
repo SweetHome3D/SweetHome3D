@@ -4022,7 +4022,7 @@ public class HomePane extends JRootPane implements HomeView {
   public void showAboutDialog() {
     final JTextComponent messagePane = createEditorPane(getAboutMessage());
     messagePane.setOpaque(false);
-    // Run a time that will update About message after a garbage collection
+    // Run a timer that will update About message after a garbage collection
     Timer updateTimer = new Timer(1000, new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           if (messagePane.isShowing()) {
@@ -4078,7 +4078,9 @@ public class HomePane extends JRootPane implements HomeView {
     float usedMemoryGigaByte = Math.max(0.1f, (runtime.totalMemory() - runtime.freeMemory()) / 1073741824f);
     float maxMemoryGigaByte = Math.max(0.1f, (runtime.maxMemory()) / 1073741824f);
     DecimalFormat format = new DecimalFormat("#.#");
-    javaVersion += " - " + format.format(usedMemoryGigaByte) + " / " + format.format(maxMemoryGigaByte) + " GB max";
+    javaVersion += " - " + format.format(usedMemoryGigaByte)
+        + " / " + format.format(maxMemoryGigaByte) + " "
+        + (Locale.FRENCH.getLanguage().equals(Locale.getDefault().getLanguage()) ? "Go" : "GB");
     String java3dVersion = "<i>not available</i>";
     try {
       if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
