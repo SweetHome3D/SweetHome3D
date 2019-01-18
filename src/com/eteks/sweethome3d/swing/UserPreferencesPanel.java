@@ -180,7 +180,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.languageComboBox.setSelectedItem(controller.getLanguage());
       this.languageComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            controller.setLanguage((String)languageComboBox.getSelectedItem());
+            if (ev.getStateChange() == ItemEvent.SELECTED) {
+              controller.setLanguage((String)languageComboBox.getSelectedItem());
+            }
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.LANGUAGE,
@@ -231,7 +233,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.unitComboBox.setSelectedItem(controller.getUnit());
       this.unitComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            controller.setUnit((LengthUnit)unitComboBox.getSelectedItem());
+            if (ev.getStateChange() == ItemEvent.SELECTED) {
+              controller.setUnit((LengthUnit)unitComboBox.getSelectedItem());
+            }
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
@@ -286,7 +290,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.currencyComboBox.setSelectedItem(controller.getCurrency());
       this.currencyComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            controller.setCurrency((String)currencyComboBox.getSelectedItem());
+            if (ev.getStateChange() == ItemEvent.SELECTED) {
+              controller.setCurrency((String)currencyComboBox.getSelectedItem());
+            }
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.CURRENCY,
@@ -487,9 +493,11 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.defaultFontNameComboBox = new FontNameComboBox(preferences);
       this.defaultFontNameComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            String selectedItem = (String)defaultFontNameComboBox.getSelectedItem();
-            controller.setDefaultFontName(selectedItem == FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME
-                ? null : selectedItem);
+            if (ev.getStateChange() == ItemEvent.SELECTED) {
+              String selectedItem = (String)defaultFontNameComboBox.getSelectedItem();
+              controller.setDefaultFontName(selectedItem == FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME
+                  ? null : selectedItem);
+            }
           }
         });
       PropertyChangeListener fontNameChangeListener = new PropertyChangeListener() {
@@ -530,7 +538,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
         this.iconSizeComboBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-              controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
+              if (ev.getStateChange() == ItemEvent.SELECTED) {
+                controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
+              }
             }
           });
         controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE,
@@ -617,7 +627,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           : controller.getWallPattern());
       this.newWallPatternComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            controller.setNewWallPattern((TextureImage)newWallPatternComboBox.getSelectedItem());
+            if (ev.getStateChange() == ItemEvent.SELECTED) {
+              controller.setNewWallPattern((TextureImage)newWallPatternComboBox.getSelectedItem());
+            }
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_PATTERN,
@@ -636,7 +648,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
       this.wallPatternComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
+            if (ev.getStateChange() == ItemEvent.SELECTED) {
+              controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
+            }
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.WALL_PATTERN,
@@ -846,18 +860,18 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
             UserPreferences.Property.SUPPORTED_LANGUAGES, this);
       } else {
-        JComboBox languageComboBox = userPreferencesPanel.languageComboBox;
+        final JComboBox languageComboBox = userPreferencesPanel.languageComboBox;
         List<String> oldSupportedLanguages = Arrays.asList((String [])ev.getOldValue());
         String [] supportedLanguages = (String [])ev.getNewValue();
         languageComboBox.setModel(new DefaultComboBoxModel(supportedLanguages));
+        languageComboBox.setSelectedItem(userPreferencesPanel.controller.getLanguage());
         // Select the first language added to supported languages
-        for (String language : supportedLanguages) {
+        for (final String language : supportedLanguages) {
           if (!oldSupportedLanguages.contains(language)) {
             languageComboBox.setSelectedItem(language);
-            return;
+            break;
           }
         }
-        languageComboBox.setSelectedItem(userPreferencesPanel.controller.getLanguage());
       }
     }
   }
