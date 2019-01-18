@@ -1430,15 +1430,23 @@
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
-    <!-- Copy Mac OS X application bundle using a different Info.plist file -->
-    <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app">
+    <!-- Copy Mac OS X 10.6 application bundle using a different Info.plist file -->
+    <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx-10.6.app">
       <fileset dir="install/macosx/10.6/Sweet Home 3D"/>
     </copy>
-    <copy file="install/portable/Info.plist" todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents" overwrite="true"/>
+    <copy file="install/portable/Info-10.6.plist" tofile="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx-10.6.app/Contents/Info.plist" overwrite="true"/>
+    <!-- Change executable permission of SweetHome3D lost during copy task -->
+    <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx-10.6.app/Contents/MacOS/SweetHome3D"/>
+
+    <!-- Copy Mac OS X application bundle using a different Info.plist file -->
+    <copy todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app">
+      <fileset dir="install/macosx/Sweet Home 3D"/>
+    </copy>
+    <copy file="install/portable/SweetHome3D.cfg" todir="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/Java" overwrite="true"/>
     <!-- Change executable permission of SweetHome3D lost during copy task -->
     <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/SweetHome3D"/>
 
-    <!-- Copy Linux command files -->
+  	<!-- Copy Linux command files -->
     <copy file="install/portable/SweetHome3D-linux-x86" todir="install/portable/SweetHome3D-${version}-portable"/>
     <copy file="install/portable/SweetHome3D-linux-x64" todir="install/portable/SweetHome3D-${version}-portable"/>
     <!-- Change executable permission of command files lost during copy task -->
@@ -1449,6 +1457,7 @@
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/windows/x64"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/i586"/>
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/linux/x64"/>
+    <mkdir dir="install/portable/SweetHome3D-${version}-portable/jre/macosx/x64"/>
 
     <!-- Prepare data directories for SH3F, SH3T, SH3L and SH3P files -->
     <mkdir dir="install/portable/SweetHome3D-${version}-portable/data/furniture"/>

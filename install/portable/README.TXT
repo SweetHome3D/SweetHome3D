@@ -8,12 +8,13 @@ To use Sweet Home 3D, simply copy the current folder on a fixed or a removable d
 and run the application matching your operating system:
 - SweetHome3D-windows-x86 for Windows 32 bits
 - SweetHome3D-windows-x64 for Windows 64 bits
-- SweetHome3D-macosx      for Mac OS X
+- SweetHome3D-macosx-10.6 for Mac OS X 10.6 and 10.7
+- SweetHome3D-macosx      for Mac OS X 10.8.3 and superior
 - SweetHome3D-linux-x86   for Linux 32 bits
 - SweetHome3D-linux-x64   for Linux 64 bits
 
 This version comes with the 1200+ pieces of furniture available at:
-http://www.sweethome3d.com/importModels.jsp
+http://www.sweethome3d.com/freeModels.jsp
 and the translations proposed by contributors at:
 http://www.sweethome3d.com/translations.jsp
 Note that some recent pieces of furniture might not be translated in your language.
@@ -29,7 +30,7 @@ Note also that the "data" sub folder matches the default configuration folder us
 by the other versions of Sweet Home 3D (installer, JAR executable file and Java Web 
 Start versions), i.e.:
 - C:\Users\user\AppData\Roaming\eTeks\Sweet Home 3D 
-  folder under Windows Vista / 7,
+  folder under Windows Vista / 7 / 8 / 10,
 - C:\Documents and Settings\user\Application Data\eTeks\Sweet Home 3D 
   folder under Windows XP and previous versions of Windows,
 - Library/Application Support/eTeks/Sweet Home 3D
