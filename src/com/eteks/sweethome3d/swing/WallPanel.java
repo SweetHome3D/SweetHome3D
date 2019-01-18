@@ -48,6 +48,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JEditorPane;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -121,7 +122,7 @@ public class WallPanel extends JPanel implements DialogView {
   private JSpinner             thicknessSpinner;
   private JLabel               arcExtentLabel;
   private JSpinner             arcExtentSpinner;
-  private JLabel               wallOrientationLabel;
+  private JEditorPane          wallOrientationLabel;
   private String               dialogTitle;
 
   /**
@@ -767,11 +768,13 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
-    this.wallOrientationLabel = new JLabel(preferences.getLocalizedString(
+    this.wallOrientationLabel = new JEditorPane("text/html", preferences.getLocalizedString(
             WallPanel.class, "wallOrientationLabel.text",
-            new ResourceURLContent(WallPanel.class, "resources/wallOrientation.png").getURL()),
-        JLabel.CENTER);
+            new ResourceURLContent(WallPanel.class, "resources/wallOrientation.png").getURL()).replace("<html>", "<html><center>"));
+    this.wallOrientationLabel.setEditable(false);
+    this.wallOrientationLabel.setOpaque(false);
     // Use same font for label as tooltips
+    this.wallOrientationLabel.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     this.wallOrientationLabel.setFont(UIManager.getFont("ToolTip.font"));
 
     this.dialogTitle = preferences.getLocalizedString(WallPanel.class, "wall.title");
