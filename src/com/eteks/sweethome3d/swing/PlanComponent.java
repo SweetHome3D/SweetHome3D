@@ -5412,7 +5412,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private Rectangle2D getSelectionBounds(boolean includeCamera) {
     Graphics2D g = (Graphics2D)getGraphics();
-    setRenderingHints(g);
+    if (g != null) {
+      setRenderingHints(g);
+    }
     if (includeCamera) {
       return getItemsBounds(g, this.home.getSelectedItems());
     } else {
