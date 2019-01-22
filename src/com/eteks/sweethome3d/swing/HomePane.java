@@ -2539,7 +2539,7 @@ public class HomePane extends JRootPane implements HomeView {
           leftToRightOrientation ? catalogFurniturePane  : planView3DPane,
           leftToRightOrientation ? planView3DPane  : catalogFurniturePane);
       // Set default divider location
-      mainPane.setDividerLocation(leftToRightOrientation ? 360 : planView3DPane.getPreferredSize().width);
+      mainPane.setDividerLocation((int)((leftToRightOrientation ? 360 : 670) * SwingTools.getResolutionScale()));
       configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY,
           leftToRightOrientation ? 0.3 : 0.7,
           true, controller);
