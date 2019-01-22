@@ -459,7 +459,9 @@ public class SwingTools {
         JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
     parentComponent = SwingUtilities.getRootPane(parentComponent);
     final JDialog dialog = optionPane.createDialog(parentComponent, title);
-    dialog.applyComponentOrientation(parentComponent.getComponentOrientation());
+    dialog.applyComponentOrientation(parentComponent != null
+        ? parentComponent.getComponentOrientation()
+        : ComponentOrientation.getOrientation(Locale.getDefault()));
     if (focusedComponent != null) {
       // Add a listener that transfer focus to focusedComponent when dialog is shown
       dialog.addComponentListener(new ComponentAdapter() {
