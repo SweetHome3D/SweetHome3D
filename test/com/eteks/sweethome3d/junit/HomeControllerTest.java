@@ -72,8 +72,6 @@ import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
-import abbot.tester.JComponentTester;
-
 /**
  * Tests home controller.
  * @author Emmanuel Puybaret
@@ -122,7 +120,6 @@ public class HomeControllerTest extends TestCase {
 
     // 3. Select the first piece in table, delete it
     furnitureTable.setRowSelectionInterval(0, 0);
-    new JComponentTester().waitForIdle();
     homeController.getFurnitureController().deleteSelection();
     // Check the table contains only one piece
     assertEquals("Table doesn't contain 1 piece",
@@ -153,7 +150,6 @@ public class HomeControllerTest extends TestCase {
 
     // 4. Select the first piece in table and delete it
     furnitureTable.setRowSelectionInterval(0, 0);
-    new JComponentTester().waitForIdle();
     runAction(HomePane.ActionType.DELETE_HOME_FURNITURE);
     //  Check Add and Undo actions are enabled
     assertActionsEnabled(true, false, true, false);

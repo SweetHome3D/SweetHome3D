@@ -32,6 +32,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -204,6 +205,12 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         }
       };
 
+    // Add a mouse listener which tracks whether selection toggling key is pressed
+    // and ensure this listener is the first one called
+    MouseListener[] mouseListeners = getMouseListeners();
+    for (MouseListener mouseListener : mouseListeners) {
+      removeMouseListener(mouseListener);
+    }
     addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent ev) {
@@ -215,33 +222,32 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
           mousePressed(ev);
         }
       });
+    for (MouseListener mouseListener : mouseListeners) {
+      addMouseListener(mouseListener);
+    }
+
     this.tableSelectionListener = new ListSelectionListener () {
         public void valueChanged(ListSelectionEvent ev) {
-          // Take into account selection change later to ensure that selectionToggling is updated first
-          EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                selectionByUser = true;
-                int [] selectedRows = getSelectedRows();
-                // Build the list of selected furniture
-                List<HomePieceOfFurniture> selectedFurniture = new ArrayList<HomePieceOfFurniture>(selectedRows.length);
-                List<HomePieceOfFurniture> ignoredGroupsFurniture = new ArrayList<HomePieceOfFurniture>();
-                TableModel tableModel = getModel();
-                for (int index : selectedRows) {
-                  HomePieceOfFurniture piece = (HomePieceOfFurniture)tableModel.getValueAt(index, 0);
-                  if (!ignoredGroupsFurniture.contains(piece)) {
-                    // Add to selectedFurniture table model value that stores piece
-                    selectedFurniture.add(piece);
-                    if (piece instanceof HomeFurnitureGroup) {
-                      ignoredGroupsFurniture.addAll(((HomeFurnitureGroup)piece).getAllFurniture());
-                    }
-                  }
-                }
-                // Set the new selection in home with controller
-                controller.setSelectedFurniture(new ArrayList<HomePieceOfFurniture>(selectedFurniture), !selectionToggling);
-                selectionByUser = false;
-                selectionToggling = false;
+          selectionByUser = true;
+          int [] selectedRows = getSelectedRows();
+          // Build the list of selected furniture
+          List<HomePieceOfFurniture> selectedFurniture = new ArrayList<HomePieceOfFurniture>(selectedRows.length);
+          List<HomePieceOfFurniture> ignoredGroupsFurniture = new ArrayList<HomePieceOfFurniture>();
+          TableModel tableModel = getModel();
+          for (int index : selectedRows) {
+            HomePieceOfFurniture piece = (HomePieceOfFurniture)tableModel.getValueAt(index, 0);
+            if (!ignoredGroupsFurniture.contains(piece)) {
+              // Add to selectedFurniture table model value that stores piece
+              selectedFurniture.add(piece);
+              if (piece instanceof HomeFurnitureGroup) {
+                ignoredGroupsFurniture.addAll(((HomeFurnitureGroup)piece).getAllFurniture());
               }
-            });
+            }
+          }
+          // Set the new selection in home with controller
+          controller.setSelectedFurniture(new ArrayList<HomePieceOfFurniture>(selectedFurniture), !selectionToggling);
+          selectionByUser = false;
+          selectionToggling = false;
         }
       };
     getSelectionModel().addListSelectionListener(this.tableSelectionListener);
