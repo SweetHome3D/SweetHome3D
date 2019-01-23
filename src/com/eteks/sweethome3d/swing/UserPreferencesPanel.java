@@ -233,9 +233,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.unitComboBox.setSelectedItem(controller.getUnit());
       this.unitComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            if (ev.getStateChange() == ItemEvent.SELECTED) {
-              controller.setUnit((LengthUnit)unitComboBox.getSelectedItem());
-            }
+            controller.setUnit((LengthUnit)unitComboBox.getSelectedItem());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
@@ -290,9 +288,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.currencyComboBox.setSelectedItem(controller.getCurrency());
       this.currencyComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            if (ev.getStateChange() == ItemEvent.SELECTED) {
-              controller.setCurrency((String)currencyComboBox.getSelectedItem());
-            }
+            controller.setCurrency((String)currencyComboBox.getSelectedItem());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.CURRENCY,
@@ -493,11 +489,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.defaultFontNameComboBox = new FontNameComboBox(preferences);
       this.defaultFontNameComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            if (ev.getStateChange() == ItemEvent.SELECTED) {
-              String selectedItem = (String)defaultFontNameComboBox.getSelectedItem();
-              controller.setDefaultFontName(selectedItem == FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME
-                  ? null : selectedItem);
-            }
+            String selectedItem = (String)defaultFontNameComboBox.getSelectedItem();
+            controller.setDefaultFontName(selectedItem == FontNameComboBox.DEFAULT_SYSTEM_FONT_NAME
+                ? null : selectedItem);
           }
         });
       PropertyChangeListener fontNameChangeListener = new PropertyChangeListener() {
@@ -538,9 +532,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.iconSizeComboBox.setSelectedItem(controller.getFurnitureModelIconSize());
         this.iconSizeComboBox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-              if (ev.getStateChange() == ItemEvent.SELECTED) {
-                controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
-              }
+              controller.setFurnitureModelIconSize((Integer)iconSizeComboBox.getSelectedItem());
             }
           });
         controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_MODEL_ICON_SIZE,
@@ -627,9 +619,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           : controller.getWallPattern());
       this.newWallPatternComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            if (ev.getStateChange() == ItemEvent.SELECTED) {
-              controller.setNewWallPattern((TextureImage)newWallPatternComboBox.getSelectedItem());
-            }
+            controller.setNewWallPattern((TextureImage)newWallPatternComboBox.getSelectedItem());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_PATTERN,
@@ -648,9 +638,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
       this.wallPatternComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            if (ev.getStateChange() == ItemEvent.SELECTED) {
-              controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
-            }
+            controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
           }
         });
       controller.addPropertyChangeListener(UserPreferencesController.Property.WALL_PATTERN,
