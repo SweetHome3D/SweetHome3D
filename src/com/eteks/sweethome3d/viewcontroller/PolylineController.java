@@ -205,7 +205,7 @@ public class PolylineController implements Controller {
           }
         }
       }
-      this.dashPattern = dashPattern;
+      setDashPattern(dashPattern);
 
       if (dashPattern != null) {
         Polyline.DashStyle dashStyle = firstPolyline.getDashStyle();
@@ -639,7 +639,7 @@ public class PolylineController implements Controller {
       if (dashStyle != null) {
         polyline.setDashStyle(dashStyle);
       }
-      if (dashPattern != null) {
+      if (dashStyle == Polyline.DashStyle.CUSTOMIZED && dashPattern != null) {
         polyline.setDashPattern(dashPattern);
       }
       if (dashOffset != null) {
