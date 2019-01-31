@@ -64,6 +64,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
+import java.awt.im.InputContext;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -927,7 +928,8 @@ public class HomePane extends JRootPane implements HomeView {
 
       @Override
       public void keyTyped(KeyEvent ev) {
-        if (ev.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+        char typedKey = ev.getKeyChar();
+        if (typedKey != KeyEvent.CHAR_UNDEFINED) {
           // This listener manages accelerator keys that may require the use of shift key
           // depending on keyboard layout (like + - or ?)
           ActionMap actionMap = getActionMap();
@@ -943,10 +945,24 @@ public class HomePane extends JRootPane implements HomeView {
             specialKeyActions.add(actionMap.get(ActionType.PREFERENCES));
           }
           int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
+          if (OperatingSystem.isMacOSX()
+              && ev.isMetaDown()) {
+            // Fix + typed key for English and other keyboards layout
+            Locale inputLocale = InputContext.getInstance().getLocale();
+            boolean shiftDown = ev.isShiftDown();
+            if (inputLocale != null
+                && (typedKey == '=' && shiftDown && Arrays.binarySearch(new String [] {"en", "es", "he", "ja", "ko", "lv", "nl", "pt", "ro", "uk"}, inputLocale.getLanguage()) >= 0
+                    || typedKey == '3' && shiftDown && ev.getKeyCode() != KeyEvent.VK_NUMPAD3 && Arrays.binarySearch(new String [] {"bg", "hu"}, inputLocale.getLanguage()) >= 0
+                    || typedKey == '1' && !shiftDown && ev.getKeyCode() != KeyEvent.VK_NUMPAD1 && Arrays.binarySearch(new String [] {"cs", "sk"}, inputLocale.getLanguage()) >= 0
+                    || typedKey == '5' && shiftDown  && ev.getKeyCode() != KeyEvent.VK_NUMPAD5 && "pl".equals(inputLocale.getLanguage())
+                    || typedKey == '=' && !shiftDown && "sr".equals(inputLocale.getLanguage()))) {
+              typedKey = '+';
+            }
+          }
           for (Action specialKeyAction : specialKeyActions) {
             KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
             if (actionKeyStroke != null
-                && ev.getKeyChar() == actionKeyStroke.getKeyChar()
+                && typedKey == actionKeyStroke.getKeyChar()
                 && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
                 && specialKeyAction.isEnabled()) {
               specialKeyAction.actionPerformed(new ActionEvent(HomePane.this,
