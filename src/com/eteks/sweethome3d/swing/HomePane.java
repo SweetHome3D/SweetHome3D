@@ -510,20 +510,8 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.MODIFY_OBSERVER, preferences, planController, "modifyObserverCamera");
       createAction(ActionType.STORE_POINT_OF_VIEW, preferences, controller, "storeCamera");
       createAction(ActionType.DELETE_POINTS_OF_VIEW, preferences, controller, "deleteCameras");
-      getActionMap().put(ActionType.DETACH_3D_VIEW,
-          new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
-            @Override
-            public void actionPerformed(ActionEvent ev) {
-              controller.detachView(homeController3D.getView());
-            }
-          });
-      getActionMap().put(ActionType.ATTACH_3D_VIEW,
-          new ResourceAction(preferences, HomePane.class, ActionType.ATTACH_3D_VIEW.name()) {
-            @Override
-            public void actionPerformed(ActionEvent ev) {
-              controller.attachView(homeController3D.getView());
-            }
-          });
+      createAction(ActionType.DETACH_3D_VIEW, preferences, controller, "detachView", controller.getHomeController3D().getView());
+      createAction(ActionType.ATTACH_3D_VIEW, preferences, controller, "attachView", controller.getHomeController3D().getView());
 
       ButtonGroup displayLevelGroup = new ButtonGroup();
       boolean allLevelsVisible = home.getEnvironment().isAllLevelsVisible();
