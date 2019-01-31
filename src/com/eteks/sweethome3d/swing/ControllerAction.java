@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.im.InputContext;
