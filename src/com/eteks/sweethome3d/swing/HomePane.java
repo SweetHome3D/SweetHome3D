@@ -947,16 +947,29 @@ public class HomePane extends JRootPane implements HomeView {
           int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
           if (OperatingSystem.isMacOSX()
               && ev.isMetaDown()) {
-            // Fix + typed key for English and other keyboards layout
             Locale inputLocale = InputContext.getInstance().getLocale();
-            boolean shiftDown = ev.isShiftDown();
-            if (inputLocale != null
-                && (typedKey == '=' && shiftDown && Arrays.binarySearch(new String [] {"en", "es", "he", "ja", "ko", "lv", "nl", "pt", "ro", "uk"}, inputLocale.getLanguage()) >= 0
-                    || typedKey == '3' && shiftDown && ev.getKeyCode() != KeyEvent.VK_NUMPAD3 && Arrays.binarySearch(new String [] {"bg", "hu"}, inputLocale.getLanguage()) >= 0
-                    || typedKey == '1' && !shiftDown && ev.getKeyCode() != KeyEvent.VK_NUMPAD1 && Arrays.binarySearch(new String [] {"cs", "sk"}, inputLocale.getLanguage()) >= 0
-                    || typedKey == '5' && shiftDown  && ev.getKeyCode() != KeyEvent.VK_NUMPAD5 && "pl".equals(inputLocale.getLanguage())
-                    || typedKey == '=' && !shiftDown && "sr".equals(inputLocale.getLanguage()))) {
-              typedKey = '+';
+            if (inputLocale != null) {
+              // Fix + and - typed key according to keyboards layout
+              boolean shiftDown = ev.isShiftDown();
+              boolean controlDown = ev.isControlDown();
+              if (typedKey == '=' && shiftDown && Arrays.binarySearch(new String [] {"en", "es", "ja", "ko", "lv", "nl", "pt", "ro", "uk"}, inputLocale.getLanguage()) >= 0
+                  || typedKey == '3' && shiftDown && ev.getKeyCode() != KeyEvent.VK_NUMPAD3 && Arrays.binarySearch(new String [] {"bg", "hu"}, inputLocale.getLanguage()) >= 0
+                  || typedKey == '1' && !shiftDown && ev.getKeyCode() != KeyEvent.VK_NUMPAD1 && Arrays.binarySearch(new String [] {"cs", "sk"}, inputLocale.getLanguage()) >= 0
+                  || typedKey == '5' && shiftDown  && ev.getKeyCode() != KeyEvent.VK_NUMPAD5 && "pl".equals(inputLocale.getLanguage())
+                  || typedKey == '=' && !shiftDown && "sr".equals(inputLocale.getLanguage())
+                  || (controlDown
+                      && (typedKey == '=' && shiftDown && Arrays.binarySearch(new String [] {"ar", "fr", "ru", "vi", "zh"}, inputLocale.getLanguage()) >= 0
+                          || typedKey == '=' && !shiftDown && Arrays.binarySearch(new String [] {"hr", "sl"}, inputLocale.getLanguage()) >= 0
+                          || typedKey == 0x1d && !shiftDown && "it".equals(inputLocale.getLanguage())
+                          || typedKey == '/' && shiftDown && "nl".equals(inputLocale.getLanguage())))) {
+                typedKey = '+';
+              } else if (controlDown
+                  && (typedKey == 0x1f && Arrays.binarySearch(new String [] {"ar", "bg", "cs", "en", "es", "el", "fi", "fr", "hr", "ja", "ko", "lt", "lv", "nl", "pt", "ro", "ru", "sk", "sv", "uk", "vi", "zh"}, inputLocale.getLanguage()) >= 0
+                      || typedKey == '/' && Arrays.binarySearch(new String [] {"hr", "hu", "pl", "sl", "sr"}, inputLocale.getLanguage()) >= 0
+                      || typedKey == '!' && "it".equals(inputLocale.getLanguage())
+                      || typedKey == '=' && "nl".equals(inputLocale.getLanguage()))) {
+                typedKey = '-';
+              }
             }
           }
           for (Action specialKeyAction : specialKeyActions) {
