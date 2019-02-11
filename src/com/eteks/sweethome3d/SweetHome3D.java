@@ -1,18 +1,18 @@
 /*
  * SweetHome3D.java 1 sept. 2006
- * 
+ *
  * Sweet Home 3D, Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>
- *  
+ *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation; either version 2 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
@@ -101,48 +101,48 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Sweet Home 3D main class. Sweet Home 3D accepts the parameter
- * <code>-open</code> followed by the path of a Sweet Home 3D file.<br> 
+ * <code>-open</code> followed by the path of a Sweet Home 3D file.<br>
  * Users may also define the optional following System properties to alter program behavior:
- * 
- * <ul><li><code>com.eteks.sweethome3d.applicationFolders</code> defines the folder(s) where private files 
+ *
+ * <ul><li><code>com.eteks.sweethome3d.applicationFolders</code> defines the folder(s) where private files
  * of Sweet Home 3D are stored. Private files include SH3F furniture library files stored in a subfolder named
- * <code>furniture</code>, SH3T textures library files stored in a subfolder named <code>textures</code>, 
- * SH3L language library files stored in a subfolder named <code>languages</code>, SH3P application plug-in 
- * files stored in a subfolder named <code>plugins</code> and SH3D files automatically created for recovery 
+ * <code>furniture</code>, SH3T textures library files stored in a subfolder named <code>textures</code>,
+ * SH3L language library files stored in a subfolder named <code>languages</code>, SH3P application plug-in
+ * files stored in a subfolder named <code>plugins</code> and SH3D files automatically created for recovery
  * purpose stored in a subfolder named <code>recovery</code>.<br>
  * If this property describes more than one folder, they should be separated by a semicolon (;) under Windows
  * or by a colon (:) under Mac OS X and Unix systems. The first folder listed in this property is used
  * as the folder where will be stored recovered SH3D files and SH3F, SH3T, SH3L, SH3P files imported by the user.
- * Thus the user should have write access rights on this first folder otherwise he won't be able to import 
+ * Thus the user should have write access rights on this first folder otherwise he won't be able to import
  * SH3F, SH3T, SH3L or SH3P files, and auto recovered SH3D files won't be managed. If this folder or
  * one of its <code>furniture</code>, <code>textures</code>, <code>languages</code>, <code>plugins</code>,
  * <code>recovery</code> subfolders don't exist, Sweet Home 3D will create it when needed.<br>
- * The other folders are used as resources where SH3F, SH3T, SH3L, SH3P files will be searched 
- * in their respective <code>furniture</code>, <code>textures</code>, <code>languages</code>, <code>plugins</code> 
+ * The other folders are used as resources where SH3F, SH3T, SH3L, SH3P files will be searched
+ * in their respective <code>furniture</code>, <code>textures</code>, <code>languages</code>, <code>plugins</code>
  * subfolders. Any of the cited folders may be an absolute path or a relative path to the folder
  * from which the program was launched.</li>
- *       
+ *
  * <li><code>com.eteks.sweethome3d.preferencesFolder</code> defines the folder where preferences
  * files (<code>preferences.xml</code> and the files depending on it) are stored. The user should have
  * write access rights on this folder otherwise the program won't be able to save his preferences
  * and the files he imported in furniture and textures catalogs. This folder may be the same as the
  * folder cited in <code>com.eteks.sweethome3d.applicationFolders</code> property.</li>
- * 
- * <li><code>com.eteks.sweethome3d.no3D</code> should be set to <code>true</code> 
- * if 3D capabilities (including 3D view and importing furniture 3D models) shouldn't be used in Sweet Home 3D. 
- * 
- * <li><code>com.eteks.sweethome3d.j3d.checkOffScreenSupport</code> should be set to <code>false</code> 
- * when editing preferences, printing, creating a photo or creating a video always lead to a crash of Sweet Home 3D. 
+ *
+ * <li><code>com.eteks.sweethome3d.no3D</code> should be set to <code>true</code>
+ * if 3D capabilities (including 3D view and importing furniture 3D models) shouldn't be used in Sweet Home 3D.
+ *
+ * <li><code>com.eteks.sweethome3d.j3d.checkOffScreenSupport</code> should be set to <code>false</code>
+ * when editing preferences, printing, creating a photo or creating a video always lead to a crash of Sweet Home 3D.
  * This means offscreen 3D images isn't supported by your video driver and Sweet Home 3D doesn't even succeed
  * to test this support. Setting this System property to <code>false</code> disables this test.</li>
- * 
- * <li><code>com.eteks.sweethome3d.j3d.additionalLoaderClasses</code> defines additional Java 3D 
+ *
+ * <li><code>com.eteks.sweethome3d.j3d.additionalLoaderClasses</code> defines additional Java 3D
  * {@linkplain com.sun.j3d.loaders.Loader loader} classes that Sweet Home 3D will use to read 3D models content
  * at formats not supported by default in Sweet Home 3D.<br>
  * The classes cited in this property must be available in the classpath and if more than one class is
  * cited, they should be separated by a colon or a space.</li></ul>
- * 
- * <p>The value of a System property can be set with the -D 
+ *
+ * <p>The value of a System property can be set with the -D
  * <a href="http://download.oracle.com/javase/6/docs/technotes/tools/windows/java.html">java</a> option.
  * @author Emmanuel Puybaret
  */
@@ -239,7 +239,7 @@ public class SweetHome3D extends HomeApplication {
             }
             return super.getLibraries();
           }
-          
+
           @Override
           public void deleteLibraries(List<Library> libraries) throws RecorderException {
             if (userPreferences != null // Don't go further if preferences are not ready
@@ -316,7 +316,7 @@ public class SweetHome3D extends HomeApplication {
       }
     }
   }
-  
+
   /**
    * Returns the name of this application read from resources.
    */
@@ -445,7 +445,7 @@ public class SweetHome3D extends HomeApplication {
             homeFrameControllers.remove(ev.getItem());
 
             // If application has no more home
-            if (getHomes().isEmpty() 
+            if (getHomes().isEmpty()
                 && (!OperatingSystem.isMacOSX()
                     || !Boolean.getBoolean("apple.laf.useScreenMenuBar")
                     || OperatingSystem.isJavaVersionGreaterOrEqual("1.9"))) {
@@ -469,8 +469,8 @@ public class SweetHome3D extends HomeApplication {
 
     getUserPreferences();
     try {
-      // Set User Agent to follow statistics on used operating systems 
-      System.setProperty("http.agent", getId() + "/" + getVersion()  
+      // Set User Agent to follow statistics on used operating systems
+      System.setProperty("http.agent", getId() + "/" + getVersion()
            + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version") + "; " + System.getProperty("os.arch") + "; " + Locale.getDefault() + ")");
     } catch (AccessControlException ex) {
       // Ignore User Agent change
@@ -524,7 +524,7 @@ public class SweetHome3D extends HomeApplication {
       if (System.getProperty("apple.laf.useScreenMenuBar") == null) {
         // Use Mac OS X screen menu bar for frames menu bar
         // except for bundles under macOS 10.13
-        System.setProperty("apple.laf.useScreenMenuBar", 
+        System.setProperty("apple.laf.useScreenMenuBar",
             String.valueOf(OperatingSystem.compareVersions(System.getProperty("os.version"), "10.13") < 0
                 || MacOSXConfiguration.isScreenMenuBarSupported()));
       }
@@ -556,7 +556,7 @@ public class SweetHome3D extends HomeApplication {
         UIManager.put("SplitPaneDivider.border", new Border() {
             public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
               // Set a border that fills the divider with the expected background color (instead of white)
-              // except at the place where the buttons are already drawn 
+              // except at the place where the buttons are already drawn
               ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
               g.setColor(UIManager.getColor("SplitPane.background"));
               Shape clip = g.getClip();
@@ -564,25 +564,25 @@ public class SweetHome3D extends HomeApplication {
               clipArea.subtract(new Area(new Ellipse2D.Float(x + width / 2f - 3.4f, y + height / 2f - 3.2f, 6.8f, 6.8f)));
               JSplitPane splitPane = ((BasicSplitPaneDivider)c).getBasicSplitPaneUI().getSplitPane();
               if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
-                clipArea.subtract(new Area(new Polygon(new int [] {x, x + 4, x + 8}, 
+                clipArea.subtract(new Area(new Polygon(new int [] {x, x + 4, x + 8},
                     new int [] {y + height / 2 + 3, y + height / 2 - 3, y + height / 2 + 3}, 3)));
-                clipArea.subtract(new Area(new Polygon(new int [] {x + 12, x + 15, x + 19}, 
+                clipArea.subtract(new Area(new Polygon(new int [] {x + 12, x + 15, x + 19},
                     new int [] {y + height / 2 - 2, y + height / 2 + 3, y + height / 2 - 2}, 3)));
               }
               g.setClip(clipArea);
               g.fillRect(x, y + height / 2 - 5, x + width, 11);
               g.setClip(clip);
             }
-            
+
             public boolean isBorderOpaque() {
               return true;
             }
-            
+
             public Insets getBorderInsets(Component c) {
               return new Insets(0, 0, 0, 0);
             }
           });
-      } 
+      }
       SwingTools.updateSwingResourceLanguage(getUserPreferences());
     } catch (Exception ex) {
       // Too bad keep current look and feel
@@ -598,7 +598,7 @@ public class SweetHome3D extends HomeApplication {
         public void collectionChanged(CollectionEvent<Home> ev) {
           // Close new home for any named home added to application
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            if (ev.getItem().getName() != null 
+            if (ev.getItem().getName() != null
                 && home.getName() == null
                 && !home.isRecovered()) {
               if (OperatingSystem.isMacOSXLionOrSuperior()
@@ -637,7 +637,7 @@ public class SweetHome3D extends HomeApplication {
    * exit in case of error during 3D rendering.
    */
   private void addComponent3DRenderingErrorObserver() {
-    if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) { 
+    if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
       // Add a RenderingErrorObserver to Component3DManager, because offscreen
       // rendering needs to check rendering errors with its own RenderingErrorListener
       Component3DManager.getInstance().setRenderingErrorObserver(new Component3DManager.RenderingErrorObserver() {
@@ -731,10 +731,15 @@ public class SweetHome3D extends HomeApplication {
   }
 
   /**
-   * Starts application once initialized and opens home passed in arguments. 
+   * Starts application once initialized and opens home passed in arguments.
    * This method is executed from Event Dispatch Thread.
    */
   protected void start(String [] args) {
+    if (args.length == 1 && !args [0].equals("-open")) {
+      // Consider a unique argument as a file to open
+      args = new String [] {"-open", args [0]};
+    }
+
     if (args.length == 2 && args [0].equals("-open") && args [1].length() > 0) {
       // If requested home is already opened, show it
       for (Home home : getHomes()) {
@@ -743,7 +748,7 @@ public class SweetHome3D extends HomeApplication {
           return;
         }
       }
-      
+
       if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
         // Add a listener to application to recover homes once the one in parameter is open
         addHomesListener(new CollectionListener<Home>() {
@@ -811,14 +816,14 @@ public class SweetHome3D extends HomeApplication {
           }
         });
       }
-    } else { 
+    } else {
       showDefaultHomeFrame();
       checkUpdates();
     }
   }
 
   /**
-   * Shows a home frame, either a new one when no home is opened, or the last created home frame.  
+   * Shows a home frame, either a new one when no home is opened, or the last created home frame.
    */
   private void showDefaultHomeFrame() {
     if (getHomes().isEmpty()) {
@@ -850,7 +855,7 @@ public class SweetHome3D extends HomeApplication {
           }
         }
       }
- 
+
       showHomeFrame(home);
     }
   }
@@ -871,7 +876,7 @@ public class SweetHome3D extends HomeApplication {
         }).start();
     }
   }
-  
+
   /**
    * A file content manager that records the last directories for each content
    * in Java preferences.
@@ -879,10 +884,10 @@ public class SweetHome3D extends HomeApplication {
   private static class FileContentManagerWithRecordedLastDirectories extends FileContentManager {
     private static final String LAST_DIRECTORY         = "lastDirectory#";
     private static final String LAST_DEFAULT_DIRECTORY = "lastDefaultDirectory";
-    
+
     private final Class<? extends SweetHome3D> mainClass;
 
-    public FileContentManagerWithRecordedLastDirectories(UserPreferences preferences, 
+    public FileContentManagerWithRecordedLastDirectories(UserPreferences preferences,
                                                          Class<? extends SweetHome3D> mainClass) {
       super(preferences);
       this.mainClass = mainClass;
@@ -902,14 +907,14 @@ public class SweetHome3D extends HomeApplication {
         File directory = new File(directoryPath);
         if (directory.isDirectory()) {
           return directory;
-        } 
+        }
       }
       return null;
     }
-    
+
     @Override
     protected void setLastDirectory(ContentType contentType, File directory) {
-      // Last directories are not recorded in user preferences since there's no need of portability 
+      // Last directories are not recorded in user preferences since there's no need of portability
       // from a computer to an other
       Preferences preferences = Preferences.userNodeForPackage(this.mainClass);
       if (directory == null) {
@@ -930,7 +935,7 @@ public class SweetHome3D extends HomeApplication {
       }
     }
   }
-  
+
   /**
    * JNLP <code>ServiceManagerStub</code> implementation for standalone
    * applications run out of Java Web Start. This service manager supports
@@ -985,7 +990,7 @@ public class SweetHome3D extends HomeApplication {
           } else if (OperatingSystem.isLinux()) {
             Runtime.getRuntime().exec(new String [] {"xdg-open", url.toString()});
             return true;
-          }  
+          }
         } catch (IOException ex2) {
         }
         // For other cases, let's consider simply the showDocument method failed
@@ -1041,7 +1046,7 @@ public class SweetHome3D extends HomeApplication {
     public void addSingleInstanceListener(SingleInstanceListener l) {
       if (this.singleInstanceListeners.isEmpty()) {
         if (!OperatingSystem.isMacOSX()) {
-          // Launching a server is useless under Mac OS X because further launches will be notified 
+          // Launching a server is useless under Mac OS X because further launches will be notified
           // by com.apple.eawt.ApplicationListener added to application in MacOSXConfiguration class
           launchSingleInstanceServer();
         }
