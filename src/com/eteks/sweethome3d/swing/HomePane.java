@@ -4252,20 +4252,22 @@ public class HomePane extends JRootPane implements HomeView {
     }
 
     // Check if it's possible to show a folder
-    Object desktopInstance = null;
-    Method openMethod = null;
+    boolean desktopOpenSupport = false;
     if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
       try {
-        // Call Java SE 6 java.awt.Desktop browse method by reflection to
+        // Check Java SE 6 java.awt.Desktop may be used by reflection to
         // ensure Java SE 5 compatibility
         Class<?> desktopClass = Class.forName("java.awt.Desktop");
-        desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
-        openMethod = desktopClass.getMethod("open", File.class);
+        Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+        Class<?> desktopActionClass = Class.forName("java.awt.Desktop$Action");
+        Method isSupportedMethod = desktopClass.getMethod("isSupported", desktopActionClass);
+        desktopOpenSupport = (Boolean)isSupportedMethod.invoke(desktopInstance,
+            desktopActionClass.getMethod("valueOf", String.class).invoke(null, "OPEN"));
       } catch (Exception ex) {
-        // For any exception, let's consider simply the open method isn't available
+        // For any exception, let's consider simply the open method isn't supported
       }
     }
-    final boolean canOpenFolder = openMethod != null || OperatingSystem.isMacOSX() || OperatingSystem.isLinux();
+    final boolean canOpenFolder = desktopOpenSupport || OperatingSystem.isMacOSX() || OperatingSystem.isLinux();
 
     // Display first column as a link
     columnModel.getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
@@ -4301,8 +4303,6 @@ public class HomePane extends JRootPane implements HomeView {
         }
       });
     if (canOpenFolder) {
-      final Object finalDesktopInstance = desktopInstance;
-      final Method finalOpenMethod = openMethod;
       librariesTable.addMouseListener(new MouseAdapter() {
           @Override
           public void mouseClicked(MouseEvent ev) {
@@ -4313,18 +4313,7 @@ public class HomePane extends JRootPane implements HomeView {
                 try {
                   new URL(location);
                 } catch (MalformedURLException ex) {
-                  File directory = new File(location).getParentFile();
-                  try {
-                    if (finalOpenMethod != null) {
-                      finalOpenMethod.invoke(finalDesktopInstance, directory);
-                    } else if (OperatingSystem.isMacOSX()) {
-                      Runtime.getRuntime().exec(new String [] {"open", directory.getAbsolutePath()});
-                    } else { // Linux
-                      Runtime.getRuntime().exec(new String [] {"xdg-open", directory.getAbsolutePath()});
-                    }
-                  } catch (Exception ex2) {
-                    ex2.printStackTrace();
-                  }
+                  showLibraryFolderInSystem(location);
                 }
               }
             }
@@ -4332,6 +4321,44 @@ public class HomePane extends JRootPane implements HomeView {
         });
     }
     return librariesTable;
+  }
+
+  /**
+   * Opens the folder containing the given library in a system window if possible.
+   */
+  protected void showLibraryFolderInSystem(String libraryLocation) {
+    File folder = new File(libraryLocation).getParentFile();
+
+    Object desktopInstance = null;
+    Method openMethod = null;
+    if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
+      try {
+        // Call Java SE 6 java.awt.Desktop open method by reflection to
+        // ensure Java SE 5 compatibility
+        Class<?> desktopClass = Class.forName("java.awt.Desktop");
+        desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+        Class<?> desktopActionClass = Class.forName("java.awt.Desktop$Action");
+        Method isSupportedMethod = desktopClass.getMethod("isSupported", desktopActionClass);
+        if ((Boolean)isSupportedMethod.invoke(desktopInstance,
+            desktopActionClass.getMethod("valueOf", String.class).invoke(null, "OPEN"))) {
+          openMethod = desktopClass.getMethod("open", File.class);
+        }
+      } catch (Exception ex) {
+        // For any exception, let's consider simply the open method isn't available
+      }
+    }
+
+    try {
+      if (openMethod != null) {
+        openMethod.invoke(desktopInstance, folder);
+      } else if (OperatingSystem.isMacOSX()) {
+        Runtime.getRuntime().exec(new String [] {"open", folder.getAbsolutePath()});
+      } else { // Linux
+        Runtime.getRuntime().exec(new String [] {"xdg-open", folder.getAbsolutePath()});
+      }
+    } catch (Exception ex2) {
+      ex2.printStackTrace();
+    }
   }
 
   /**
