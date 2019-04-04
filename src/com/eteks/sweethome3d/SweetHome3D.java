@@ -169,6 +169,7 @@ public class SweetHome3D extends HomeApplication {
    */
   protected SweetHome3D() {
     this.homeFrameControllers = new HashMap<Home, HomeFrameController>();
+    this.checkUpdatesNeeded = true;
   }
 
   /**
@@ -255,7 +256,6 @@ public class SweetHome3D extends HomeApplication {
             }
           }
         };
-      this.checkUpdatesNeeded = this.userPreferences.isCheckUpdatesEnabled();
     }
     return this.userPreferences;
   }
@@ -866,14 +866,16 @@ public class SweetHome3D extends HomeApplication {
   private void checkUpdates() {
     if (this.checkUpdatesNeeded) {
       this.checkUpdatesNeeded = false;
-      // Delay updates checking to let program launch finish
-      new Timer(500, new ActionListener() {
-          public void actionPerformed(ActionEvent ev) {
-            ((Timer)ev.getSource()).stop();
-            // Check updates with a dummy controller
-            createHomeFrameController(createHome()).getHomeController().checkUpdates(true);
-          }
-        }).start();
+      if (getUserPreferences().isCheckUpdatesEnabled()) {
+        // Delay updates checking to let program launch finish
+        new Timer(500, new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+              ((Timer)ev.getSource()).stop();
+              // Check updates with a dummy controller
+              createHomeFrameController(createHome()).getHomeController().checkUpdates(true);
+            }
+          }).start();
+      }
     }
   }
 
