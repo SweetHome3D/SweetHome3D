@@ -435,20 +435,36 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
     HomeFurnitureGroup group2 = (HomeFurnitureGroup)pieces.get(0);
     assertFalse("Home doesn't contain a different group", group == group2);
+    assertEquals("New group isn't selected", Arrays.asList(new Selectable [] {group2}), this.home.getSelectedItems());
     assertGroupActionsEnabled(false, true);
 
-    // 7. Ungroup furniture
+    // 7. Add a piece directly to the group
+    assertTrue("Add to Group action invalid state", getAction(HomePane.ActionType.ADD_FURNITURE_TO_GROUP).isEnabled());
+    assertTrue("Expected top camera as default", this.home.getCamera() == this.home.getTopCamera());
+    runAction(HomePane.ActionType.ADD_FURNITURE_TO_GROUP);
+    assertEquals("Group doesn't contain 3 items", 3, group2.getFurniture().size());
+    assertEquals("Selection doesn't contain one piece", 1, this.home.getSelectedItems().size());
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)this.home.getSelectedItems().get(0);
+    float x = piece.getX();
+    assertTrue("Selected piece isn't a child of a group", group2.getFurniture().contains(piece));
+    // Check that when exiting HomeController3D top camera state, listeners set on group children are removed
+    runAction(HomePane.ActionType.VIEW_FROM_OBSERVER);
+    piece.setX(x + 1);
+    assertEquals("Piece didn't move 1 unit", x + 1f, piece.getX());
+    this.home.setSelectedItems(Arrays.asList(new Selectable [] {group2}));
+
+    // 8. Ungroup furniture
     runAction(HomePane.ActionType.UNGROUP_FURNITURE);
     assertGroupActionsEnabled(true, true);
     pieces = this.home.getFurniture();
-    assertEquals("Home doesn't contain 2 piece", 2, pieces.size());
-    assertEquals("Home doesn't contain 2 selected item", 2, this.home.getSelectedItems().size());
+    assertEquals("Home doesn't contain 3 piece", 3, pieces.size());
+    assertEquals("Home doesn't contain 3 selected item", 3, this.home.getSelectedItems().size());
     assertFalse("Home contains second group", pieces.contains(group2));
     assertTrue("Home doesn't contain group", pieces.contains(group));
     runAction(HomePane.ActionType.UNGROUP_FURNITURE);
     assertGroupActionsEnabled(true, false);
     pieces = this.home.getFurniture();
-    assertEquals("Home doesn't contain 3 piece", 3, pieces.size());
+    assertEquals("Home doesn't contain 3 piece", 4, pieces.size());
     assertEquals("Home doesn't contain 2 selected item", 2, this.home.getSelectedItems().size());
     assertFalse("Home contains group", pieces.contains(group));
   }
