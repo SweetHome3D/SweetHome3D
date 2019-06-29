@@ -143,13 +143,29 @@ public class FurnitureController implements Controller {
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       piece.addPropertyChangeListener(furnitureChangeListener);
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+          childPiece.addPropertyChangeListener(furnitureChangeListener);
+        }
+      }
     }
     this.home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture> () {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = ev.getItem();
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+            piece.addPropertyChangeListener(furnitureChangeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.addPropertyChangeListener(furnitureChangeListener);
+              }
+            }
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+            piece.removePropertyChangeListener(furnitureChangeListener);
+            if (piece instanceof HomeFurnitureGroup) {
+              for (HomePieceOfFurniture childPiece : ((HomeFurnitureGroup)piece).getAllFurniture()) {
+                childPiece.removePropertyChangeListener(furnitureChangeListener);
+              }
+            }
           }
         }
       });
