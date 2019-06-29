@@ -4236,7 +4236,9 @@ public class PlanController extends FurnitureController implements Controller {
                 List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)selectedItem).getFurniture();
                 for (int i = groupFurniture.size() - 1; i >= 0; i--) {
                   HomePieceOfFurniture piece = groupFurniture.get(i);
-                  if (!selectedItems.contains(piece)
+                  if ((!basePlanLocked
+                        || !isItemPartOfBasePlan(piece))
+                      && !selectedItems.contains(piece)
                       && piece.containsPoint(x, y, margin)) {
                     return Arrays.asList(new Selectable [] {piece});
                   }
@@ -4249,7 +4251,9 @@ public class PlanController extends FurnitureController implements Controller {
                 List<HomePieceOfFurniture> groupFurniture = getFurnitureInSameGroup((HomePieceOfFurniture)selectedItem);
                 for (int i = groupFurniture.size() - 1; i >= 0; i--) {
                   HomePieceOfFurniture piece = groupFurniture.get(i);
-                  if (piece.containsPoint(x, y, margin)) {
+                  if ((!basePlanLocked
+                        || !isItemPartOfBasePlan(piece))
+                      && piece.containsPoint(x, y, margin)) {
                     return Arrays.asList(new Selectable [] {piece});
                   }
                 }
