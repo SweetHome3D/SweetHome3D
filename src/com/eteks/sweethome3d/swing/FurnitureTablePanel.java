@@ -56,6 +56,7 @@ import javax.swing.text.NumberFormatter;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -117,14 +118,15 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
         }
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      piece.addPropertyChangeListener(furnitureChangeListener);
+      addPropertyChangeListener(piece, furnitureChangeListener);
     }
     home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = ev.getItem();
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
-          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+            addPropertyChangeListener(piece, furnitureChangeListener);
+          } else {
+            removePropertyChangeListener(piece, furnitureChangeListener);
           }
           updateTotals(home, preferences);
         }
@@ -134,6 +136,26 @@ public class FurnitureTablePanel extends JPanel implements FurnitureView, Printa
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesListener);
     preferences.addPropertyChangeListener(UserPreferences.Property.CURRENCY, preferencesListener);
     preferences.addPropertyChangeListener(UserPreferences.Property.VALUE_ADDED_TAX_ENABLED, preferencesListener);
+  }
+
+  private void addPropertyChangeListener(HomePieceOfFurniture piece, PropertyChangeListener listener) {
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture child : ((HomeFurnitureGroup)piece).getFurniture()) {
+        addPropertyChangeListener(child, listener);
+      }
+    } else {
+      piece.addPropertyChangeListener(listener);
+    }
+  }
+
+  private void removePropertyChangeListener(HomePieceOfFurniture piece, PropertyChangeListener listener) {
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture child : ((HomeFurnitureGroup)piece).getFurniture()) {
+        removePropertyChangeListener(child, listener);
+      }
+    } else {
+      piece.removePropertyChangeListener(listener);
+    }
   }
 
   /**
