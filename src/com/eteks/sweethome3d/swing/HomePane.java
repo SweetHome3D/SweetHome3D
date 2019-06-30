@@ -269,6 +269,7 @@ public class HomePane extends JRootPane implements HomeView {
     createPluginActions(controller instanceof HomePluginController
         ? ((HomePluginController)controller).getPlugins()
         : null);
+    initActions(preferences);
     createTransferHandlers(home, controller);
     addHomeListener(home);
     addLevelVisibilityListener(home);
@@ -294,7 +295,6 @@ public class HomePane extends JRootPane implements HomeView {
     disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
     // Change component orientation
     applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
-    initActions(preferences);
   }
 
   /**
@@ -1464,6 +1464,7 @@ public class HomePane extends JRootPane implements HomeView {
             return furnitureProperty == home.getFurnitureSortedProperty();
           }
         });
+      sortMenuItem.setVisible(Boolean.TRUE.equals(sortAction.getValue(ResourceAction.VISIBLE)));
       // Configure check box menu item action after setting its model to avoid losing its mnemonic
       final Action menuItemAction = new ResourceAction.MenuItemAction(sortAction);
       // Add listener on action visibility to update menu item and furniture sort
@@ -1578,6 +1579,7 @@ public class HomePane extends JRootPane implements HomeView {
             return home.getFurnitureVisibleProperties().contains(furnitureProperty);
           }
         });
+      displayPropertyMenuItem.setVisible(Boolean.TRUE.equals(displayPropertyAction.getValue(ResourceAction.VISIBLE)));
       // Configure check box menu item action after setting its model to avoid losing its mnemonic
       displayPropertyMenuItem.setAction(displayPropertyAction);
       // Add listener on action visibility to update menu item and furniture property visibility

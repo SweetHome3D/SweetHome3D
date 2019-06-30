@@ -1144,9 +1144,9 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
 
     public FurnitureTableColumnModel(Home home, UserPreferences preferences) {
       createAvailableColumns(home, preferences);
-      addHomeListener(home);
-      addLanguageListener(preferences);
-      updateModelColumns(home.getFurnitureVisibleProperties());
+      updateModelColumns(home.getFurnitureVisibleProperties(), preferences);
+      addHomeListener(home, preferences);
+      addUserPreferencesListener(preferences, home);
     }
 
     /**
@@ -1171,11 +1171,11 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
      * Adds a property change listener to home to update displayed columns list
      * from furniture visible properties.
      */
-    private void addHomeListener(final Home home) {
+    private void addHomeListener(final Home home, final UserPreferences preferences) {
       home.addPropertyChangeListener(Home.Property.FURNITURE_VISIBLE_PROPERTIES,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              updateModelColumns(home.getFurnitureVisibleProperties());
+              updateModelColumns(home.getFurnitureVisibleProperties(), preferences);
               // Will implicitly change columns width and update COLUMN_WIDTHS_VISUAL_PROPERTY property
             }
           });
@@ -1185,36 +1185,48 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
      * Adds a property change listener to <code>preferences</code> to update
      * column names when preferred language changes.
      */
-    private void addLanguageListener(UserPreferences preferences) {
-      preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE,
-          new LanguageChangeListener(this));
+    private void addUserPreferencesListener(UserPreferences preferences, Home home) {
+      UserPreferencesChangeListener preferencesListener = new UserPreferencesChangeListener(this, home);
+      preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesListener);
+      preferences.addPropertyChangeListener(UserPreferences.Property.CURRENCY, preferencesListener);
+      preferences.addPropertyChangeListener(UserPreferences.Property.VALUE_ADDED_TAX_ENABLED, preferencesListener);
     }
 
     /**
      * Preferences property listener bound to this component with a weak reference to avoid
      * strong link between preferences and this component.
      */
-    private static class LanguageChangeListener implements PropertyChangeListener {
+    private static class UserPreferencesChangeListener implements PropertyChangeListener {
       private WeakReference<FurnitureTableColumnModel> furnitureTableColumnModel;
+      private WeakReference<Home> home;
 
-      public LanguageChangeListener(FurnitureTableColumnModel furnitureTable) {
+      public UserPreferencesChangeListener(FurnitureTableColumnModel furnitureTable, Home home) {
         this.furnitureTableColumnModel = new WeakReference<FurnitureTableColumnModel>(furnitureTable);
+        this.home = new WeakReference<Home>(home);
       }
 
       public void propertyChange(PropertyChangeEvent ev) {
         // If furniture table column model was garbage collected, remove this listener from preferences
         FurnitureTableColumnModel furnitureTableColumnModel = this.furnitureTableColumnModel.get();
         UserPreferences preferences = (UserPreferences)ev.getSource();
+        UserPreferences.Property property = UserPreferences.Property.valueOf(ev.getPropertyName());
         if (furnitureTableColumnModel == null) {
-          preferences.removePropertyChangeListener(
-              UserPreferences.Property.LANGUAGE, this);
+          preferences.removePropertyChangeListener(property, this);
         } else {
-          // Change column name and renderer from current locale
-          for (TableColumn tableColumn : furnitureTableColumnModel.availableColumns.values()) {
-            HomePieceOfFurniture.SortableProperty columnIdentifier =
-                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier();
-            tableColumn.setHeaderValue(furnitureTableColumnModel.getColumnName(columnIdentifier, preferences));
-            tableColumn.setCellRenderer(furnitureTableColumnModel.getColumnRenderer(columnIdentifier, preferences));
+          switch (property) {
+            case LANGUAGE :
+           // Change column name and renderer from current locale
+              for (TableColumn tableColumn : furnitureTableColumnModel.availableColumns.values()) {
+                HomePieceOfFurniture.SortableProperty columnIdentifier =
+                    (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier();
+                tableColumn.setHeaderValue(furnitureTableColumnModel.getColumnName(columnIdentifier, preferences));
+                tableColumn.setCellRenderer(furnitureTableColumnModel.getColumnRenderer(columnIdentifier, preferences));
+              }
+              break;
+            case CURRENCY :
+            case VALUE_ADDED_TAX_ENABLED :
+              furnitureTableColumnModel.updateModelColumns(home.get().getFurnitureVisibleProperties(), preferences);
+              break;
           }
         }
       }
@@ -1223,30 +1235,51 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
     /**
      * Updates displayed columns list from furniture visible properties.
      */
-    private void updateModelColumns(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
+    private void updateModelColumns(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties, UserPreferences preferences) {
       // Remove columns not in furnitureVisibleProperties
       for (int i = this.tableColumns.size() - 1; i >= 0; i--) {
         TableColumn tableColumn = this.tableColumns.get(i);
         Object columnIdentifier = tableColumn.getIdentifier();
         if ((columnIdentifier instanceof HomePieceOfFurniture.SortableProperty)
-            && !furnitureVisibleProperties.contains(columnIdentifier)) {
+            && (!furnitureVisibleProperties.contains(columnIdentifier)
+                || isPropertyAccepted((HomePieceOfFurniture.SortableProperty)columnIdentifier, preferences))) {
           removeColumn(tableColumn);
         }
       }
       // Add columns not currently displayed
       for (HomePieceOfFurniture.SortableProperty visibleProperty : furnitureVisibleProperties) {
         TableColumn tableColumn = this.availableColumns.get(visibleProperty);
-        if (!this.tableColumns.contains(tableColumn)) {
+        if (!this.tableColumns.contains(tableColumn)
+            && isPropertyAccepted(visibleProperty, preferences)) {
           addColumn(tableColumn);
         }
       }
       // Reorder columns
-      for (int i = 0, n = furnitureVisibleProperties.size(); i < n; i++) {
+      for (int i = 0, j = 0, n = furnitureVisibleProperties.size(); i < n; i++) {
         TableColumn tableColumn = this.availableColumns.get(furnitureVisibleProperties.get(i));
         int tableColumnIndex = this.tableColumns.indexOf(tableColumn);
-        if (tableColumnIndex != i) {
-          moveColumn(tableColumnIndex, i);
+        if (tableColumnIndex != -1) {
+          if (tableColumnIndex != j) {
+            moveColumn(tableColumnIndex, j);
+          }
+          j++;
         }
+      }
+    }
+
+    /**
+     * Returns <code>true</code> if the given property is accepted as a column.
+     */
+    private boolean isPropertyAccepted(HomePieceOfFurniture.SortableProperty property, UserPreferences preferences) {
+      switch (property) {
+        case PRICE :
+          return preferences.getCurrency() != null;
+        case VALUE_ADDED_TAX_PERCENTAGE :
+        case VALUE_ADDED_TAX :
+        case PRICE_VALUE_ADDED_TAX_INCLUDED :
+          return preferences.isValueAddedTaxEnabled();
+        default :
+          return true;
       }
     }
 
