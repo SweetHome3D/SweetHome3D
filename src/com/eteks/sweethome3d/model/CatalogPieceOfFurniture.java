@@ -1068,30 +1068,39 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private byte [] getPieceOfFurnitureCollationKey() {
     if (this.filterCollationKey == null) {
       // Prepare filter string collation key  
-      // (collect the name, category, creator, description and tags of each piece)
       StringBuilder search = new StringBuilder();
-      search.append(getName());
-      search.append('|');
-      if (getCategory() != null) {
-        search.append(getCategory().getName());
-        search.append('|');
+      for (String criterion : getFilterCriteria()) {
+        if (search.length() != 0) {
+          search.append('|');
+        }
+        search.append(criterion);
       }
-      if (getCreator() != null) {
-        search.append(getCreator());
-        search.append('|');
-      }
-      if (getDescription() != null) {
-        search.append(getDescription());
-        search.append('|');
-      }
-      for (String tag : getTags()) {
-        search.append(tag);
-        search.append('|');
-      }
-      
       this.filterCollationKey = COMPARATOR.getCollationKey(search.toString()).toByteArray();
     }
     return this.filterCollationKey;
+  }
+  
+  /**
+   * Returns the strings used as criteria for filtering (name, category, creator, description and tags). 
+   * @see CatalogPieceOfFurniture#matchesFilter(String)
+   * @since 6.2 
+   */
+  protected String [] getFilterCriteria() {
+    List<String> criteria = new ArrayList<String>();
+    criteria.add(getName());
+    if (getCategory() != null) {
+      criteria.add(getCategory().getName());
+    }
+    if (getCreator() != null) {
+      criteria.add(getCreator());
+    }
+    if (getDescription() != null) {
+      criteria.add(getDescription());
+    }
+    for (String tag : getTags()) {
+      criteria.add(tag);
+    }
+    return criteria.toArray(new String [criteria.size()]);
   }
   
   /**
