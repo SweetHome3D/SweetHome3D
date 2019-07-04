@@ -6659,11 +6659,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     private static float [] computePieceOfFurnitureSizeInPlan(HomePieceOfFurniture piece,
                                                               Object3DFactory object3dFactory) {
       Transform3D horizontalRotation = new Transform3D();
+      // Change its angles around horizontal axes
       if (piece.getPitch() != 0) {
         horizontalRotation.rotX(-piece.getPitch());
-      } else {
-        horizontalRotation.rotZ(-piece.getRoll());
+      } 
+      if (piece.getRoll() != 0) {
+        Transform3D rollRotation = new Transform3D();
+        rollRotation.rotZ(-piece.getRoll());
+        horizontalRotation.mul(rollRotation, horizontalRotation);
       }
+
       // Compute bounds of a piece centered at the origin and rotated around the target horizontal angle
       piece = piece.clone();
       piece.setX(0);

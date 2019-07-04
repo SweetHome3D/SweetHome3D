@@ -651,15 +651,18 @@ public class ModelManager {
     float height;
     if (piece.isHorizontallyRotated() && normalizedModelNode != null) {
       Transform3D horizontalRotationAndScale = new Transform3D();
-      // Change its angle around horizontal axis
+      // Change its angles around horizontal axes
       if (piece.getPitch() != 0) {
         horizontalRotationAndScale.rotX(-piece.getPitch());
-      } else {
-        horizontalRotationAndScale.rotZ(-piece.getRoll());
+      } 
+      if (piece.getRoll() != 0) {
+        Transform3D rollRotation = new Transform3D();
+        rollRotation.rotZ(-piece.getRoll());
+        horizontalRotationAndScale.mul(rollRotation, horizontalRotationAndScale);
       }
       horizontalRotationAndScale.mul(scale);
 
-      // Compute center location when the piece is rotated around horizontal axis
+      // Compute center location when the piece is rotated around horizontal axes
       BoundingBox rotatedModelBounds = getBounds(normalizedModelNode, horizontalRotationAndScale);
       Point3d lower = new Point3d();
       rotatedModelBounds.getLower(lower);
