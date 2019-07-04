@@ -1029,14 +1029,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addCameraListeners(final View view,
                                   final TransformGroup viewPlatformTransform) {
     this.cameraChangeListener = new PropertyChangeListener() {
+        private Runnable updater;
         public void propertyChange(PropertyChangeEvent ev) {
-          // Update view transform later to avoid flickering in case of multiple camera changes
-          EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              updateView(view, home.getCamera());
-              updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), true);
-            }
-          });
+          if (this.updater == null) {
+            // Update view transform later to avoid flickering in case of multiple camera changes
+            EventQueue.invokeLater(this.updater = new Runnable () {
+                public void run() {
+                  updateView(view, home.getCamera());
+                  updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), true);
+                  updater = null;
+                }
+              });
+          }
         }
       };
     this.home.getCamera().addPropertyChangeListener(this.cameraChangeListener);
@@ -1320,12 +1324,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   private void updateViewPlatformTransform(TransformGroup viewPlatformTransform,
                                            Camera camera, boolean updateWithAnimation) {
+    // Get the camera interpolator
+    CameraInterpolator cameraInterpolator =
+        (CameraInterpolator)viewPlatformTransform.getChild(viewPlatformTransform.numChildren() - 1);
     if (updateWithAnimation) {
-      // Get the camera interpolator
-      CameraInterpolator cameraInterpolator =
-          (CameraInterpolator)viewPlatformTransform.getChild(viewPlatformTransform.numChildren() - 1);
       cameraInterpolator.moveCamera(camera);
     } else {
+      cameraInterpolator.stop();
       Transform3D transform = new Transform3D();
       updateViewPlatformTransform(transform, camera.getX(), camera.getY(),
           camera.getZ(), camera.getYaw(), camera.getPitch());
@@ -1412,6 +1417,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           this.initialCamera.getZ() + (this.finalCamera.getZ() - this.initialCamera.getZ()) * alpha,
           this.initialCamera.getYaw() + (this.finalCamera.getYaw() - this.initialCamera.getYaw()) * alpha,
           this.initialCamera.getPitch() + (this.finalCamera.getPitch() - this.initialCamera.getPitch()) * alpha);
+    }
+
+    public synchronized void stop() {
+      setAlpha(null);
+      this.finalCamera = null;
     }
   }
 
