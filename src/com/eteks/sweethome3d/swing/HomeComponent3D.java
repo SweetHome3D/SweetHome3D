@@ -2670,7 +2670,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Adds the given <code>listener</code> from <code>piece</code> and its children.
+   * Removes the given <code>listener</code> from <code>piece</code> and its children.
    */
   private void removePropertyChangeListener(HomePieceOfFurniture piece, PropertyChangeListener listener) {
     if (piece instanceof HomeFurnitureGroup) {
