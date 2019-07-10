@@ -4713,6 +4713,13 @@ public class HomePane extends JRootPane implements HomeView {
                 (float)homeBounds.getWidth(), (float)homeBounds.getHeight(), true);
             writer.writeNode(groundNode, "ground");
           }
+        } else if (home.isAllLevelsSelection()) {
+          // Make viewable levels visible when all levels are selected
+          for (Level level : home.getLevels()) {
+            if (level.isViewable()) {
+              level.setVisible(true);
+            }
+          }
         }
 
         // Write 3D objects
