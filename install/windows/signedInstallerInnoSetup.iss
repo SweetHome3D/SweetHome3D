@@ -2,7 +2,7 @@
 ;
 ; Sweet Home 3D, Copyright (c) 2007-2019 Emmanuel PUYBARET / eTeks <info@eteks.com>
 ;
-; SweetHome3D-6.1.2-windows.exe setup program creator
+; SweetHome3D-6.2-windows.exe setup program creator
 ; This UTF-8 BOM encoded script requires Inno Setup Unicode available at http://www.jrsoftware.org/isinfo.php
 ; and a build directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -14,9 +14,9 @@
 [Setup]
 DisableWelcomePage=no
 AppName=Sweet Home 3D
-AppVersion=6.1.2
+AppVersion=6.2
 AppCopyright=Copyright (c) 2007-2019 eTeks
-AppVerName=Sweet Home 3D version 6.1.2
+AppVerName=Sweet Home 3D version 6.2
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -26,13 +26,13 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=SweetHome3D-6.1.2-windows
+OutputBaseFilename=SweetHome3D-6.2-windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 ChangesAssociations=yes
 ExtraDiskSpaceRequired=107000000
-VersionInfoVersion=6.1.2.0
-VersionInfoTextVersion=6.1.2
+VersionInfoVersion=6.2.0.0
+VersionInfoTextVersion=6.2
 VersionInfoDescription=Sweet Home 3D Setup
 VersionInfoCopyright=Copyright (c) 2007-2019 eTeks
 VersionInfoCompany=eTeks

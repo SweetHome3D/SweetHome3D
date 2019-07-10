@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleGetInfoString</key>
-	<string>Sweet Home 3D 6.1.2 Copyright 2007-2019 eTeks</string>
+	<string>Sweet Home 3D 6.2 Copyright 2007-2019 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>6120</string>
+	<string>6200</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.1.2</string>
+	<string>6.2</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -17,7 +17,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.eteks.sweethome3d.SweetHome3D</string>
 	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.1.2</string>
+	<string>6.2</string>
 	<key>CFBundleName</key>
 	<string>Sweet Home 3D</string>
 	<key>CFBundlePackageType</key>
@@ -243,7 +243,7 @@
 		<key>Properties</key>
 		<dict>
 			<key>java.ext.dirs</key>
-			<string>$JAVAROOT/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/lib/ext:/Library/Java/JavaVirtualMachines/1.6.1.2.jdk/Contents/Home/lib/ext</string>
+			<string>$JAVAROOT/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home/lib/ext:/Library/Java/JavaVirtualMachines/1.6.2.jdk/Contents/Home/lib/ext</string>
 			<key>java.library.path</key>
 			<string>$JAVAROOT/ext</string>
 			<key>jogamp.gluegen.UseTempJarCache</key>
