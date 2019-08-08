@@ -29,6 +29,8 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.AWTEventListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -139,6 +141,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
   private int                    furnitureInformationRow;
   private Popup                  furnitureInformationPopup;
   private AWTEventListener       informationPopupRemovalListener;
+  private final boolean          reorderingEnabled = false;
 
   /**
    * Creates a table that displays furniture of <code>home</code>.
@@ -152,6 +155,9 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
   /**
    * Creates a table controlled by <code>controller</code>
    * that displays furniture of <code>home</code>.
+   * @param home        the home displayed by this view
+   * @param preferences the preferences of the application
+   * @param controller  the controller of the furniture table
    */
   public FurnitureTable(Home home, UserPreferences preferences,
                         FurnitureController controller) {
@@ -174,6 +180,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
       addTableColumnModelListener(controller);
       addMouseListener(home, controller);
     }
+    addFocusListener(home);
     addHomeListener(home, controller);
     addUserPreferencesListener(preferences);
 
@@ -183,8 +190,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         Class<?> dropModeEnum = Class.forName("javax.swing.DropMode");
         Object insertRowsDropMode = dropModeEnum.getMethod("valueOf", String.class).invoke(null, "INSERT_ROWS");
         getClass().getMethod("setDropMode", dropModeEnum).invoke(this, insertRowsDropMode);
-        // Remove colors used in INSERT_ROWS mode
-        UIManager.getDefaults().remove("Table.dropLineColor");
+        // Remove column underline color used in INSERT_ROWS mode
         UIManager.getDefaults().remove("Table.dropLineShortColor");
       } catch (Exception ex) {
         // Shouldn't happen
@@ -510,6 +516,22 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
   }
 
   /**
+   * Adds a focus listener to this table.
+   */
+  private void addFocusListener(final Home home) {
+    addFocusListener(new FocusListener() {
+        public void focusGained(FocusEvent e) {
+          // Allow drag and drop within the table i.e. only when this table has the focus
+          setDragEnabled(reorderingEnabled && home.getFurnitureSortedProperty() == null);
+        }
+
+        public void focusLost(FocusEvent e) {
+          setDragEnabled(false);
+        }
+      });
+  }
+
+  /**
    * Shows in a popup the information of the cell at the given coordinates.
    */
   private void showInformationPopup(String information, int column, int row) {
@@ -651,6 +673,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
           updateTableSelectedFurniture(home);
           storeExpandedRows(home, controller);
           getTableHeader().repaint();
+          setDragEnabled(reorderingEnabled && home.getFurnitureSortedProperty() == null && hasFocus());
         }
       };
     home.addPropertyChangeListener(Home.Property.FURNITURE_SORTED_PROPERTY, sortListener);
@@ -801,6 +824,20 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
     for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       TableColumn column = getColumnModel().getColumn(columnIndex);
       column.addPropertyChangeListener(columnWidthListener);
+    }
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    Object dropLineColor = UIManager.getDefaults().get("Table.dropLineColor");
+    if (dropLineColor != null
+        && !getDragEnabled()) {
+      // Don't draw drop line color when drag is disabled (table not sorted)
+      UIManager.getDefaults().remove("Table.dropLineColor");
+    }
+    super.paintComponent(g);
+    if (dropLineColor != null) {
+      UIManager.getDefaults().put("Table.dropLineColor", dropLineColor);
     }
   }
 
@@ -1215,7 +1252,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
         } else {
           switch (property) {
             case LANGUAGE :
-           // Change column name and renderer from current locale
+              // Change column name and renderer from current locale
               for (TableColumn tableColumn : furnitureTableColumnModel.availableColumns.values()) {
                 HomePieceOfFurniture.SortableProperty columnIdentifier =
                     (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier();
@@ -1225,7 +1262,9 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
               break;
             case CURRENCY :
             case VALUE_ADDED_TAX_ENABLED :
-              furnitureTableColumnModel.updateModelColumns(home.get().getFurnitureVisibleProperties(), preferences);
+              furnitureTableColumnModel.updateModelColumns(this.home.get().getFurnitureVisibleProperties(), preferences);
+              break;
+            default :
               break;
           }
         }

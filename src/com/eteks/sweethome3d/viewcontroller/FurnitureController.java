@@ -178,7 +178,19 @@ public class FurnitureController implements Controller {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
-    addFurniture(furniture, null);
+    addFurniture(furniture, null, null, null);
+  }
+
+  /**
+   * Controls new furniture added to home.
+   * Once added the furniture will be selected in view
+   * and undo support will receive a new undoable edit.
+   * @param furniture the furniture to add.
+   * @param beforePiece the piece before which the furniture will be added
+   * @since 6.3
+   */
+  public void addFurniture(List<HomePieceOfFurniture> furniture, HomePieceOfFurniture beforePiece) {
+    addFurniture(furniture, null, null, beforePiece);
   }
 
   /**
@@ -192,10 +204,11 @@ public class FurnitureController implements Controller {
     if (group == null) {
       throw new IllegalArgumentException("Group shouldn't be null");
     }
-    addFurniture(furniture, group);
+    addFurniture(furniture, null, group, null);
   }
 
-  private void addFurniture(List<HomePieceOfFurniture> furniture, HomeFurnitureGroup group) {
+  private void addFurniture(List<HomePieceOfFurniture> furniture, Level [] furnitureLevels,
+                            HomeFurnitureGroup group, HomePieceOfFurniture beforePiece) {
     final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
     final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     final List<Selectable> oldSelection = this.home.getSelectedItems();
@@ -203,27 +216,40 @@ public class FurnitureController implements Controller {
         furniture.toArray(new HomePieceOfFurniture [furniture.size()]);
     // Get indices of added furniture
     final int [] furnitureIndex = new int [furniture.size()];
+    int insertIndex = group == null
+        ? this.home.getFurniture().size()
+        : group.getFurniture().size();
+    if (beforePiece != null) {
+      List<HomePieceOfFurniture> parentFurniture = this.home.getFurniture();
+      group = getPieceOfFurnitureGroup(beforePiece, null, parentFurniture);
+      if (group != null) {
+        parentFurniture = group.getFurniture();
+      }
+      insertIndex = parentFurniture.indexOf(beforePiece);
+    }
     final HomeFurnitureGroup [] furnitureGroups = group != null
         ? new HomeFurnitureGroup [furniture.size()]
         : null;
-    int endIndex = group == null
-        ? this.home.getFurniture().size()
-        : group.getFurniture().size();
     boolean basePlanLocked = oldBasePlanLocked;
+    boolean levelUpdated = group != null || furnitureLevels == null;
     for (int i = 0; i < furnitureIndex.length; i++) {
-      furnitureIndex [i] = endIndex++;
+      furnitureIndex [i] = insertIndex++;
       // Unlock base plan if the piece is a part of it
       basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(newFurniture [i]);
+      if (furnitureLevels != null) {
+        levelUpdated |= furnitureLevels [i] == null;
+      }
       if (furnitureGroups != null) {
         furnitureGroups [i] = group;
       }
     }
+    final Level [] newFurnitureLevels = levelUpdated ? null : furnitureLevels;
     final boolean newBasePlanLocked = basePlanLocked;
     final Level furnitureLevel = group != null
         ? group.getLevel()
         : this.home.getSelectedLevel();
 
-    doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false);
+    doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, newFurnitureLevels, newBasePlanLocked, false);
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
@@ -236,7 +262,7 @@ public class FurnitureController implements Controller {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false);
+          doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, newFurnitureLevels, newBasePlanLocked, false);
         }
 
         @Override
@@ -405,6 +431,33 @@ public class FurnitureController implements Controller {
       }
     }
     return null;
+  }
+
+  /**
+   * Reorders the selected furniture in home to place it before the given piece.
+   * @since 6.3
+   */
+  public void moveSelectedFurnitureBefore(HomePieceOfFurniture beforePiece) {
+    List<HomePieceOfFurniture> movedFurniture = Home.getFurnitureSubList(this.home.getSelectedItems());
+    if (!movedFurniture.isEmpty()) {
+      // Store current level of the furniture
+      final Level [] furnitureLevels = new Level [movedFurniture.size()];
+      for (int i = 0; i < furnitureLevels.length; i++) {
+        furnitureLevels [i] = movedFurniture.get(i).getLevel();
+      }
+      this.undoSupport.beginUpdate();
+      deleteFurniture(movedFurniture);
+      addFurniture(movedFurniture, furnitureLevels, null, beforePiece);
+      undoSupport.postEdit(new AbstractUndoableEdit() {
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(FurnitureController.class, "undoReorderName");
+        }
+      });
+
+      // End compound edit
+      undoSupport.endUpdate();
+    }
   }
 
   /**
