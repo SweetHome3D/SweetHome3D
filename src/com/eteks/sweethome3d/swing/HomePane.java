@@ -2064,10 +2064,10 @@ public class HomePane extends JRootPane implements HomeView {
     ActionType display3DViewActionType = view3DRootPane == this
         ? ActionType.DETACH_3D_VIEW
         : ActionType.ATTACH_3D_VIEW;
-    Action backgroundImageAction = getActionMap().get(display3DViewActionType);
+    Action attachmentAction = getActionMap().get(display3DViewActionType);
     return popup
-        ? new ResourceAction.PopupMenuItemAction(backgroundImageAction)
-        : new ResourceAction.MenuItemAction(backgroundImageAction);
+        ? new ResourceAction.PopupMenuItemAction(attachmentAction)
+        : new ResourceAction.MenuItemAction(attachmentAction);
   }
 
   /**
