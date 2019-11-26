@@ -20,18 +20,10 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.im.InputContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Locale;
-
-import javax.swing.KeyStroke;
-import javax.swing.Timer;
 
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * An action which <code>actionPerformed</code> method
@@ -124,61 +116,19 @@ public class ControllerAction extends ResourceAction {
     this.controllerMethod = controllerMethod;
   }
 
-  private static final String [] LATIN_AND_SUPPORTED_LOCALES = new String [] {"cs", "da", "de", "en", "es", "et", "fi", "fr", "hr", "hu", "it", "ja", "lt", "lv", "nl", "no", "pl", "pt", "ro", "sk", "sl", "sv", "tr", "vi"};
-  private static KeyStroke previousActionAccelerator;
-  private static Timer     doubleEventsTimer;
-
   /**
    * Calls the method on controller given in constructor.
    */
   @Override
   public void actionPerformed(ActionEvent ev) {
     try {
-      if (OperatingSystem.isMacOSX()
-          && OperatingSystem.isJavaVersionBetween("1.7", "9")) {
-        Locale inputLocale = InputContext.getInstance().getLocale();
-        if (inputLocale != null
-            && Arrays.binarySearch(LATIN_AND_SUPPORTED_LOCALES, inputLocale.getLanguage()) < 0) {
-          // Accelerators used with non latin keyboards provokes two events,
-          // the second event being emitted by the menu item management
-          if (!isInvokedFromMenuItem()) {
-            previousActionAccelerator = (KeyStroke)getValue(ACCELERATOR_KEY);
-            // Cancel double event tracker in 1s in case the user provokes events
-            // by selecting the toolbar button then the menu item matching the accelerator
-            if (doubleEventsTimer == null) {
-              doubleEventsTimer = new Timer(1000, new ActionListener() {
-                  public void actionPerformed(ActionEvent ev) {
-                    previousActionAccelerator = null;
-                    doubleEventsTimer.stop();
-                  }
-                });
-            }
-            doubleEventsTimer.restart();
-          } else if (previousActionAccelerator != null
-                     && previousActionAccelerator.equals(getValue(ACCELERATOR_KEY))) {
-            previousActionAccelerator = null;
-            return; // Cancel the second event
-          }
-        }
+      if (isActionValid(this)) {
+        this.controllerMethod.invoke(controller, parameters);
       }
-      this.controllerMethod.invoke(controller, parameters);
     } catch (IllegalAccessException ex) {
       throw new RuntimeException (ex);
     } catch (InvocationTargetException ex) {
       throw new RuntimeException (ex);
     }
-  }
-
-  /**
-   * Returns <code>true</code> if current call is done from a menu item.
-   */
-  private boolean isInvokedFromMenuItem() {
-    for (StackTraceElement stackElement : Thread.currentThread().getStackTrace()) {
-      if ("com.apple.laf.ScreenMenuItem".equals(stackElement.getClassName())
-          && "actionPerformed".equals(stackElement.getMethodName())) {
-        return true;
-      }
-    }
-    return false;
   }
 }

@@ -20,13 +20,18 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.im.InputContext;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Locale;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.KeyStroke;
+import javax.swing.Timer;
 import javax.swing.event.SwingPropertyChangeSupport;
 
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -173,6 +178,58 @@ public class ResourceAction extends AbstractAction {
     throw new UnsupportedOperationException();
   }
 
+  private static final String [] LATIN_AND_SUPPORTED_LOCALES = new String [] {"cs", "da", "de", "en", "es", "et", "fi", "fr", "hr", "hu", "it", "ja", "lt", "lv", "nl", "no", "pl", "pt", "ro", "sk", "sl", "sv", "tr", "vi"};
+  private static KeyStroke previousActionAccelerator;
+  private static Timer     doubleEventsTimer;
+
+  /**
+   * Returns <code>true</code> if the given <code>action</action> is valid to avoid it to be
+   * fired twice for the same user command.
+   */
+  static boolean isActionValid(Action action) {
+    if (OperatingSystem.isMacOSX()
+        && OperatingSystem.isJavaVersionBetween("1.7", "9")) {
+      Locale inputLocale = InputContext.getInstance().getLocale();
+      if (inputLocale != null
+          && Arrays.binarySearch(LATIN_AND_SUPPORTED_LOCALES, inputLocale.getLanguage()) < 0) {
+        // Accelerators used with non latin keyboards provokes two events,
+        // the second event being emitted by the menu item management
+        if (!isInvokedFromMenuItem()) {
+          previousActionAccelerator = (KeyStroke)action.getValue(ACCELERATOR_KEY);
+          // Cancel double event tracker in 1s in case the user provokes events
+          // by selecting the toolbar button then the menu item matching the accelerator
+          if (doubleEventsTimer == null) {
+            doubleEventsTimer = new Timer(1000, new ActionListener() {
+                public void actionPerformed(ActionEvent ev) {
+                  previousActionAccelerator = null;
+                  doubleEventsTimer.stop();
+                }
+              });
+          }
+          doubleEventsTimer.restart();
+        } else if (previousActionAccelerator != null
+                   && previousActionAccelerator.equals(action.getValue(ACCELERATOR_KEY))) {
+          previousActionAccelerator = null;
+          return false; // The second event is doubled
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns <code>true</code> if current call is done from a menu item.
+   */
+  private static boolean isInvokedFromMenuItem() {
+    for (StackTraceElement stackElement : Thread.currentThread().getStackTrace()) {
+      if ("com.apple.laf.ScreenMenuItem".equals(stackElement.getClassName())
+          && "actionPerformed".equals(stackElement.getMethodName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * An action decorator.
    */
@@ -202,7 +259,9 @@ public class ResourceAction extends AbstractAction {
     }
 
     public final void actionPerformed(ActionEvent ev) {
-      this.action.actionPerformed(ev);
+      if (isActionValid(this)) {
+        this.action.actionPerformed(ev);
+      }
     }
 
     public final void addPropertyChangeListener(PropertyChangeListener listener) {
