@@ -1657,7 +1657,7 @@ public class OBJWriter extends FilterWriter {
           code += name.hashCode();
         }
       } catch (NoSuchMethodError ex) {
-        // Don't take name into account with Java 3D < 1.4 where getName was added              }
+        // Don't take name into account with Java 3D < 1.4 where getName was added
       }
       return code;
     }
