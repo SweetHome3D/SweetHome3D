@@ -108,6 +108,7 @@ public class OBJWriter extends FilterWriter {
   private final String  header;
   
   private boolean firstNode = true;
+  private boolean checkNodeNames = true;
   private String  mtlFileName;
 
   private int shapeIndex = 1;
@@ -154,7 +155,23 @@ public class OBJWriter extends FilterWriter {
    */
   public OBJWriter(String objFileName, String header, 
                    int maximumFractionDigits) throws FileNotFoundException, IOException {
+    this(objFileName, header, maximumFractionDigits, true);
+  }
+  
+  /**
+   * Create an OBJ writer for the given file name.
+   * @param objFileName the name of the file into which 3D nodes will be written at OBJ format
+   * @param header  a header written as a comment at start of the OBJ file and its MTL counterpart
+   * @param maximumFractionDigits the maximum digits count used in fraction part of numbers,
+   *                or -1 for default value. Using -1 may cause writing nodes to be twice faster.
+   * @param checkNodeNames if <code>true</code> then this writer will check whether node name prefixes written in the 
+   *                file respect OBJ specifications (i.e. contains only alphanumeric characters or underscores)
+   */
+  public OBJWriter(String objFileName, String header, 
+                   int maximumFractionDigits, 
+                   boolean checkNodeNames) throws FileNotFoundException, IOException {
     this(new FileOutputStream(objFileName), header, maximumFractionDigits);
+    this.checkNodeNames = checkNodeNames;
     if (objFileName.toLowerCase().endsWith(".obj")) {
       this.mtlFileName = objFileName.substring(0, objFileName.length() - 4) + ".mtl";
     } else {
@@ -357,7 +374,7 @@ public class OBJWriter extends FilterWriter {
               || renderingAttributes.getVisible())) {
         // Build a unique human readable object name
         String objectName = "";
-        if (accept(nodeName)) {
+        if (nodeName != null && (!this.checkNodeNames || accept(nodeName))) {
           objectName = nodeName + "_";
         }
           
