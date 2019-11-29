@@ -409,12 +409,17 @@ public class OBJWriter extends FilterWriter {
               } catch (NoSuchMethodError ex) {
                 // Don't reuse appearance name with Java 3D < 1.4 where getName was added
               }
-              if (appearanceName == null || !accept(appearanceName)) {
+              if ((appearanceName == null || !accept(appearanceName)) && accept(objectName)) {
                 appearanceName = objectName;
               } else {
                 // Find a unique appearance name among appearances 
                 Collection<String> appearanceNames = this.appearances.values();
-                String baseName = appearanceName + "_" + objectName;
+                String baseName = appearanceName != null
+                    ? appearanceName 
+                    : "material";
+                if (accept(objectName)) {
+                  baseName += "_" + objectName;
+                }
                 for (int i = 0; appearanceNames.contains(appearanceName); i++) {
                   if (i == 0) {
                     appearanceName = baseName;
