@@ -108,7 +108,6 @@ public class OBJWriter extends FilterWriter {
   private final String  header;
   
   private boolean firstNode = true;
-  private boolean checkNodeNames = true;
   private String  mtlFileName;
 
   private int shapeIndex = 1;
@@ -155,23 +154,7 @@ public class OBJWriter extends FilterWriter {
    */
   public OBJWriter(String objFileName, String header, 
                    int maximumFractionDigits) throws FileNotFoundException, IOException {
-    this(objFileName, header, maximumFractionDigits, true);
-  }
-  
-  /**
-   * Create an OBJ writer for the given file name.
-   * @param objFileName the name of the file into which 3D nodes will be written at OBJ format
-   * @param header  a header written as a comment at start of the OBJ file and its MTL counterpart
-   * @param maximumFractionDigits the maximum digits count used in fraction part of numbers,
-   *                or -1 for default value. Using -1 may cause writing nodes to be twice faster.
-   * @param checkNodeNames if <code>true</code> then this writer will check whether node name prefixes written in the 
-   *                file respect OBJ specifications (i.e. contains only alphanumeric characters or underscores)
-   */
-  public OBJWriter(String objFileName, String header, 
-                   int maximumFractionDigits, 
-                   boolean checkNodeNames) throws FileNotFoundException, IOException {
     this(new FileOutputStream(objFileName), header, maximumFractionDigits);
-    this.checkNodeNames = checkNodeNames;
     if (objFileName.toLowerCase().endsWith(".obj")) {
       this.mtlFileName = objFileName.substring(0, objFileName.length() - 4) + ".mtl";
     } else {
@@ -374,7 +357,7 @@ public class OBJWriter extends FilterWriter {
               || renderingAttributes.getVisible())) {
         // Build a unique human readable object name
         String objectName = "";
-        if (nodeName != null && (!this.checkNodeNames || accept(nodeName))) {
+        if (accept(nodeName)) {
           objectName = nodeName + "_";
         }
           
@@ -409,17 +392,12 @@ public class OBJWriter extends FilterWriter {
               } catch (NoSuchMethodError ex) {
                 // Don't reuse appearance name with Java 3D < 1.4 where getName was added
               }
-              if ((appearanceName == null || !accept(appearanceName)) && accept(objectName)) {
+              if (appearanceName == null || !accept(appearanceName)) {
                 appearanceName = objectName;
               } else {
                 // Find a unique appearance name among appearances 
                 Collection<String> appearanceNames = this.appearances.values();
-                String baseName = appearanceName != null
-                    ? appearanceName 
-                    : "material";
-                if (accept(objectName)) {
-                  baseName += "_" + objectName;
-                }
+                String baseName = appearanceName + "_" + objectName;
                 for (int i = 0; appearanceNames.contains(appearanceName); i++) {
                   if (i == 0) {
                     appearanceName = baseName;
