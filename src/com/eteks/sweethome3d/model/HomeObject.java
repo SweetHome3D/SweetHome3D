@@ -55,8 +55,13 @@ public abstract class HomeObject implements Serializable, Cloneable {
   public void setProperty(String name, String value) {
     if (value == null) {
       if (this.properties != null && this.properties.containsKey(name)) {
-        this.properties.remove(name);
-        if (this.properties.size() == 0) {
+        try {
+          this.properties.remove(name);
+          if (this.properties.size() == 0) {
+            this.properties = null;
+          }
+        } catch (UnsupportedOperationException ex) {
+          // Exception thrown by singleton map when an entry is removed 
           this.properties = null;
         }
       }
