@@ -70,9 +70,13 @@ public abstract class HomeObject implements Serializable, Cloneable {
         // Create properties map on the fly with a singleton map first
         this.properties = Collections.singletonMap(name, value); 
       } else {
-        if (this.properties.size() == 1) {
+        if (this.properties.size() == 1 && !(this.properties instanceof HashMap)) {
           // Then a HashMap if the user needs more than a property
-          this.properties = new HashMap<String, String>(this.properties);
+          Map<String, String> properties = this.properties;
+          this.properties = new HashMap<String, String>();
+          // Fill it with existing value 
+          String key = properties.keySet().iterator().next();
+          this.properties.put(key, properties.get(key));
         }
         this.properties.put(name, value);
       }
