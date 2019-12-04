@@ -430,6 +430,8 @@ public class HomeXMLHandler extends DefaultHandler {
   private final Stack<String>     elements = new Stack<String>();
   private final Stack<Map<String, String>> attributes = new Stack<Map<String, String>>();
   private final Stack<List<HomePieceOfFurniture>> groupsFurniture = new Stack<List<HomePieceOfFurniture>>();
+  private final Stack<Map<String, String>> properties = new Stack<Map<String, String>>();
+  private final Stack<Map<String, TextStyle>> textStyles = new Stack<Map<String, TextStyle>>();
   private final Map<String, Level>      levels = new HashMap<String, Level>();
   private final Map<String, JoinedWall> joinedWalls  = new HashMap<String, JoinedWall>();
 
@@ -439,9 +441,6 @@ public class HomeXMLHandler extends DefaultHandler {
   private Baseboard rightSideBaseboard;
   private BackgroundImage homeBackgroundImage;
   private BackgroundImage backgroundImage;
-  private final Map<String, String> homeProperties = new HashMap<String, String>();
-  private final Map<String, String> properties = new HashMap<String, String>();
-  private final Map<String, TextStyle>    textStyles = new HashMap<String, TextStyle>();
   private final Map<String, HomeTexture>  textures = new HashMap<String, HomeTexture>();
   private final List<HomeMaterial>        materials = new ArrayList<HomeMaterial>();
   private final List<Transformation>      transformations = new ArrayList<Transformation>();
@@ -487,25 +486,25 @@ public class HomeXMLHandler extends DefaultHandler {
       attributesMap.put(attributes.getQName(i), attributes.getValue(i));
     }
     this.attributes.push(attributesMap);
+    if (!"property".equals(name)
+        && !"furnitureVisibleProperty".equals(name)
+        && !"textStyle".equals(name)) {
+      this.properties.push(new HashMap<String, String>());
+      this.textStyles.push(new HashMap<String, TextStyle>());
+    }
 
     if ("home".equals(name)) {
       setHome(createHome(name, attributesMap));
-      this.homeProperties.clear();
       this.furnitureVisibleProperties.clear();
       this.homeBackgroundImage = null;
     } else if ("environment".equals(name)) {
       this.textures.clear();
-    } else if ("compass".equals(name)) {
-      this.properties.clear();
     } else if ("level".equals(name)) {
-      this.properties.clear();
       this.backgroundImage = null;
     } else if ("pieceOfFurniture".equals(name)
               || "doorOrWindow".equals(name)
               || "light".equals(name)
               || "furnitureGroup".equals(name)) {
-      this.properties.clear();
-      this.textStyles.clear();
       this.textures.clear();
       this.materials.clear();
       this.transformations.clear();
@@ -514,26 +513,14 @@ public class HomeXMLHandler extends DefaultHandler {
       if ("furnitureGroup".equals(name)) {
         this.groupsFurniture.push(new ArrayList<HomePieceOfFurniture>());
       }
-    } else if ("camera".equals(name)
-        || "observerCamera".equals(name)) {
-      this.properties.clear();
     } else if ("room".equals(name)) {
-      this.properties.clear();
-      this.textStyles.clear();
       this.textures.clear();
       this.points.clear();
     } else if ("polyline".equals(name)) {
-      this.properties.clear();
       this.points.clear();
-    } else if ("dimensionLine".equals(name)) {
-      this.properties.clear();
-      this.textStyles.clear();
     } else if ("label".equals(name)) {
-      this.properties.clear();
-      this.textStyles.clear();
       this.labelText = null;
     } else if ("wall".equals(name)) {
-      this.properties.clear();
       this.textures.clear();
       this.leftSideBaseboard = null;
       this.rightSideBaseboard = null;
@@ -618,9 +605,6 @@ public class HomeXMLHandler extends DefaultHandler {
         }
       } else if ("furnitureGroup".equals(parent)) {
         this.groupsFurniture.peek().add(piece);
-        // Clear properties and text styles of the group that may be cited after child element
-        this.properties.clear();
-        this.textStyles.clear();
       }
     } else if ("wall".equals(name)) {
       Wall wall = createWall(name, attributesMap);
@@ -675,7 +659,7 @@ public class HomeXMLHandler extends DefaultHandler {
       this.labelText = getCharacters();
     } else if ("textStyle".equals(name)) {
       String attribute = attributesMap.get("attribute");
-      this.textStyles.put(attribute != null ? attribute : UNIQUE_ATTRIBUTE,
+      this.textStyles.peek().put(attribute != null ? attribute : UNIQUE_ATTRIBUTE,
           createTextStyle(name, attributesMap));
     } else if ("texture".equals(name)) {
       if ("material".equals(parent)) {
@@ -761,12 +745,16 @@ public class HomeXMLHandler extends DefaultHandler {
       }
     } else if ("property".equals(name)) {
       if (this.homeElementName != null) {
-        if (this.homeElementName.equals(parent)) {
-          this.homeProperties.put(attributesMap.get("name"), attributesMap.get("value"));
-        } else {
-          this.properties.put(attributesMap.get("name"), attributesMap.get("value"));
-        }
+        this.properties.peek().put(attributesMap.get("name"), attributesMap.get("value"));
       }
+    }
+
+    if (!"property".equals(name)
+        && !"furnitureVisibleProperty".equals(name)
+        && !"textStyle".equals(name)) {
+      // Clear properties and text styles that may be cited in child elements
+      this.properties.pop();
+      this.textStyles.pop();
     }
   }
 
@@ -836,7 +824,7 @@ public class HomeXMLHandler extends DefaultHandler {
   protected void setHomeAttributes(Home home,
                                    String elementName,
                                    Map<String, String> attributes) throws SAXException {
-    for (Map.Entry<String, String> property : this.homeProperties.entrySet()) {
+    for (Map.Entry<String, String> property : this.properties.peek().entrySet()) {
       home.setProperty(property.getKey(), property.getValue());
     }
     if (this.furnitureVisibleProperties.size() > 0) {
@@ -1263,7 +1251,7 @@ public class HomeXMLHandler extends DefaultHandler {
                                                String elementName,
                                                Map<String, String> attributes) throws SAXException {
     setProperties(piece);
-    piece.setNameStyle(this.textStyles.get("nameStyle"));
+    piece.setNameStyle(this.textStyles.peek().get("nameStyle"));
     piece.setNameVisible("true".equals(attributes.get("nameVisible")));
     Float nameAngle = parseOptionalFloat(attributes, "nameAngle");
     if (nameAngle != null) {
@@ -1441,8 +1429,8 @@ public class HomeXMLHandler extends DefaultHandler {
                                    String elementName,
                                    Map<String, String> attributes) throws SAXException {
     setProperties(room);
-    room.setNameStyle(this.textStyles.get("nameStyle"));
-    room.setAreaStyle(this.textStyles.get("areaStyle"));
+    room.setNameStyle(this.textStyles.peek().get("nameStyle"));
+    room.setAreaStyle(this.textStyles.peek().get("areaStyle"));
     room.setName(attributes.get("name"));
     Float nameAngle = parseOptionalFloat(attributes, "nameAngle");
     if (nameAngle != null) {
@@ -1596,7 +1584,7 @@ public class HomeXMLHandler extends DefaultHandler {
                                             String elementName,
                                             Map<String, String> attributes) throws SAXException {
     setProperties(dimensionLine);
-    dimensionLine.setLengthStyle(this.textStyles.get("lengthStyle"));
+    dimensionLine.setLengthStyle(this.textStyles.peek().get("lengthStyle"));
   }
 
   /**
@@ -1618,7 +1606,7 @@ public class HomeXMLHandler extends DefaultHandler {
                                     String elementName,
                                     Map<String, String> attributes) throws SAXException {
     setProperties(label);
-    label.setStyle(this.textStyles.get(UNIQUE_ATTRIBUTE));
+    label.setStyle(this.textStyles.peek().get(UNIQUE_ATTRIBUTE));
     Float angle = parseOptionalFloat(attributes, "angle");
     if (angle != null) {
       label.setAngle(angle);
@@ -1715,7 +1703,7 @@ public class HomeXMLHandler extends DefaultHandler {
    * Sets the properties of the given <code>object</code>.
    */
   private void setProperties(HomeObject object) {
-    for (Map.Entry<String, String> property : this.properties.entrySet()) {
+    for (Map.Entry<String, String> property : this.properties.peek().entrySet()) {
       object.setProperty(property.getKey(), property.getValue());
     }
   }

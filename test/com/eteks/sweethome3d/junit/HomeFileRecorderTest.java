@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
@@ -53,17 +54,28 @@ import junit.framework.TestCase;
  */
 public class HomeFileRecorderTest extends TestCase {
   public void testWriteReadHome() throws RecorderException {
-    // Create an empty home with a wall and a piece of furniture
+    // Create an empty home with a wall and a group with two pieces of furniture
     Home home1 = new Home();
+    home1.setProperty("id", "home1");
     Wall wall = new Wall(0, 10, 100, 80, 10, home1.getWallHeight());
     wall.setProperty("id", "wall1");
     home1.addWall(wall);
     FurnitureCatalog catalog = new DefaultFurnitureCatalog();
-    HomePieceOfFurniture piece = new HomePieceOfFurniture(
+    HomePieceOfFurniture piece1 = new HomePieceOfFurniture(
         catalog.getCategories().get(0).getFurniture().get(0));
-    piece.setProperty("id", "piece1");
-    piece.setProperty("name", "value");
-    home1.addPieceOfFurniture(piece);
+    piece1.setProperty("id", "piece1");
+    piece1.setProperty("name", "value1");
+    piece1.setNameStyle(new TextStyle(12, false, false));
+    HomePieceOfFurniture piece2 = new HomePieceOfFurniture(
+        catalog.getCategories().get(1).getFurniture().get(0));
+    piece2.setX(100);
+    piece2.setY(200);
+    piece2.setProperty("name", "value2");
+    piece2.setNameStyle(new TextStyle(10, true, false));
+    HomeFurnitureGroup group = new HomeFurnitureGroup(Arrays.asList(piece1, piece2), "Group");
+    group.setProperty("test", "value");
+    group.setNameStyle(new TextStyle(16, false, true));
+    home1.addPieceOfFurniture(group);
 
     // Test if home is correctly saved
     checkSavedHome(home1, new HomeFileRecorder());
@@ -82,6 +94,8 @@ public class HomeFileRecorderTest extends TestCase {
     Home readHome = recorder.readHome(testFile);
     // Compare home content
     assertNotSame("Home not loaded", home, readHome);
+    assertEquals("Different home property id",
+        home.getProperty("id"), readHome.getProperty("id"));
     assertEquals("Home wall height",
         home.getWallHeight(), readHome.getWallHeight());
     assertEquals("Home walls wrong count",
@@ -224,6 +238,7 @@ public class HomeFileRecorderTest extends TestCase {
    */
   private void assertEquals(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
     assertNotSame("Piece not loaded", piece1, piece2);
+    assertEquals("Different class", piece1.getClass(), piece2.getClass());
     assertEquals("Different X", piece1.getX(), piece2.getX());
     assertEquals("Different Y", piece1.getY(), piece2.getY());
     assertEquals("Different color", piece1.getColor(), piece2.getColor());
@@ -231,12 +246,25 @@ public class HomeFileRecorderTest extends TestCase {
     assertEquals("Different height", piece1.getHeight(), piece2.getHeight());
     assertEquals("Different depth", piece1.getDepth(), piece2.getDepth());
     assertEquals("Different name", piece1.getName(), piece2.getName());
-    assertNotSame("Piece icon not loaded", piece1.getIcon(), piece2.getIcon());
-    assertContentEquals("Different icon content", piece1.getIcon(), piece2.getIcon());
-    assertNotSame("Piece model not loaded", piece1.getModel(), piece2.getModel());
-    assertContentEquals("Different model content", piece1.getModel(), piece2.getModel());
-    assertEquals("Different property id", piece1.getProperty("id"), piece2.getProperty("id"));
-    assertEquals("Different property name", piece1.getProperty("name"), piece2.getProperty("name"));
+    if (piece1 instanceof HomeFurnitureGroup) {
+      HomeFurnitureGroup group1 = (HomeFurnitureGroup)piece1;
+      HomeFurnitureGroup group2 = (HomeFurnitureGroup)piece2;
+      assertEquals("Different furniture count", group1.getFurniture().size(), group2.getFurniture().size());
+      List<HomePieceOfFurniture> furniture = group1.getFurniture();
+      for (int i = 0; i < furniture.size(); i++) {
+        assertEquals(furniture.get(i), group2.getFurniture().get(i));
+      }
+    } else {
+      assertNotSame("Piece icon not loaded", piece1.getIcon(), piece2.getIcon());
+      assertContentEquals("Different icon content", piece1.getIcon(), piece2.getIcon());
+      assertNotSame("Piece model not loaded", piece1.getModel(), piece2.getModel());
+      assertContentEquals("Different model content", piece1.getModel(), piece2.getModel());
+    }
+    assertEquals("Different properties", piece1.getPropertyNames(), piece2.getPropertyNames());
+    for (String property : piece1.getPropertyNames()) {
+      assertEquals("Different property " + property, piece1.getProperty(property), piece2.getProperty(property));
+    }
+    assertEquals("Different name style", piece1.getNameStyle(), piece2.getNameStyle());
   }
 
   /**
