@@ -33,21 +33,21 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A room or a polygon in a home plan. 
+ * A room or a polygon in a home plan.
  * @author Emmanuel Puybaret
  */
 public class Room extends HomeObject implements Selectable, Elevatable {
   /**
-   * The properties of a room that may change. <code>PropertyChangeListener</code>s added 
+   * The properties of a room that may change. <code>PropertyChangeListener</code>s added
    * to a room will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
       POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, AREA_STYLE, AREA_ANGLE,
       FLOOR_COLOR, FLOOR_TEXTURE, FLOOR_VISIBLE, FLOOR_SHININESS,
       CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE, CEILING_SHININESS, LEVEL}
-  
+
   private static final long serialVersionUID = 1L;
-  
+
   private static final double TWICE_PI = 2 * Math.PI;
 
   private String              name;
@@ -70,7 +70,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   private HomeTexture         ceilingTexture;
   private float               ceilingShininess;
   private Level               level;
-  
+
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
   private transient Float areaCache;
@@ -90,7 +90,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Initializes new room transient fields  
+   * Initializes new room transient fields
    * and reads room from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -120,7 +120,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the name of this room. Once this room is updated, 
+   * Sets the name of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    */
   public void setName(String name) {
@@ -131,17 +131,17 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
     }
   }
-   
+
   /**
-   * Returns the distance along x axis applied to room center abscissa 
-   * to display room name. 
+   * Returns the distance along x axis applied to room center abscissa
+   * to display room name.
    */
   public float getNameXOffset() {
-    return this.nameXOffset;  
+    return this.nameXOffset;
   }
-  
+
   /**
-   * Sets the distance along x axis applied to room center abscissa to display room name. 
+   * Sets the distance along x axis applied to room center abscissa to display room name.
    * Once this room  is updated, listeners added to this room will receive a change notification.
    */
   public void setNameXOffset(float nameXOffset) {
@@ -151,17 +151,17 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.NAME_X_OFFSET.name(), oldNameXOffset, nameXOffset);
     }
   }
-  
+
   /**
-   * Returns the distance along y axis applied to room center ordinate 
+   * Returns the distance along y axis applied to room center ordinate
    * to display room name.
    */
   public float getNameYOffset() {
-    return this.nameYOffset;  
+    return this.nameYOffset;
   }
 
   /**
-   * Sets the distance along y axis applied to room center ordinate to display room name. 
+   * Sets the distance along y axis applied to room center ordinate to display room name.
    * Once this room is updated, listeners added to this room will receive a change notification.
    */
   public void setNameYOffset(float nameYOffset) {
@@ -171,12 +171,12 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.NAME_Y_OFFSET.name(), oldNameYOffset, nameYOffset);
     }
   }
-  
+
   /**
    * Returns the text style used to display room name.
    */
   public TextStyle getNameStyle() {
-    return this.nameStyle;  
+    return this.nameStyle;
   }
 
   /**
@@ -190,19 +190,19 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.NAME_STYLE.name(), oldNameStyle, nameStyle);
     }
   }
-  
+
   /**
    * Returns the angle in radians used to display the room name.
-   * @since 3.6 
+   * @since 3.6
    */
   public float getNameAngle() {
     return this.nameAngle;
   }
 
   /**
-   * Sets the angle in radians used to display the room name. Once this piece is updated, 
+   * Sets the angle in radians used to display the room name. Once this piece is updated,
    * listeners added to this piece will receive a change notification.
-   * @since 3.6 
+   * @since 3.6
    */
   public void setNameAngle(float nameAngle) {
     // Ensure angle is always positive and between 0 and 2 PI
@@ -215,19 +215,19 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns the points of the polygon matching this room. 
+   * Returns the points of the polygon matching this room.
    * @return an array of the (x,y) coordinates of the room points.
    */
   public float [][] getPoints() {
-    return deepCopy(this.points);  
+    return deepCopy(this.points);
   }
 
   /**
    * Returns the number of points of the polygon matching this room.
-   * @since 2.0 
+   * @since 2.0
    */
   public int getPointCount() {
-    return this.points.length;  
+    return this.points.length;
   }
 
   private float [][] deepCopy(float [][] points) {
@@ -239,7 +239,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the points of the polygon matching this room. Once this room 
+   * Sets the points of the polygon matching this room. Once this room
    * is updated, listeners added to this room will receive a change notification.
    */
   public void setPoints(float [][] points) {
@@ -266,39 +266,39 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   public void addPoint(float x, float y) {
     addPoint(x, y, this.points.length);
   }
-  
+
   /**
    * Adds a point at the given <code>index</code>.
-   * @throws IndexOutOfBoundsException if <code>index</code> is negative or > <code>getPointCount()</code> 
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or > <code>getPointCount()</code>
    * @since 2.0
    */
   public void addPoint(float x, float y, int index) {
     if (index < 0 || index > this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
     }
-    
+
     float [][] newPoints = new float [this.points.length + 1][];
     System.arraycopy(this.points, 0, newPoints, 0, index);
     newPoints [index] = new float [] {x, y};
     System.arraycopy(this.points, index, newPoints, index + 1, this.points.length - index);
-    
+
     float [][] oldPoints = this.points;
     this.points = newPoints;
     this.shapeCache = null;
     this.areaCache  = null;
     this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
-  
+
   /**
    * Sets the point at the given <code>index</code>.
-   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code>
    * @since 2.0
    */
   public void setPoint(float x, float y, int index) {
     if (index < 0 || index >= this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
     }
-    if (this.points [index][0] != x 
+    if (this.points [index][0] != x
         || this.points [index][1] != y) {
       float [][] oldPoints = this.points;
       this.points = deepCopy(this.points);
@@ -309,10 +309,10 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
     }
   }
-  
+
   /**
    * Removes the point at the given <code>index</code>.
-   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code>
    * @since 2.0
    */
   public void removePoint(int index) {
@@ -321,27 +321,27 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     } else if (this.points.length <= 1) {
       throw new IllegalStateException("Room points must containt at least one point");
     }
-    
+
     float [][] newPoints = new float [this.points.length - 1][];
     System.arraycopy(this.points, 0, newPoints, 0, index);
     System.arraycopy(this.points, index + 1, newPoints, index, this.points.length - index - 1);
-    
+
     float [][] oldPoints = this.points;
     this.points = newPoints;
     this.shapeCache = null;
     this.areaCache  = null;
     this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
-  
+
   /**
-   * Returns whether the area of this room is visible or not. 
+   * Returns whether the area of this room is visible or not.
    */
   public boolean isAreaVisible() {
-    return this.areaVisible;  
+    return this.areaVisible;
   }
-  
+
   /**
-   * Sets whether the area of this room is visible or not. Once this room 
+   * Sets whether the area of this room is visible or not. Once this room
    * is updated, listeners added to this room will receive a change notification.
    */
   public void setAreaVisible(boolean areaVisible) {
@@ -350,17 +350,17 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.AREA_VISIBLE.name(), !areaVisible, areaVisible);
     }
   }
-  
+
   /**
-   * Returns the distance along x axis applied to room center abscissa 
-   * to display room area. 
+   * Returns the distance along x axis applied to room center abscissa
+   * to display room area.
    */
   public float getAreaXOffset() {
-    return this.areaXOffset;  
+    return this.areaXOffset;
   }
-  
+
   /**
-   * Sets the distance along x axis applied to room center abscissa to display room area. 
+   * Sets the distance along x axis applied to room center abscissa to display room area.
    * Once this room  is updated, listeners added to this room will receive a change notification.
    */
   public void setAreaXOffset(float areaXOffset) {
@@ -370,17 +370,17 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.AREA_X_OFFSET.name(), oldAreaXOffset, areaXOffset);
     }
   }
-  
+
   /**
-   * Returns the distance along y axis applied to room center ordinate 
+   * Returns the distance along y axis applied to room center ordinate
    * to display room area.
    */
   public float getAreaYOffset() {
-    return this.areaYOffset;  
+    return this.areaYOffset;
   }
 
   /**
-   * Sets the distance along y axis applied to room center ordinate to display room area. 
+   * Sets the distance along y axis applied to room center ordinate to display room area.
    * Once this room is updated, listeners added to this room will receive a change notification.
    */
   public void setAreaYOffset(float areaYOffset) {
@@ -390,12 +390,12 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.AREA_Y_OFFSET.name(), oldAreaYOffset, areaYOffset);
     }
   }
-  
+
   /**
    * Returns the text style used to display room area.
    */
   public TextStyle getAreaStyle() {
-    return this.areaStyle;  
+    return this.areaStyle;
   }
 
   /**
@@ -409,19 +409,19 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.AREA_STYLE.name(), oldAreaStyle, areaStyle);
     }
   }
-  
+
   /**
    * Returns the angle in radians used to display the room area.
-   * @since 3.6 
+   * @since 3.6
    */
   public float getAreaAngle() {
     return this.areaAngle;
   }
 
   /**
-   * Sets the angle in radians used to display the room area. Once this piece is updated, 
+   * Sets the angle in radians used to display the room area. Once this piece is updated,
    * listeners added to this piece will receive a change notification.
-   * @since 3.6 
+   * @since 3.6
    */
   public void setAreaAngle(float areaAngle) {
     // Ensure angle is always positive and between 0 and 2 PI
@@ -437,37 +437,37 @@ public class Room extends HomeObject implements Selectable, Elevatable {
    * Returns the abscissa of the center point of this room.
    */
   public float getXCenter() {
-    float xMin = this.points [0][0]; 
-    float xMax = this.points [0][0]; 
+    float xMin = this.points [0][0];
+    float xMax = this.points [0][0];
     for (int i = 1; i < this.points.length; i++) {
       xMin = Math.min(xMin, this.points [i][0]);
       xMax = Math.max(xMax, this.points [i][0]);
     }
     return (xMin + xMax) / 2;
   }
-  
+
   /**
    * Returns the ordinate of the center point of this room.
    */
   public float getYCenter() {
-    float yMin = this.points [0][1]; 
-    float yMax = this.points [0][1]; 
+    float yMin = this.points [0][1];
+    float yMax = this.points [0][1];
     for (int i = 1; i < this.points.length; i++) {
       yMin = Math.min(yMin, this.points [i][1]);
       yMax = Math.max(yMax, this.points [i][1]);
     }
     return (yMin + yMax) / 2;
   }
-  
+
   /**
-   * Returns the floor color of this room. 
+   * Returns the floor color of this room.
    */
   public Integer getFloorColor() {
     return this.floorColor;
   }
 
   /**
-   * Sets the floor color of this room. Once this room is updated, 
+   * Sets the floor color of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    */
   public void setFloorColor(Integer floorColor) {
@@ -475,7 +475,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (floorColor == null || !floorColor.equals(this.floorColor))) {
       Integer oldFloorColor = this.floorColor;
       this.floorColor = floorColor;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_COLOR.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_COLOR.name(),
           oldFloorColor, floorColor);
     }
   }
@@ -488,7 +488,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the floor texture of this room. Once this room is updated, 
+   * Sets the floor texture of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    */
   public void setFloorTexture(HomeTexture floorTexture) {
@@ -496,20 +496,20 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (floorTexture == null || !floorTexture.equals(this.floorTexture))) {
       HomeTexture oldFloorTexture = this.floorTexture;
       this.floorTexture = floorTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_TEXTURE.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_TEXTURE.name(),
           oldFloorTexture, floorTexture);
     }
   }
 
   /**
-   * Returns whether the floor of this room is visible or not. 
+   * Returns whether the floor of this room is visible or not.
    */
   public boolean isFloorVisible() {
-    return this.floorVisible;  
+    return this.floorVisible;
   }
-  
+
   /**
-   * Sets whether the floor of this room is visible or not. Once this room 
+   * Sets whether the floor of this room is visible or not. Once this room
    * is updated, listeners added to this room will receive a change notification.
    */
   public void setFloorVisible(boolean floorVisible) {
@@ -518,10 +518,10 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.FLOOR_VISIBLE.name(), !floorVisible, floorVisible);
     }
   }
-  
+
   /**
-   * Returns the floor shininess of this room. 
-   * @return a value between 0 (matt) and 1 (very shiny)  
+   * Returns the floor shininess of this room.
+   * @return a value between 0 (matt) and 1 (very shiny)
    * @since 3.0
    */
   public float getFloorShininess() {
@@ -529,7 +529,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the floor shininess of this room. Once this room is updated, 
+   * Sets the floor shininess of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    * @since 3.0
    */
@@ -537,20 +537,20 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (floorShininess != this.floorShininess) {
       float oldFloorShininess = this.floorShininess;
       this.floorShininess = floorShininess;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_SHININESS.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_SHININESS.name(),
           oldFloorShininess, floorShininess);
     }
   }
 
   /**
-   * Returns the ceiling color color of this room. 
+   * Returns the ceiling color color of this room.
    */
   public Integer getCeilingColor() {
     return this.ceilingColor;
   }
 
   /**
-   * Sets the ceiling color of this room. Once this room is updated, 
+   * Sets the ceiling color of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    */
   public void setCeilingColor(Integer ceilingColor) {
@@ -558,7 +558,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (ceilingColor == null || !ceilingColor.equals(this.ceilingColor))) {
       Integer oldCeilingColor = this.ceilingColor;
       this.ceilingColor = ceilingColor;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_COLOR.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_COLOR.name(),
           oldCeilingColor, ceilingColor);
     }
   }
@@ -571,7 +571,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the ceiling texture of this room. Once this room is updated, 
+   * Sets the ceiling texture of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    */
   public void setCeilingTexture(HomeTexture ceilingTexture) {
@@ -579,20 +579,20 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (ceilingTexture == null || !ceilingTexture.equals(this.ceilingTexture))) {
       HomeTexture oldCeilingTexture = this.ceilingTexture;
       this.ceilingTexture = ceilingTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_TEXTURE.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_TEXTURE.name(),
           oldCeilingTexture, ceilingTexture);
     }
   }
 
   /**
-   * Returns whether the ceiling of this room is visible or not. 
+   * Returns whether the ceiling of this room is visible or not.
    */
   public boolean isCeilingVisible() {
-    return this.ceilingVisible;  
+    return this.ceilingVisible;
   }
-  
+
   /**
-   * Sets whether the ceiling of this room is visible or not. Once this room 
+   * Sets whether the ceiling of this room is visible or not. Once this room
    * is updated, listeners added to this room will receive a change notification.
    */
   public void setCeilingVisible(boolean ceilingVisible) {
@@ -601,10 +601,10 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.propertyChangeSupport.firePropertyChange(Property.CEILING_VISIBLE.name(), !ceilingVisible, ceilingVisible);
     }
   }
-  
+
   /**
    * Returns the ceiling shininess of this room.
-   * @return a value between 0 (matt) and 1 (very shiny)  
+   * @return a value between 0 (matt) and 1 (very shiny)
    * @since 3.0
    */
   public float getCeilingShininess() {
@@ -612,7 +612,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the ceiling shininess of this room. Once this room is updated, 
+   * Sets the ceiling shininess of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    * @since 3.0
    */
@@ -620,13 +620,13 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (ceilingShininess != this.ceilingShininess) {
       float oldCeilingShininess = this.ceilingShininess;
       this.ceilingShininess = ceilingShininess;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_SHININESS.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.CEILING_SHININESS.name(),
           oldCeilingShininess, ceilingShininess);
     }
   }
 
   /**
-   * Returns the level which this room belongs to. 
+   * Returns the level which this room belongs to.
    * @since 3.4
    */
   public Level getLevel() {
@@ -634,7 +634,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Sets the level of this room. Once this room is updated, 
+   * Sets the level of this room. Once this room is updated,
    * listeners added to this room will receive a change notification.
    * @since 3.4
    */
@@ -647,7 +647,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Returns <code>true</code> if this room is at the given <code>level</code> 
+   * Returns <code>true</code> if this room is at the given <code>level</code>
    * or at a level with the same elevation and a smaller elevation index.
    * @since 3.4
    */
@@ -657,7 +657,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
            && this.level.getElevation() == level.getElevation()
            && this.level.getElevationIndex() < level.getElevationIndex();
   }
-  
+
   /**
    * Returns the area of this room.
    */
@@ -673,54 +673,54 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         for (PathIterator it = roomArea.getPathIterator(null); !it.isDone(); ) {
           float [] roomPoint = new float[2];
           switch (it.currentSegment(roomPoint)) {
-            case PathIterator.SEG_MOVETO : 
+            case PathIterator.SEG_MOVETO :
               currentPathPoints.add(roomPoint);
               break;
-            case PathIterator.SEG_LINETO : 
+            case PathIterator.SEG_LINETO :
               currentPathPoints.add(roomPoint);
               break;
             case PathIterator.SEG_CLOSE :
-              float [][] pathPoints = 
+              float [][] pathPoints =
                   currentPathPoints.toArray(new float [currentPathPoints.size()][]);
               area += getSignedArea(pathPoints);
               currentPathPoints.clear();
               break;
           }
-          it.next();        
+          it.next();
         }
         this.areaCache = area;
       }
     }
     return this.areaCache;
   }
-  
+
   private float getSignedArea(float areaPoints [][]) {
-    // From "Area of a General Polygon" algorithm described in  
+    // From "Area of a General Polygon" algorithm described in
     // http://www.davidchandler.com/AreaOfAGeneralPolygon.pdf
-    float area = 0;
+    double area = 0; // Compute in double to avoid precision loss with complex areas
     for (int i = 1; i < areaPoints.length; i++) {
-      area += areaPoints [i][0] * areaPoints [i - 1][1];
-      area -= areaPoints [i][1] * areaPoints [i - 1][0];
+      area += (double)areaPoints [i][0] * areaPoints [i - 1][1];
+      area -= (double)areaPoints [i][1] * areaPoints [i - 1][0];
     }
-    area += areaPoints [0][0] * areaPoints [areaPoints.length - 1][1];
-    area -= areaPoints [0][1] * areaPoints [areaPoints.length - 1][0];
-    return area / 2;
+    area += (double)areaPoints [0][0] * areaPoints [areaPoints.length - 1][1];
+    area -= (double)areaPoints [0][1] * areaPoints [areaPoints.length - 1][0];
+    return (float)area / 2;
   }
-  
+
   /**
    * Returns <code>true</code> if the points of this room are in clockwise order.
    */
   public boolean isClockwise() {
     return getSignedArea(getPoints()) < 0;
   }
-  
+
   /**
    * Returns <code>true</code> if this room is comprised of only one polygon.
    */
   public boolean isSingular() {
     return new Area(getShape()).isSingular();
   }
-  
+
   /**
    * Returns <code>true</code> if this room intersects
    * with the horizontal rectangle which opposite corners are at points
@@ -731,17 +731,17 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     rectangle.add(x1, y1);
     return getShape().intersects(rectangle);
   }
-  
+
   /**
-   * Returns <code>true</code> if this room contains 
+   * Returns <code>true</code> if this room contains
    * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
   public boolean containsPoint(float x, float y, float margin) {
     return containsShapeAtWithMargin(getShape(), x, y, margin);
   }
-  
+
   /**
-   * Returns the index of the point of this room equal to 
+   * Returns the index of the point of this room equal to
    * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    * @return the index of the first found point or -1.
    */
@@ -753,29 +753,29 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     }
     return -1;
   }
-  
+
   /**
-   * Returns <code>true</code> if the center point at which is displayed the name 
-   * of this room is equal to the point at (<code>x</code>, <code>y</code>) 
-   * with a given <code>margin</code>. 
+   * Returns <code>true</code> if the center point at which is displayed the name
+   * of this room is equal to the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
    */
   public boolean isNameCenterPointAt(float x, float y, float margin) {
-    return Math.abs(x - getXCenter() - getNameXOffset()) <= margin 
+    return Math.abs(x - getXCenter() - getNameXOffset()) <= margin
         && Math.abs(y - getYCenter() - getNameYOffset()) <= margin;
   }
-  
+
   /**
-   * Returns <code>true</code> if the center point at which is displayed the area 
-   * of this room is equal to the point at (<code>x</code>, <code>y</code>) 
-   * with a given <code>margin</code>. 
+   * Returns <code>true</code> if the center point at which is displayed the area
+   * of this room is equal to the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
    */
   public boolean isAreaCenterPointAt(float x, float y, float margin) {
-    return Math.abs(x - getXCenter() - getAreaXOffset()) <= margin 
+    return Math.abs(x - getXCenter() - getAreaXOffset()) <= margin
         && Math.abs(y - getYCenter() - getAreaYOffset()) <= margin;
   }
-  
+
   /**
-   * Returns <code>true</code> if <code>shape</code> contains 
+   * Returns <code>true</code> if <code>shape</code> contains
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    */
@@ -817,7 +817,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       updatePoints(points);
     }
   }
-  
+
   /**
    * Returns a clone of this room.
    */
