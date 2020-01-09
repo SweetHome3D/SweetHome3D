@@ -36,9 +36,19 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.SecureClassLoader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -64,6 +74,14 @@ import javax.swing.event.AncestorListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.event.MouseInputAdapter;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.JavaFileObject.Kind;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 
 import com.apple.eawt.AppEvent.FullScreenEvent;
 import com.apple.eawt.Application;
@@ -199,6 +217,34 @@ class MacOSXConfiguration {
             }
           });
         */
+
+        try {
+          // Meanwhile compile on the fly the 4 handlers in MacOSXDesktopHandlersSupport and set them by reflection
+          // Note: using compiled classes is mandatory because each handler must implement a given interface
+          Class<?> quitHandlerInterface = Class.forName("java.awt.desktop.QuitHandler");
+          Class<?> aboutHandlerInterface = Class.forName("java.awt.desktop.AboutHandler");
+          Class<?> preferencesHandlerInterface = Class.forName("java.awt.desktop.PreferencesHandler");
+          Class<?> openFilesHandlerInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
+
+          // Instantiate handlers and set them on desktop by reflection
+          Class<?> desktopClass = Class.forName("java.awt.Desktop");
+          Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+
+          Object quitHandler = MacOSXDesktopHandlersSupport.quitHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
+          desktopClass.getMethod("setQuitHandler", quitHandlerInterface).invoke(desktopInstance, quitHandler);
+
+          Object aboutHandler = MacOSXDesktopHandlersSupport.aboutHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
+          desktopClass.getMethod("setAboutHandler", aboutHandlerInterface).invoke(desktopInstance, aboutHandler);
+
+          Object preferencesHandler = MacOSXDesktopHandlersSupport.preferencesHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
+          desktopClass.getMethod("setPreferencesHandler", preferencesHandlerInterface).invoke(desktopInstance, preferencesHandler);
+
+          Object openFilesHandler = MacOSXDesktopHandlersSupport.openFilesHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication});
+          desktopClass.getMethod("setOpenFileHandler", openFilesHandlerInterface).invoke(desktopInstance, openFilesHandler);
+        } catch (Exception ex2) {
+          ex2.printStackTrace();
+        }
+
         try {
           // Call Desktop.getDesktop().setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS)
           // to prevent default call to System#exit
@@ -863,6 +909,121 @@ class MacOSXConfiguration {
       // handleReOpenApplication is called when user launches
       // the application when it's already open
       MacOSXConfiguration.handleReOpenApplication(this.homeApplication);
+    }
+  }
+
+  /**
+   * Management of Mac OS X handler classes.
+   * Declared in a separated static class to be ignored with Java 5.
+   */
+  private static class MacOSXDesktopHandlersSupport {
+    // Java 9 handler classes compiled on the fly
+    static Class<?> quitHandlerClass;
+    static Class<?> aboutHandlerClass;
+    static Class<?> preferencesHandlerClass;
+    static Class<?> openFilesHandlerClass;
+
+    static {
+      try {
+        // Create handlers source files
+        List<JavaFileObject> compilationUnits = new ArrayList<JavaFileObject>();
+        String quitHandlerClassName = "com.eteks.sweethome3d.SweetHome3DQuitHandler";
+        compilationUnits.add(createHandlerJavaFile(quitHandlerClassName,
+            "java.awt.desktop.QuitHandler",
+            "void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer)",
+            "handleQuit", null));
+        String aboutHandlerClassName = "com.eteks.sweethome3d.SweetHome3DAboutHandler";
+        compilationUnits.add(createHandlerJavaFile(aboutHandlerClassName,
+            "java.awt.desktop.AboutHandler",
+            "void handleAbout(java.awt.desktop.AboutEvent ev)",
+            "handleAbout", null));
+        String preferencesHandlerClassName = "com.eteks.sweethome3d.SweetHome3DPreferencesHandler";
+        compilationUnits.add(createHandlerJavaFile(preferencesHandlerClassName,
+            "java.awt.desktop.PreferencesHandler",
+            "void handlePreferences(java.awt.desktop.PreferencesEvent ev)",
+            "handlePreferences", null));
+        String openFilesHandlerClassName = "com.eteks.sweethome3d.SweetHome3DOpenFilesHandler";
+        compilationUnits.add(createHandlerJavaFile(openFilesHandlerClassName,
+            "java.awt.desktop.OpenFilesHandler",
+            "void openFiles(java.awt.desktop.OpenFilesEvent ev)",
+            "handleOpenFile",
+            "for (java.io.File file : ev.getFiles()) {" +
+            "  method.invoke(null, this.parameters [0], file.getAbsolutePath());" +
+            "}"));
+
+        // Compile the 4 handlers with a customized file manager which handles class files in memory
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        final Map<String, ByteArrayOutputStream> classData = new HashMap<String, ByteArrayOutputStream>();
+        ForwardingJavaFileManager<StandardJavaFileManager> fileManager =
+            new ForwardingJavaFileManager<StandardJavaFileManager>(compiler.getStandardFileManager(null, null, null)) {
+              @Override
+              public JavaFileObject getJavaFileForOutput(Location location, final String className, Kind kind, FileObject sibling) throws IOException {
+                return new SimpleJavaFileObject(URI.create("string:///" + className.replace('.', '/') + kind.extension), kind) {
+                    @Override
+                    public OutputStream openOutputStream() throws IOException {
+                      ByteArrayOutputStream data = new ByteArrayOutputStream();
+                      classData.put(className, data);
+                      return data;
+                    }
+                  };
+              }
+            };
+        compiler.getTask(null, fileManager, null, null, null, compilationUnits).call();
+
+        // Retrieve the compiled handler classes
+        ClassLoader classLoader = new ClassLoader() {
+            @Override
+            protected Class<?> findClass(String className) throws ClassNotFoundException {
+              byte [] data = classData.get(className).toByteArray();
+              return super.defineClass(className, data, 0, data.length);
+            }
+          };
+        quitHandlerClass = Class.forName(quitHandlerClassName, true, classLoader);
+        aboutHandlerClass = Class.forName(aboutHandlerClassName, true, classLoader);
+        preferencesHandlerClass = Class.forName(preferencesHandlerClassName, true, classLoader);
+        openFilesHandlerClass = Class.forName(openFilesHandlerClassName, true, classLoader);
+        fileManager.close();
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+
+    /**
+     * Returns the source of a Java class used as new Java 9 handlers.
+     */
+    private static SimpleJavaFileObject createHandlerJavaFile(final String handlerClassName,
+                                                              final String handlerInterface,
+                                                              final String handlerInterfaceMethod,
+                                                              final String configurationCalledMethod,
+                                                              final String otherCall) {
+      return new SimpleJavaFileObject(URI.create("string:///" + handlerClassName.replace('.','/') + Kind.SOURCE.extension), Kind.SOURCE) {
+          public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+            String simpleClassName = handlerClassName.substring(handlerClassName.lastIndexOf('.') + 1);
+            return (handlerClassName.indexOf('.') > 0 ? "package " + handlerClassName.substring(0, handlerClassName.lastIndexOf('.')) + ";" : "")
+                + "public class " + simpleClassName + " implements " + handlerInterface + " {"
+                + "   private Class     configuration;"
+                + "   private Object [] parameters;"
+                + "   public " + simpleClassName + "(Class configuration, Object ... parameters) {"
+                + "      this.configuration = configuration;"
+                + "      this.parameters = parameters;"
+                + "   }"
+                + "   public " + handlerInterfaceMethod + " {"
+                        // Configuration method is searched by its name without using class types because
+                        // this class will be loaded with a separate class loader, creating a different module
+                + "     for (java.lang.reflect.Method method : this.configuration.getDeclaredMethods()) {"
+                + "       if (method.getName().equals(\""+ configurationCalledMethod + "\")) {"
+                + "         try {"
+                + "           method.setAccessible(true);"
+                + (otherCall != null ? otherCall : "method.invoke(null, this.parameters);")
+                + "         } catch (Exception ex) {"
+                + "           ex.printStackTrace();"
+                + "         }"
+                + "       }"
+                + "     }"
+                + "  }"
+                + "}";
+          }
+        };
     }
   }
 }
