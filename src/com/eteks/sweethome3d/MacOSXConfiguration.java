@@ -192,58 +192,7 @@ class MacOSXConfiguration {
     if (!applicationListenerSupported) {
       // Probably running under Java 9 where previous methods were removed
       if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
-        // Use the new handlers of Java 9 once compiling with Java 9 library is enabled
-        /*
-        java.awt.Desktop.getDesktop().setQuitHandler(new java.awt.desktop.QuitHandler() {
-            public void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer) {
-              MacOSXConfiguration.handleQuit(homeApplication, defaultController, defaultFrame);
-            }
-          });
-        java.awt.Desktop.getDesktop().setAboutHandler(new java.awt.desktop.AboutHandler() {
-            public void handleAbout(java.awt.desktop.AboutEvent ev) {
-              MacOSXConfiguration.handleAbout(homeApplication, defaultController, defaultFrame);
-            }
-          });
-        java.awt.Desktop.getDesktop().setPreferencesHandler(new java.awt.desktop.PreferencesHandler() {
-            public void handlePreferences(java.awt.desktop.PreferencesEvent ev) {
-              MacOSXConfiguration.handlePreferences(homeApplication, defaultController, defaultFrame);
-            }
-          });
-        java.awt.Desktop.getDesktop().setOpenFileHandler(new java.awt.desktop.OpenFilesHandler() {
-            public void openFiles(java.awt.desktop.OpenFilesEvent ev) {
-              for (java.io.File file : ev.getFiles()) {
-                MacOSXConfiguration.handleOpenFile(homeApplication, file.getAbsolutePath());
-              }
-            }
-          });
-        */
-
-        try {
-          // Meanwhile compile on the fly the 4 handlers in MacOSXDesktopHandlersSupport and set them by reflection
-          // Note: using compiled classes is mandatory because each handler must implement a given interface
-          Class<?> quitHandlerInterface = Class.forName("java.awt.desktop.QuitHandler");
-          Class<?> aboutHandlerInterface = Class.forName("java.awt.desktop.AboutHandler");
-          Class<?> preferencesHandlerInterface = Class.forName("java.awt.desktop.PreferencesHandler");
-          Class<?> openFilesHandlerInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
-
-          // Instantiate handlers and set them on desktop by reflection
-          Class<?> desktopClass = Class.forName("java.awt.Desktop");
-          Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
-
-          Object quitHandler = MacOSXDesktopHandlersSupport.quitHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
-          desktopClass.getMethod("setQuitHandler", quitHandlerInterface).invoke(desktopInstance, quitHandler);
-
-          Object aboutHandler = MacOSXDesktopHandlersSupport.aboutHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
-          desktopClass.getMethod("setAboutHandler", aboutHandlerInterface).invoke(desktopInstance, aboutHandler);
-
-          Object preferencesHandler = MacOSXDesktopHandlersSupport.preferencesHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
-          desktopClass.getMethod("setPreferencesHandler", preferencesHandlerInterface).invoke(desktopInstance, preferencesHandler);
-
-          Object openFilesHandler = MacOSXDesktopHandlersSupport.openFilesHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication});
-          desktopClass.getMethod("setOpenFileHandler", openFilesHandlerInterface).invoke(desktopInstance, openFilesHandler);
-        } catch (Exception ex2) {
-          ex2.printStackTrace();
-        }
+        MacOSXDesktopHandlersSupport.installDesktopHandlers(homeApplication, defaultController, defaultFrame);;
 
         try {
           // Call Desktop.getDesktop().setQuitStrategy(QuitStrategy.CLOSE_ALL_WINDOWS)
@@ -917,34 +866,63 @@ class MacOSXConfiguration {
    * Declared in a separated static class to be ignored with Java 5.
    */
   private static class MacOSXDesktopHandlersSupport {
-    // Java 9 handler classes compiled on the fly
-    static Class<?> quitHandlerClass;
-    static Class<?> aboutHandlerClass;
-    static Class<?> preferencesHandlerClass;
-    static Class<?> openFilesHandlerClass;
+    static void installDesktopHandlers(SweetHome3D homeApplication,
+                                       HomeController defaultController,
+                                       JFrame defaultFrame) {
+      // Use the new handlers of Java 9 once compiling with Java 9 library is enabled
+      /*
+      java.awt.Desktop.getDesktop().setQuitHandler(new java.awt.desktop.QuitHandler() {
+          public void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer) {
+            MacOSXConfiguration.handleQuit(homeApplication, defaultController, defaultFrame);
+          }
+        });
+      java.awt.Desktop.getDesktop().setAboutHandler(new java.awt.desktop.AboutHandler() {
+          public void handleAbout(java.awt.desktop.AboutEvent ev) {
+            MacOSXConfiguration.handleAbout(homeApplication, defaultController, defaultFrame);
+          }
+        });
+      java.awt.Desktop.getDesktop().setPreferencesHandler(new java.awt.desktop.PreferencesHandler() {
+          public void handlePreferences(java.awt.desktop.PreferencesEvent ev) {
+            MacOSXConfiguration.handlePreferences(homeApplication, defaultController, defaultFrame);
+          }
+        });
+      java.awt.Desktop.getDesktop().setOpenFileHandler(new java.awt.desktop.OpenFilesHandler() {
+          public void openFiles(java.awt.desktop.OpenFilesEvent ev) {
+            for (java.io.File file : ev.getFiles()) {
+              MacOSXConfiguration.handleOpenFile(homeApplication, file.getAbsolutePath());
+            }
+          }
+        });
+      */
 
-    static {
       try {
+        // Meanwhile compile on the fly the 4 handlers and set them by reflection
+        // Note: using compiled classes is mandatory because each handler must implement a given interface
+
         // Create handlers source files
         List<JavaFileObject> compilationUnits = new ArrayList<JavaFileObject>();
         String quitHandlerClassName = "com.eteks.sweethome3d.SweetHome3DQuitHandler";
+        Class<?> quitHandlerInterface = Class.forName("java.awt.desktop.QuitHandler");
         compilationUnits.add(createHandlerJavaFile(quitHandlerClassName,
-            "java.awt.desktop.QuitHandler",
+            quitHandlerInterface.getName(),
             "void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer)",
-            "handleQuit", null));
+            "handleQuit", "method.invoke(null, this.parameters); answer.cancelQuit();"));
         String aboutHandlerClassName = "com.eteks.sweethome3d.SweetHome3DAboutHandler";
+        Class<?> aboutHandlerInterface = Class.forName("java.awt.desktop.AboutHandler");
         compilationUnits.add(createHandlerJavaFile(aboutHandlerClassName,
-            "java.awt.desktop.AboutHandler",
+            aboutHandlerInterface.getName(),
             "void handleAbout(java.awt.desktop.AboutEvent ev)",
             "handleAbout", null));
         String preferencesHandlerClassName = "com.eteks.sweethome3d.SweetHome3DPreferencesHandler";
+        Class<?> preferencesHandlerInterface = Class.forName("java.awt.desktop.PreferencesHandler");
         compilationUnits.add(createHandlerJavaFile(preferencesHandlerClassName,
-            "java.awt.desktop.PreferencesHandler",
+            preferencesHandlerInterface.getName(),
             "void handlePreferences(java.awt.desktop.PreferencesEvent ev)",
             "handlePreferences", null));
         String openFilesHandlerClassName = "com.eteks.sweethome3d.SweetHome3DOpenFilesHandler";
+        Class<?> openFilesHandlerInterface = Class.forName("java.awt.desktop.OpenFilesHandler");
         compilationUnits.add(createHandlerJavaFile(openFilesHandlerClassName,
-            "java.awt.desktop.OpenFilesHandler",
+            openFilesHandlerInterface.getName(),
             "void openFiles(java.awt.desktop.OpenFilesEvent ev)",
             "handleOpenFile",
             "for (java.io.File file : ev.getFiles()) {" +
@@ -978,11 +956,27 @@ class MacOSXConfiguration {
               return super.defineClass(className, data, 0, data.length);
             }
           };
-        quitHandlerClass = Class.forName(quitHandlerClassName, true, classLoader);
-        aboutHandlerClass = Class.forName(aboutHandlerClassName, true, classLoader);
-        preferencesHandlerClass = Class.forName(preferencesHandlerClassName, true, classLoader);
-        openFilesHandlerClass = Class.forName(openFilesHandlerClassName, true, classLoader);
+        Class<?> quitHandlerClass = Class.forName(quitHandlerClassName, true, classLoader);
+        Class<?> aboutHandlerClass = Class.forName(aboutHandlerClassName, true, classLoader);
+        Class<?> preferencesHandlerClass = Class.forName(preferencesHandlerClassName, true, classLoader);
+        Class<?> openFilesHandlerClass = Class.forName(openFilesHandlerClassName, true, classLoader);
         fileManager.close();
+
+        // Instantiate handlers and set them on desktop by reflection
+        Class<?> desktopClass = Class.forName("java.awt.Desktop");
+        Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+
+        Object quitHandler = quitHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
+        desktopClass.getMethod("setQuitHandler", quitHandlerInterface).invoke(desktopInstance, quitHandler);
+
+        Object aboutHandler = aboutHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
+        desktopClass.getMethod("setAboutHandler", aboutHandlerInterface).invoke(desktopInstance, aboutHandler);
+
+        Object preferencesHandler = preferencesHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication, defaultController, defaultFrame});
+        desktopClass.getMethod("setPreferencesHandler", preferencesHandlerInterface).invoke(desktopInstance, preferencesHandler);
+
+        Object openFilesHandler = openFilesHandlerClass.getConstructors() [0].newInstance(MacOSXConfiguration.class, new Object [] {homeApplication});
+        desktopClass.getMethod("setOpenFileHandler", openFilesHandlerInterface).invoke(desktopInstance, openFilesHandler);
       } catch (Exception ex) {
         ex.printStackTrace();
       }
