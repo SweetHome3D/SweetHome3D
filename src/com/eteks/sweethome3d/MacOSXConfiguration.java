@@ -42,6 +42,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -945,7 +946,8 @@ class MacOSXConfiguration {
                   };
               }
             };
-        compiler.getTask(null, fileManager, null, null, null, compilationUnits).call();
+        // Compile with a simplified classpath to speed up compilation
+        compiler.getTask(null, fileManager, null, Arrays.asList("-cp", ""), null, compilationUnits).call();
 
         // Retrieve the compiled handler classes
         ClassLoader classLoader = new ClassLoader() {
