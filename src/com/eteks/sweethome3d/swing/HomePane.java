@@ -1074,8 +1074,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToMenu(ActionType.PRINT_TO_PDF, fileMenu);
     }
     if (!OperatingSystem.isMacOSX()
-        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")
-        || OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       fileMenu.addSeparator();
       addActionToMenu(ActionType.PREFERENCES, fileMenu);
     }
@@ -1208,8 +1207,7 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
     addActionToMenu(ActionType.HELP, helpMenu);
     if (!OperatingSystem.isMacOSX()
-        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")
-        || OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+        || !Boolean.getBoolean("apple.laf.useScreenMenuBar")) {
       addActionToMenu(ActionType.ABOUT, helpMenu);
     }
 

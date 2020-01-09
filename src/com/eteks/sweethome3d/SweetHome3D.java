@@ -447,8 +447,7 @@ public class SweetHome3D extends HomeApplication {
             // If application has no more home
             if (getHomes().isEmpty()
                 && (!OperatingSystem.isMacOSX()
-                    || !Boolean.getBoolean("apple.laf.useScreenMenuBar")
-                    || OperatingSystem.isJavaVersionGreaterOrEqual("1.9"))) {
+                    || !Boolean.getBoolean("apple.laf.useScreenMenuBar"))) {
               // If SingleInstanceService is available, remove the listener that was added on it
               if (singleInstanceService != null) {
                 singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
