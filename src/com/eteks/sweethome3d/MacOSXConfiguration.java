@@ -874,6 +874,7 @@ class MacOSXConfiguration {
       java.awt.Desktop.getDesktop().setQuitHandler(new java.awt.desktop.QuitHandler() {
           public void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer) {
             MacOSXConfiguration.handleQuit(homeApplication, defaultController, defaultFrame);
+            answer.cancelQuit();
           }
         });
       java.awt.Desktop.getDesktop().setAboutHandler(new java.awt.desktop.AboutHandler() {
@@ -906,7 +907,9 @@ class MacOSXConfiguration {
         compilationUnits.add(createHandlerJavaFile(quitHandlerClassName,
             quitHandlerInterface.getName(),
             "void handleQuitRequestWith(java.awt.desktop.QuitEvent ev, java.awt.desktop.QuitResponse answer)",
-            "handleQuit", "method.invoke(null, this.parameters); answer.cancelQuit();"));
+            "handleQuit",
+              "method.invoke(null, this.parameters);"
+            + "answer.cancelQuit();"));
         String aboutHandlerClassName = "com.eteks.sweethome3d.SweetHome3DAboutHandler";
         Class<?> aboutHandlerInterface = Class.forName("java.awt.desktop.AboutHandler");
         compilationUnits.add(createHandlerJavaFile(aboutHandlerClassName,
@@ -925,9 +928,9 @@ class MacOSXConfiguration {
             openFilesHandlerInterface.getName(),
             "void openFiles(java.awt.desktop.OpenFilesEvent ev)",
             "handleOpenFile",
-            "for (java.io.File file : ev.getFiles()) {" +
-            "  method.invoke(null, this.parameters [0], file.getAbsolutePath());" +
-            "}"));
+              "for (java.io.File file : ev.getFiles()) {"
+            + "  method.invoke(null, this.parameters [0], file.getAbsolutePath());"
+            + "}"));
 
         // Compile the 4 handlers with a customized file manager which handles class files in memory
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
