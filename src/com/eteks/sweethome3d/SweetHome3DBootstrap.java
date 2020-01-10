@@ -115,7 +115,8 @@ public class SweetHome3DBootstrap {
       }
     } else { // Other OS
       if ("1.5.2".equals(System.getProperty("com.eteks.sweethome3d.j3d.version", "1.6"))
-          || "d3d".equals(System.getProperty("j3d.rend", "jogl"))) {
+          || "d3d".equals(System.getProperty("j3d.rend", "jogl"))
+          || javaVersion.startsWith("1.5")) {
         extensionJarsAndDlls.addAll(Arrays.asList(new String [] {
             "j3dcore.jar", // Main Java 3D jars
             "vecmath.jar",
