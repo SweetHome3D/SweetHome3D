@@ -55,6 +55,7 @@
       </extdirs>
       <classpath>
         <pathelement location="libtest/AppleJavaExtensions.jar"/>
+      	<pathelement location="libtest/javaAwtDesktop.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
       </classpath>
     </javac>
@@ -417,6 +418,7 @@
       </extdirs>
       <classpath>
         <pathelement location="libtest/AppleJavaExtensions.jar"/>
+      	<pathelement location="libtest/javaAwtDesktop.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
       </classpath>
     </javac>

@@ -16,6 +16,7 @@
 	<classpathentry kind="lib" path="libtest/gnu-regexp-1.1.0.jar"/>
 	<classpathentry kind="lib" path="libtest/jdepend-2.9.jar"/>
 	<classpathentry kind="lib" path="libtest/AppleJavaExtensions.jar"/>
+	<classpathentry kind="lib" path="libtest/javaAwtDesktop.jar"/>
 	<classpathentry kind="lib" path="libtest/jnlp.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
