@@ -48,6 +48,7 @@ public class ResourceAction extends AbstractAction {
   public static final String VISIBLE = "Visible";
   public static final String POPUP   = "Popup";
   public static final String TOGGLE_BUTTON_MODEL = "ToggleButtonModel";
+  public static final String TOOL_BAR_ICON = "ToolBarIcon";
 
   /**
    * Creates a disabled action with properties retrieved from a resource bundle
@@ -128,6 +129,11 @@ public class ResourceAction extends AbstractAction {
     String smallIcon = getOptionalString(preferences, resourceClass, propertyPrefix + SMALL_ICON, false);
     if (smallIcon != null) {
       putValue(SMALL_ICON, SwingTools.getScaledImageIcon(resourceClass.getResource(smallIcon)));
+    }
+
+    String toolBarIcon = getOptionalString(preferences, resourceClass, propertyPrefix + TOOL_BAR_ICON, false);
+    if (toolBarIcon != null) {
+      putValue(TOOL_BAR_ICON, SwingTools.getScaledImageIcon(resourceClass.getResource(toolBarIcon)));
     }
 
     String propertyKey = propertyPrefix + ACCELERATOR_KEY;
@@ -362,6 +368,12 @@ public class ResourceAction extends AbstractAction {
       // Ignore NAME in tool bar
       if (key.equals(NAME)) {
         return null;
+      }
+      if (key.equals(SMALL_ICON)) {
+        Object toolBarIcon = super.getValue(TOOL_BAR_ICON);
+        if (toolBarIcon != null) {
+          return toolBarIcon;
+        }
       }
       return super.getValue(key);
     }
