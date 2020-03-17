@@ -2221,7 +2221,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void addActionToToolBar(Action action,
                                   JToolBar toolBar) {
-    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior() && OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_40")) {
       // Add a button with higher insets to ensure the top and bottom of segmented buttons are correctly drawn
       toolBar.add(new JButton(new ResourceAction.ToolBarAction(action)) {
           @Override
