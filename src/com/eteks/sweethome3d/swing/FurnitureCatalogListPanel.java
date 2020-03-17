@@ -108,6 +108,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalogListPanel extends JPanel implements View {
+  private static final int DEFAULT_ICON_HEIGHT = 48;
+  
   private ListSelectionListener listSelectionListener;
   private JLabel                categoryFilterLabel;
   private JComboBox             categoryFilterComboBox;
@@ -189,7 +191,8 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         }
       };
     this.catalogFurnitureList.setLayoutOrientation(JList.HORIZONTAL_WRAP);
-    this.catalogFurnitureList.setCellRenderer(new CatalogCellRenderer());
+    this.catalogFurnitureList.setCellRenderer(new CatalogCellRenderer(
+        Math.round(getIconHeight() * SwingTools.getResolutionScale())));
     this.catalogFurnitureList.setAutoscrolls(false);
     if (OperatingSystem.isJavaVersionGreaterOrEqual("1.6")) {
       this.catalogFurnitureList.setDragEnabled(true);
@@ -303,6 +306,13 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     PreferencesChangeListener preferencesChangeListener = new PreferencesChangeListener(this);
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, preferencesChangeListener);
     catalog.addFurnitureListener(preferencesChangeListener);
+  }
+
+  /**
+   * Returns the height of icons displayed in the list.
+   */
+  protected int getIconHeight() {
+    return DEFAULT_ICON_HEIGHT;
   }
 
   /**
@@ -694,25 +704,26 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
    * Cell renderer for the furniture list.
    */
   private static class CatalogCellRenderer extends JComponent implements ListCellRenderer {
-    private static final int DEFAULT_ICON_HEIGHT = Math.round(48 * SwingTools.getResolutionScale());
+    private int                     iconHeight;
     private Font                    defaultFont;
     private Font                    modifiablePieceFont;
     private DefaultListCellRenderer nameLabel;
     private JEditorPane             informationPane;
 
-    public CatalogCellRenderer() {
+    public CatalogCellRenderer(final int iconHeight) {
       setLayout(null);
+      this.iconHeight = iconHeight;
       this.nameLabel = new DefaultListCellRenderer() {
           @Override
           public Dimension getPreferredSize() {
-            return new Dimension(DEFAULT_ICON_HEIGHT * 3 / 2 + 5, super.getPreferredSize().height);
+            return new Dimension(Math.max(iconHeight, 48 * 3 / 2) + 5, super.getPreferredSize().height);
           }
         };
       this.nameLabel.setHorizontalTextPosition(JLabel.CENTER);
       this.nameLabel.setVerticalTextPosition(JLabel.BOTTOM);
       this.nameLabel.setHorizontalAlignment(JLabel.CENTER);
       this.nameLabel.setText("-");
-      this.nameLabel.setIcon(IconManager.getInstance().getWaitIcon(DEFAULT_ICON_HEIGHT));
+      this.nameLabel.setIcon(IconManager.getInstance().getWaitIcon(iconHeight));
       this.defaultFont = UIManager.getFont("ToolTip.font");
       this.modifiablePieceFont = new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
       this.nameLabel.setFont(this.defaultFont);
@@ -782,7 +793,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     }
 
     private Icon getLabelIcon(JList list, Content content) {
-      return IconManager.getInstance().getIcon(content, DEFAULT_ICON_HEIGHT, list);
+      return IconManager.getInstance().getIcon(content, this.iconHeight, list);
     }
 
     @Override
