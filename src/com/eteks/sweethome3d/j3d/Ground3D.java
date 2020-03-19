@@ -128,7 +128,8 @@ public class Ground3D extends Object3DBranch {
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
     transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 
-    Box box = new Box(0.5f, 0f, 0.5f, backgroundImageAppearance);
+    // Do not share box geometry or cleaning up the universe after an offscreen rendering may cause some bugs
+    Box box = new Box(0.5f, 0f, 0.5f, Box.GEOMETRY_NOT_SHARED | Box.GENERATE_NORMALS, backgroundImageAppearance);
     Shape3D backgroundImageShape = box.getShape(Box.TOP);
     backgroundImageShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     box.removeChild(backgroundImageShape);

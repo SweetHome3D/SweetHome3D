@@ -238,7 +238,8 @@ public class Label3D extends Object3DBranch {
               TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 
-          Box box = new Box(0.5f, 0f, 0.5f, appearance);
+          // Do not share box geometry or cleaning up the universe after an offscreen rendering may cause some bugs
+          Box box = new Box(0.5f, 0f, 0.5f, Box.GEOMETRY_NOT_SHARED | Box.GENERATE_NORMALS, appearance);
           Shape3D shape = box.getShape(Box.TOP);
           box.removeChild(shape);
           transformGroup.addChild(shape);
