@@ -2032,7 +2032,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the maximum scale of the plan view.
    */
   public float getMaximumScale() {
-    return 5f;
+    return 10f;
   }
 
   /**
