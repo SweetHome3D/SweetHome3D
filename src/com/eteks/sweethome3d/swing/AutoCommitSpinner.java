@@ -25,7 +25,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
-import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.ParsePosition;
@@ -40,13 +39,6 @@ import javax.swing.UIManager;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
-
-import com.eteks.parser.CalculatorParser;
-import com.eteks.parser.CompilationException;
-import com.eteks.parser.Function;
-import com.eteks.parser.Interpreter;
-import com.eteks.parser.Syntax;
-import com.eteks.sweethome3d.model.LengthUnit;
 
 /**
  * A spinner which commits its value during edition and selects
@@ -122,7 +114,30 @@ public class AutoCommitSpinner extends JSpinner {
                   noGroupingFormat.setGroupingUsed(false);
                   try {
                     if (allowMathExpressions) {
-                      return new CalculatorFormat(noGroupingFormat);
+                      return new CalculatorFormat(noGroupingFormat,
+                                                  getModel() instanceof NullableSpinner.NullableSpinnerLengthModel
+                                                      ? ((NullableSpinner.NullableSpinnerLengthModel)getModel()).getLengthUnit()
+                                                      : null) {
+                          public Number parse(String text, ParsePosition pos) {
+                            Number number = super.parse(text, pos);
+                            Color defaultColor = UIManager.getColor("FormattedTextField.foreground");
+                            if (Color.BLACK.equals(defaultColor) || Color.WHITE.equals(defaultColor)) {
+                              JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
+                              NumberFormatter formatter = (NumberFormatter)textField.getFormatter();
+                              if (pos.getIndex() != text.length()
+                                     && text.substring(pos.getIndex()).trim().length() > 0
+                                  || number != null
+                                     && (number.doubleValue() < ((Number)formatter.getMinimum()).doubleValue()
+                                         || number.doubleValue() > ((Number)formatter.getMaximum()).doubleValue())) {
+                                // Change text color if parsing couldn't be completed
+                                textField.setForeground(Color.RED.darker());
+                              } else {
+                                textField.setForeground(defaultColor);
+                              }
+                            }
+                            return number;
+                          }
+                        };
                     }
                   } catch (LinkageError ex) {
                     // Don't allow math expressions if Jeks Parser library isn't available
@@ -231,273 +246,4 @@ public class AutoCommitSpinner extends JSpinner {
     }
   }
 
-  /**
-   * A decimal format able to calculate formulas.
-   */
-  private class CalculatorFormat extends DecimalFormat {
-    private DecimalFormat    numberFormat;
-
-    private CalculatorFormat(DecimalFormat numberFormat) {
-      super(numberFormat.toPattern());
-      this.numberFormat = numberFormat;
-    }
-
-    @Override
-    public Number parse(String text, ParsePosition pos) {
-      final String parsedText = text.substring(pos.getIndex());
-      Number number = this.numberFormat.parse(text, pos);
-      if (number == null || pos.getIndex() != text.length()) {
-        LengthUnit lengthUnit = getModel() instanceof NullableSpinner.NullableSpinnerLengthModel
-            ? ((NullableSpinner.NullableSpinnerLengthModel)getModel()).getLengthUnit()
-            : null;
-        CalculatorParser parser = new CalculatorParser(new CalculatorSyntax(this.numberFormat, lengthUnit));
-        try {
-          // Try to parse with Jeks Parser
-          number = (Number)parser.computeExpression(parsedText, new CalculatorInterpreter());
-          if (number != null && lengthUnit != null) {
-            number = lengthUnit.unitToCentimeter(number.floatValue());
-          }
-          pos.setIndex(text.length());
-        } catch (CompilationException ex) {
-          // Keep default value
-        }
-      }
-      Color defaultColor = UIManager.getColor("FormattedTextField.foreground");
-      if (Color.BLACK.equals(defaultColor) || Color.WHITE.equals(defaultColor)) {
-        JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
-        NumberFormatter formatter = (NumberFormatter)textField.getFormatter();
-        if (pos.getIndex() != text.length()
-               && text.substring(pos.getIndex()).trim().length() > 0
-            || number != null
-               && (number.doubleValue() < ((Number)formatter.getMinimum()).doubleValue()
-                   || number.doubleValue() > ((Number)formatter.getMaximum()).doubleValue())) {
-          // Change text color if parsing couldn't be completed
-          textField.setForeground(Color.RED.darker());
-        } else {
-          textField.setForeground(defaultColor);
-        }
-      }
-
-      return number;
-    }
-
-    public StringBuffer format(double number, StringBuffer result, FieldPosition position) {
-      return this.numberFormat.format(number, result, position);
-    }
-  }
-
-  /**
-   * The syntax used in computed spinners.
-   */
-  private static class CalculatorSyntax implements Syntax {
-    private final DecimalFormat format;
-    private final LengthUnit    lengthUnit;
-
-    private CalculatorSyntax(DecimalFormat format,
-                             LengthUnit    lengthUnit) {
-      this.format = format;
-      this.lengthUnit = lengthUnit;
-    }
-
-    public Object getLiteral(String expression, StringBuffer extractedString) {
-      ParsePosition position = new ParsePosition(0);
-      Number literal = this.format.parse(expression, position);
-      if (literal != null && this.lengthUnit != null) {
-        literal = this.lengthUnit.centimeterToUnit(literal.floatValue());
-      }
-      extractedString.append(expression, 0, position.getIndex());
-      return literal;
-    }
-
-    public Object getConstantKey(String constant) {
-      return null; // No constant only numbers
-    }
-
-    public Object getUnaryOperatorKey(String unaryOperator) {
-      if ("-".equals(unaryOperator)) {
-        return unaryOperator;
-      } else {
-        return null;
-      }
-    }
-
-    public Object getBinaryOperatorKey(String binaryOperator) {
-      if ("+".equals(binaryOperator)
-          || "-".equals(binaryOperator)
-          || "/".equals(binaryOperator)
-          || "*".equals(binaryOperator)
-          || "^".equals(binaryOperator)) {
-        return binaryOperator;
-      } else {
-        return null;
-      }
-    }
-
-    public Object getConditionPartKey(String ternaryOperator) {
-      return null; // No condition
-    }
-
-    public int getConditionPartCount() {
-      return 0;
-    }
-
-    public Object getCommonFunctionKey(String predefinedFunction) {
-      predefinedFunction = predefinedFunction.toUpperCase();
-      if ("LN".equals(predefinedFunction)
-          || "LOG".equals(predefinedFunction)
-          || "EXP".equals(predefinedFunction)
-          || "SQR".equals(predefinedFunction)
-          || "SQRT".equals(predefinedFunction)
-          || "COS".equals(predefinedFunction)
-          || "SIN".equals(predefinedFunction)
-          || "TAN".equals(predefinedFunction)
-          || "ARCCOS".equals(predefinedFunction)
-          || "ARCSIN".equals(predefinedFunction)
-          || "ARCTAN".equals(predefinedFunction)) {
-        return predefinedFunction;
-      } else {
-        return null;
-      }
-    }
-
-    public Function getFunction(String userFunction) {
-      return null; // No function
-    }
-
-    public int getBinaryOperatorPriority(Object binaryOperatorKey) {
-      if ("+".equals(binaryOperatorKey)
-          || "-".equals(binaryOperatorKey)) {
-        return 1;
-      } else if ("/".equals(binaryOperatorKey)
-                || "*".equals(binaryOperatorKey)) {
-        return 2;
-      } else if ("^".equals(binaryOperatorKey)) {
-        return 3;
-      } else {
-        throw new IllegalArgumentException();
-      }
-    }
-
-    public String getAssignmentOperator() {
-      return null;
-    }
-
-    public String getWhiteSpaceCharacters() {
-      return " \t\n\r";
-    }
-
-    public char getOpeningBracket() {
-      return '(';
-    }
-
-    public char getClosingBracket() {
-      return ')';
-    }
-
-    public char getParameterSeparator() {
-      return 0;
-    }
-
-    public String getDelimiters() {
-      return " \t\n\r-+*/^().";
-    }
-
-    public boolean isCaseSensitive() {
-      return false;
-    }
-
-    public boolean isShortSyntax() {
-      // Supports common function calls without brackets
-      return true;
-    }
-
-    public boolean isValidIdentifier(String identifier) {
-      return false; // No identifier
-    }
-  }
-
-  /**
-   * The interpreter used to compute spinners.
-   */
-  private static class CalculatorInterpreter implements Interpreter {
-    public Object getLiteralValue(Object literal) {
-      return literal;
-    }
-
-    public Object getParameterValue(Object parameter) {
-      return null; // No parameter
-    }
-
-    public Object getConstantValue(Object key) {
-      return null; // No constant
-    }
-
-    public Double getUnaryOperatorValue(Object unaryOperator, Object param) {
-      if (unaryOperator.equals("-")) {
-        return -((Number)param).doubleValue();
-      } else {
-        throw new IllegalArgumentException("Not implemented");
-      }
-    }
-
-    public Double getBinaryOperatorValue(Object binaryOperator, Object param1, Object param2) {
-      if (binaryOperator.equals("+")) {
-        return ((Number)param1).doubleValue() + ((Number)param2).doubleValue();
-      } else if (binaryOperator.equals("-")) {
-        return ((Number)param1).doubleValue() - ((Number)param2).doubleValue();
-      } else if (binaryOperator.equals("/")) {
-        return ((Number)param1).doubleValue() / ((Number)param2).doubleValue();
-      } else if (binaryOperator.equals("*")) {
-        return ((Number)param1).doubleValue() * ((Number)param2).doubleValue();
-      } else if (binaryOperator.equals("^")) {
-        return Math.pow(((Number)param1).doubleValue(), ((Number)param2).doubleValue());
-      } else {
-        throw new IllegalArgumentException("Not implemented");
-      }
-    }
-
-    public Double getCommonFunctionValue(Object predefinedFunction, Object param) {
-      if (predefinedFunction.equals("LN")) {
-        return Math.log(((Number)param).doubleValue());
-      } else if (predefinedFunction.equals("LOG")) {
-        return Math.log(((Number)param).doubleValue()) / Math.log(10.);
-      } else if (predefinedFunction.equals("EXP")) {
-        return Math.exp(((Number)param).doubleValue());
-      } else if (predefinedFunction.equals("SQR")) {
-        return ((Number)param).doubleValue() * ((Number)param).doubleValue();
-      } else if (predefinedFunction.equals("SQRT")) {
-        return Math.sqrt(((Number)param).doubleValue());
-      } else if (predefinedFunction.equals("COS")) {
-        return Math.cos(Math.toRadians(((Number)param).doubleValue()));
-      } else if (predefinedFunction.equals("SIN")) {
-        return Math.sin(Math.toRadians(((Number)param).doubleValue()));
-      } else if (predefinedFunction.equals("TAN")) {
-        return Math.tan(Math.toRadians(((Number)param).doubleValue()));
-      } else if (predefinedFunction.equals("ARCCOS")) {
-        return Math.toDegrees(Math.acos(((Number)param).doubleValue()));
-      } else if (predefinedFunction.equals("ARCSIN")) {
-        return Math.toDegrees(Math.asin(((Number)param).doubleValue()));
-      } else if (predefinedFunction.equals("ARCTAN")) {
-        return Math.toDegrees(Math.atan(((Number)param).doubleValue()));
-      } else {
-        throw new IllegalArgumentException("Not implemented");
-      }
-    }
-
-    public Object getConditionValue(Object paramIf, Object paramThen, Object paramElse) {
-      return null;
-    }
-
-    public boolean isTrue(Object param) {
-      return false; // No condition
-    }
-
-    public boolean supportsRecursiveCall() {
-      return false;
-    }
-
-    public Object getFunctionValue(Function function, Object [] parameters, boolean recursiveCall) {
-      return null; // No function
-    }
-  }
 }

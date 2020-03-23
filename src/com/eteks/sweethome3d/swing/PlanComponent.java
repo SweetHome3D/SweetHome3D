@@ -83,6 +83,7 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.security.AccessControlException;
+import java.text.DecimalFormat;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -154,7 +155,6 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.InternationalFormatter;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -1633,11 +1633,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                                              UserPreferences preferences) {
     InternationalFormatter formatter;
     if (editableProperty == PlanController.EditableProperty.ANGLE) {
-      formatter = new NumberFormatter(NumberFormat.getNumberInstance());
+      DecimalFormat format = new DecimalFormat("0.#");
+      try {
+        format = new CalculatorFormat(format, null);
+      } catch (LinkageError ex) {
+        // Don't allow math expressions if Jeks Parser library isn't available
+      }
+      formatter = new NumberFormatter(format);
     } else {
       Format lengthFormat = preferences.getLengthUnit().getFormat();
-      if (lengthFormat instanceof NumberFormat) {
-        formatter = new NumberFormatter((NumberFormat)lengthFormat);
+      if (lengthFormat instanceof DecimalFormat) {
+        try {
+          lengthFormat = new CalculatorFormat((DecimalFormat)lengthFormat, preferences.getLengthUnit());
+        } catch (LinkageError ex) {
+          // Don't allow math expressions if Jeks Parser library isn't available
+        }
+        formatter = new NumberFormatter((DecimalFormat)lengthFormat);
       } else {
         formatter = new InternationalFormatter(lengthFormat);
       }
@@ -5644,26 +5655,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // plan component (if the user moves fast enough the mouse pointer in a way
       // it's in toolTipWindow, the matching event is dispatched to toolTipWindow)
       MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
-        @Override
-        public void mousePressed(MouseEvent ev) {
-          mouseMoved(ev);
-        }
+          @Override
+          public void mousePressed(MouseEvent ev) {
+            mouseMoved(ev);
+          }
 
-        @Override
-        public void mouseReleased(MouseEvent ev) {
-          mouseMoved(ev);
-        }
+          @Override
+          public void mouseReleased(MouseEvent ev) {
+            mouseMoved(ev);
+          }
 
-        @Override
-        public void mouseMoved(MouseEvent ev) {
-          dispatchEvent(SwingUtilities.convertMouseEvent(toolTipWindow, ev, PlanComponent.this));
-        }
+          @Override
+          public void mouseMoved(MouseEvent ev) {
+            dispatchEvent(SwingUtilities.convertMouseEvent(toolTipWindow, ev, PlanComponent.this));
+          }
 
-        @Override
-        public void mouseDragged(MouseEvent ev) {
-          mouseMoved(ev);
-        }
-      };
+          @Override
+          public void mouseDragged(MouseEvent ev) {
+            mouseMoved(ev);
+          }
+        };
       this.toolTipWindow.addMouseListener(mouseAdapter);
       this.toolTipWindow.addMouseMotionListener(mouseAdapter);
     } else {
@@ -5752,7 +5763,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // (don't give focus to tool tip window otherwise plan component window will lose focus)
     this.toolTipKeyListener = new KeyListener() {
         private int focusedTextFieldIndex;
-        private JTextComponent focusedTextField;
+        private JFormattedTextField focusedTextField;
 
         {
           // Simulate focus on first text field
@@ -5763,6 +5774,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (this.focusedTextField != null) {
             this.focusedTextField.getCaret().setVisible(false);
             this.focusedTextField.getCaret().setSelectionVisible(false);
+            this.focusedTextField.setValue(this.focusedTextField.getValue());
           }
           this.focusedTextFieldIndex = textFieldIndex;
           this.focusedTextField = toolTipEditableTextFields.get(toolTipEditedProperties [textFieldIndex]);
@@ -6662,7 +6674,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Change its angles around horizontal axes
       if (piece.getPitch() != 0) {
         horizontalRotation.rotX(-piece.getPitch());
-      } 
+      }
       if (piece.getRoll() != 0) {
         Transform3D rollRotation = new Transform3D();
         rollRotation.rotZ(-piece.getRoll());
