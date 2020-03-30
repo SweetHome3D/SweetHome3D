@@ -42,6 +42,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,12 +63,16 @@ import javax.media.j3d.GeometryStripArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.IndexedGeometryArray;
 import javax.media.j3d.IndexedGeometryStripArray;
+import javax.media.j3d.IndexedLineArray;
+import javax.media.j3d.IndexedLineStripArray;
 import javax.media.j3d.IndexedQuadArray;
 import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Light;
+import javax.media.j3d.LineArray;
 import javax.media.j3d.LineAttributes;
+import javax.media.j3d.LineStripArray;
 import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
@@ -90,6 +95,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
@@ -654,7 +660,7 @@ public class ModelManager {
       // Change its angles around horizontal axes
       if (piece.getPitch() != 0) {
         horizontalRotationAndScale.rotX(-piece.getPitch());
-      } 
+      }
       if (piece.getRoll() != 0) {
         Transform3D rollRotation = new Transform3D();
         rollRotation.rotZ(-piece.getRoll());
@@ -981,6 +987,7 @@ public class ModelManager {
         turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());
         updateDeformableModelHierarchy(modelNode);
         checkAppearancesName(modelNode);
+        replaceMultipleSharedShapes(modelNode);
         modelNode.setUserData(content);
         return modelNode;
       } catch (IllegalArgumentException ex) {
@@ -1497,6 +1504,338 @@ public class ModelManager {
       if (appearance != null) {
         appearances.add(appearance);
       }
+    }
+  }
+
+  /**
+   * Replaces multiple shared shapes of the given <code>node</code> with one shape with transformed geometries.
+   */
+  private void replaceMultipleSharedShapes(BranchGroup modelRoot) {
+    Map<Shape3D, Integer> sharedShapes = new HashMap<Shape3D, Integer>();
+    searchSharedShapes(modelRoot, sharedShapes, false);
+    for (Iterator<Map.Entry<Shape3D, Integer>> iterator = sharedShapes.entrySet().iterator(); iterator.hasNext();) {
+      Map.Entry<Shape3D, Integer> shapeSharingCount = (Map.Entry<Shape3D, Integer>)iterator.next();
+      if (shapeSharingCount.getValue() > 1) {
+        List<Transform3D> transformations = new ArrayList<Transform3D>(shapeSharingCount.getValue());
+        Shape3D shape = shapeSharingCount.getKey();
+        searchShapeTransformations(modelRoot, shape, transformations, new Transform3D());
+        // Replace shared shape by a unique shape with transformed geometries
+        Shape3D newShape = (Shape3D)shape.cloneNode(true);
+        for (int i = 0; i < newShape.numGeometries(); i++) {
+          Geometry newGeometry = getTransformedGeometry(newShape.getGeometry(i), transformations);
+          if (newGeometry == null) {
+            return;
+          }
+          newShape.setGeometry(newGeometry, i);
+        }
+        removeSharedShape(modelRoot, shape);
+        modelRoot.addChild(newShape);
+      }
+    }
+  }
+
+  /**
+   * Searches all the shapes which are shared among the children of the given <code>node</code>.
+   */
+  private void searchSharedShapes(Node node, Map<Shape3D, Integer> sharedShapes, boolean childOfSharedGroup) {
+    if (node instanceof Group) {
+      // Enumerate children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasMoreElements()) {
+        searchSharedShapes((Node)enumeration.nextElement(), sharedShapes, childOfSharedGroup);
+      }
+    } else if (node instanceof Link) {
+      searchSharedShapes(((Link)node).getSharedGroup(), sharedShapes, true);
+    } else if (node instanceof Shape3D) {
+      if (childOfSharedGroup) {
+        Integer sharingCount = sharedShapes.get(node);
+        if (sharingCount == null) {
+          sharedShapes.put((Shape3D)node, 1);
+        } else {
+          sharedShapes.put((Shape3D)node, ++sharingCount);
+        }
+      }
+    }
+  }
+
+  /**
+   * Searches all the transformations applied to a shared <code>shape</code> child of the given <b>node</b>.
+   */
+  private void searchShapeTransformations(Node node, Shape3D shape, List<Transform3D> transformations, Transform3D parentTransformations) {
+    if (node instanceof Group) {
+      if (!(node instanceof TransformGroup)
+          || !isDeformed(node)) {
+        if (node instanceof TransformGroup) {
+          parentTransformations = new Transform3D(parentTransformations);
+          Transform3D transform = new Transform3D();
+          ((TransformGroup)node).getTransform(transform);
+          parentTransformations.mul(transform);
+        }
+        // Enumerate children
+        Enumeration<?> enumeration = ((Group)node).getAllChildren();
+        while (enumeration.hasMoreElements()) {
+          searchShapeTransformations((Node)enumeration.nextElement(), shape, transformations, parentTransformations);
+        }
+      }
+    } else if (node instanceof Link) {
+      searchShapeTransformations(((Link)node).getSharedGroup(), shape, transformations, parentTransformations);
+    } else if (node == shape) {
+      transformations.add(parentTransformations);
+    }
+  }
+
+  /**
+   * Returns a new geometry where coordinates are transformed with the given transformations.
+   */
+  private Geometry getTransformedGeometry(Geometry geometry,
+                                          List<Transform3D> transformations) {
+    if (geometry instanceof GeometryArray) {
+      GeometryArray geometryArray = (GeometryArray)geometry;
+      GeometryArray newGeometryArray = null;
+      boolean normalsDefined = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0;
+      boolean textureCoordinatesDefined = (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0;
+
+      if (geometryArray instanceof IndexedGeometryArray) {
+        IndexedGeometryArray indexedGeometryArray = (IndexedGeometryArray)geometryArray;
+        IndexedGeometryArray newIndexedGeometryArray = null;
+        if (geometryArray instanceof IndexedLineArray) {
+          newIndexedGeometryArray = new IndexedLineArray(indexedGeometryArray.getVertexCount() * transformations.size(), indexedGeometryArray.getVertexFormat(), indexedGeometryArray.getIndexCount() * transformations.size());
+        } else if (geometryArray instanceof IndexedTriangleArray) {
+          newIndexedGeometryArray = new IndexedTriangleArray(indexedGeometryArray.getVertexCount() * transformations.size(), indexedGeometryArray.getVertexFormat(), indexedGeometryArray.getIndexCount() * transformations.size());
+        } else if (geometryArray instanceof IndexedQuadArray) {
+          newIndexedGeometryArray = new IndexedQuadArray(indexedGeometryArray.getVertexCount() * transformations.size(), indexedGeometryArray.getVertexFormat(), indexedGeometryArray.getIndexCount() * transformations.size());
+        } else if (geometryArray instanceof IndexedGeometryStripArray) {
+          IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
+          int [] stripIndexCounts = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripIndexCounts(stripIndexCounts);
+          int [] newStripIndexCounts = new int [stripIndexCounts.length * transformations.size()];
+          int offset = 0;
+          for (int i = 0; i < transformations.size(); i++) {
+            for (int j = 0, n = stripIndexCounts.length; j < n; j++) {
+              newStripIndexCounts [offset + j] = stripIndexCounts [j];
+            }
+            offset += stripIndexCounts.length;
+          }
+          if (geometryStripArray instanceof IndexedLineStripArray) {
+            newIndexedGeometryArray = new IndexedLineStripArray(indexedGeometryArray.getVertexCount() * transformations.size(), indexedGeometryArray.getVertexFormat(), indexedGeometryArray.getIndexCount() * transformations.size(), newStripIndexCounts);
+          } else if (geometryStripArray instanceof IndexedTriangleStripArray) {
+            newIndexedGeometryArray = new IndexedTriangleStripArray(indexedGeometryArray.getVertexCount() * transformations.size(), indexedGeometryArray.getVertexFormat(), indexedGeometryArray.getIndexCount() * transformations.size(), newStripIndexCounts);
+          } else if (geometryStripArray instanceof IndexedTriangleFanArray) {
+            newIndexedGeometryArray = new IndexedTriangleFanArray(indexedGeometryArray.getVertexCount() * transformations.size(), indexedGeometryArray.getVertexFormat(), indexedGeometryArray.getIndexCount(), newStripIndexCounts);
+          }
+        }
+        int offsetIndex = 0;
+        int offsetVertex = 0;
+        if (newIndexedGeometryArray != null) {
+          for (int i = 0; i < transformations.size(); i++) {
+            for (int j = 0, n = indexedGeometryArray.getIndexCount(); j < n; j++) {
+              newIndexedGeometryArray.setCoordinateIndex(offsetIndex + j, offsetVertex + indexedGeometryArray.getCoordinateIndex(j));
+              if (normalsDefined) {
+                newIndexedGeometryArray.setNormalIndex(offsetIndex + j, offsetVertex + indexedGeometryArray.getNormalIndex(j));
+              }
+              if (textureCoordinatesDefined) {
+                newIndexedGeometryArray.setTextureCoordinateIndex(0, offsetIndex + j, offsetVertex + indexedGeometryArray.getTextureCoordinateIndex(0, j));
+              }
+            }
+            offsetIndex += indexedGeometryArray.getIndexCount();
+            offsetVertex += indexedGeometryArray.getVertexCount();
+          }
+          newGeometryArray = newIndexedGeometryArray;
+        }
+      } else {
+        if (geometryArray instanceof LineArray) {
+          newGeometryArray = new LineArray(geometryArray.getVertexCount() * transformations.size(), geometryArray.getVertexFormat());
+        } else if (geometryArray instanceof TriangleArray) {
+          newGeometryArray = new TriangleArray(geometryArray.getVertexCount() * transformations.size(), geometryArray.getVertexFormat());
+        } else if (geometryArray instanceof QuadArray) {
+          newGeometryArray = new QuadArray(geometryArray.getVertexCount() * transformations.size(), geometryArray.getVertexFormat());
+        } else if (geometryArray instanceof GeometryStripArray) {
+          GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
+          int [] stripVertexCounts = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripVertexCounts(stripVertexCounts);
+          int [] newStripVertexCounts = new int [stripVertexCounts.length * transformations.size()];
+          int offset = 0;
+          for (int i = 0; i < transformations.size(); i++) {
+            for (int j = 0, n = stripVertexCounts.length; j < n; j++) {
+              newStripVertexCounts [offset + j] = stripVertexCounts [j];
+            }
+            offset += stripVertexCounts.length;
+          }
+          if (geometryStripArray instanceof LineStripArray) {
+            newGeometryArray = new LineStripArray(geometryArray.getVertexCount() * transformations.size(), geometryArray.getVertexFormat(), newStripVertexCounts);
+          } else if (geometryStripArray instanceof TriangleStripArray) {
+            newGeometryArray = new TriangleStripArray(geometryArray.getVertexCount() * transformations.size(), geometryArray.getVertexFormat(), newStripVertexCounts);
+          } else if (geometryStripArray instanceof TriangleFanArray) {
+            newGeometryArray = new TriangleFanArray(geometryArray.getVertexCount() * transformations.size(), geometryArray.getVertexFormat(), newStripVertexCounts);
+          }
+        }
+      }
+
+      if (newGeometryArray != null) {
+        if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+          Point3f  vertex = new Point3f();
+          Vector3f normal = new Vector3f();
+          if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+            float [] vertexData = geometryArray.getInterleavedVertices();
+            int vertexSize = vertexData.length / geometryArray.getVertexCount();
+            float [] newVertexData = new float [vertexData.length * transformations.size()];
+            int offset = 0;
+            for (Transform3D parentTransformations : transformations) {
+              // Prepare vertices coordinates
+              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize) {
+                vertex.x = vertexData [i];
+                vertex.y = vertexData [i + 1];
+                vertex.z = vertexData [i + 2];
+                parentTransformations.transform(vertex);
+                newVertexData [offset + i] = vertex.x;
+                newVertexData [offset + i + 1] = vertex.y;
+                newVertexData [offset + i + 2] = vertex.z;
+              }
+              // Prepare texture coordinates
+              if (textureCoordinatesDefined) {
+                for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize) {
+                  newVertexData [offset + i] = vertexData [i];
+                  newVertexData [offset + i + 1] = vertexData [i + 1];
+                }
+              }
+              // Prepare normals
+              if (normalsDefined) {
+                for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize) {
+                  normal.x = vertexData [i];
+                  normal.y = vertexData [i + 1];
+                  normal.z = vertexData [i + 2];
+                  parentTransformations.transform(normal);
+                  normal.normalize();
+                  newVertexData [offset + i] = normal.x;
+                  newVertexData [offset + i + 1] = normal.y;
+                  newVertexData [offset + i + 2] = normal.z;
+                }
+              }
+              offset += vertexData.length;
+            }
+            newGeometryArray.setInterleavedVertices(newVertexData);
+          } else {
+            // Prepare vertices coordinates
+            float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+            float [] newVertexCoordinates = new float [vertexCoordinates.length * transformations.size()];
+            int offset = 0;
+            for (Transform3D parentTransformations : transformations) {
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+                vertex.x = vertexCoordinates [i];
+                vertex.y = vertexCoordinates [i + 1];
+                vertex.z = vertexCoordinates [i + 2];
+                parentTransformations.transform(vertex);
+                newVertexCoordinates [offset + i] = vertex.x;
+                newVertexCoordinates [offset + i + 1] = vertex.y;
+                newVertexCoordinates [offset + i + 2] = vertex.z;
+              }
+              offset += vertexCoordinates.length;
+            }
+            newGeometryArray.setCoordRefFloat(newVertexCoordinates);
+            if (textureCoordinatesDefined) {
+              // Prepare texture coordinates
+              float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
+              float [] newTextureCoordinatesArray = new float [textureCoordinatesArray.length * transformations.size()];
+              offset = 0;
+              for (int i = 0; i < transformations.size(); i++) {
+                for (int index = 0, j = 0, n = geometryArray.getVertexCount(); index < n; index++, j += 2) {
+                  newTextureCoordinatesArray [offset + j] = textureCoordinatesArray [j];
+                  newTextureCoordinatesArray [offset + j + 1] = textureCoordinatesArray [j + 1];
+                }
+                offset += vertexCoordinates.length;
+              }
+              newGeometryArray.setTexCoordRefFloat(0, newTextureCoordinatesArray);
+            }
+            if (normalsDefined) {
+              // Prepare normals
+              float [] normalCoordinates = geometryArray.getNormalRefFloat();
+              float [] newNormalCoordinates = new float [normalCoordinates.length * transformations.size()];
+              offset = 0;
+              for (Transform3D parentTransformations : transformations) {
+                for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+                  normal.x = normalCoordinates [i];
+                  normal.y = normalCoordinates [i + 1];
+                  normal.z = normalCoordinates [i + 2];
+                  parentTransformations.transform(normal);
+                  normal.normalize();
+                  newNormalCoordinates [offset + i] = normal.x;
+                  newNormalCoordinates [offset + i + 1] = normal.y;
+                  newNormalCoordinates [offset + i + 2] = normal.z;
+                }
+                offset += vertexCoordinates.length;
+              }
+              newGeometryArray.setNormalRefFloat(newNormalCoordinates);
+            }
+          }
+        } else {
+          // Prepare vertices coordinates
+          int offset = 0;
+          for (Transform3D parentTransformations : transformations) {
+            for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+              Point3f newVertex = new Point3f();
+              geometryArray.getCoordinate(index, newVertex);
+              parentTransformations.transform(newVertex);
+              newGeometryArray.setCoordinate(offset + index, newVertex);
+            }
+            offset += geometryArray.getVertexCount();
+          }
+          if (textureCoordinatesDefined) {
+            // Prepare texture coordinates
+            offset = 0;
+            for (int i = 0; i < transformations.size(); i++) {
+              for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+                TexCoord2f newTextureCoordinates = new TexCoord2f();
+                geometryArray.getTextureCoordinate(0, index, newTextureCoordinates);
+                newGeometryArray.setTextureCoordinate(0, offset + index, newTextureCoordinates);
+              }
+              offset += geometryArray.getVertexCount();
+            }
+          }
+          if (normalsDefined) {
+            // Prepare normals
+            offset = 0;
+            for (Transform3D parentTransformations : transformations) {
+              for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+                Vector3f newNormal = new Vector3f();
+                geometryArray.getNormal(index, newNormal);
+                parentTransformations.transform(newNormal);
+                newNormal.normalize();
+                newGeometryArray.setNormal(offset + index, newNormal);
+              }
+              offset += geometryArray.getVertexCount();
+            }
+          }
+        }
+      }
+      return newGeometryArray;
+    }
+    return null;
+  }
+
+  /**
+   * Removes the shared shape from the children of the given <code>node</code>.
+   */
+  private void removeSharedShape(Node node, Shape3D shape) {
+    if (node instanceof Group) {
+      if (!(node instanceof TransformGroup)
+          || !isDeformed(node)) {
+        Group group = (Group)node;
+        for (int i = group.numChildren() - 1; i >= 0; i--) {
+          removeSharedShape(group.getChild(i), shape);
+        }
+        if (group.numChildren() == 0
+            && group.getParent() instanceof Group) {
+          ((Group)group.getParent()).removeChild(group);
+        }
+      }
+    } else if (node instanceof Link) {
+      SharedGroup sharedGroup = ((Link)node).getSharedGroup();
+      removeSharedShape(sharedGroup, shape);
+      if (sharedGroup.numChildren() == 0) {
+        ((Group)node.getParent()).removeChild(node);
+      }
+    } else if (node == shape) {
+      ((Group)node.getParent()).removeChild(node);
     }
   }
 
