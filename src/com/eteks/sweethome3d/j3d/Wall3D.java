@@ -739,7 +739,9 @@ public class Wall3D extends Object3DBranch {
     double  [] distanceSqToWallMiddle = new double [points.length];
     for (int i = 0; i < points.length; i++) {
       if (arcCircleCenter == null) {
-        distanceSqToWallMiddle [i] = Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z);
+        distanceSqToWallMiddle [i] = xStart != xEnd || yStart != yEnd
+            ? Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z)
+            : Point2D.distanceSq(xStart, yStart, bottom [i].x, bottom [i].z);
       } else {
         distanceSqToWallMiddle [i] = arcCircleRadius
             - Point2D.distance(arcCircleCenter [0], arcCircleCenter [1], bottom [i].x, bottom [i].z);
@@ -1030,8 +1032,9 @@ public class Wall3D extends Object3DBranch {
       float [] wallSecondPoint = wallSide == WALL_LEFT_SIDE
           ? wallSidePoints [wallSidePoints.length / 2 - 1]
           : wallSidePoints [wallSidePoints.length / 2];
-      float frontSideToWallDistance = (float)Line2D.ptLineDist(wallFirstPoint [0], wallFirstPoint [1],
-              wallSecondPoint [0], wallSecondPoint [1], xPieceSide, yPieceSide);
+      float frontSideToWallDistance = wallFirstPoint [0] != wallSecondPoint [0] || wallFirstPoint [1] != wallSecondPoint [1]
+          ? (float)Line2D.ptLineDist(wallFirstPoint [0], wallFirstPoint [1], wallSecondPoint [0], wallSecondPoint [1], xPieceSide, yPieceSide)
+          : (float)Point2D.distance(wallFirstPoint [0], wallFirstPoint [1], xPieceSide, yPieceSide);
       float position = (float)Line2D.relativeCCW(wallFirstPoint [0], wallFirstPoint [1],
           wallSecondPoint [0], wallSecondPoint [1], xPieceSide, yPieceSide);
       float depthTranslation = frontOrBackSide * (0.5f - position * frontSideToWallDistance / doorOrWindowDepth);
