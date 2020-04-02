@@ -321,7 +321,7 @@ public class HomeFramePane extends JRootPane implements View {
     Number screenWidth = home.getNumericProperty(SCREEN_WIDTH_VISUAL_PROPERTY);
     Number screenHeight = home.getNumericProperty(SCREEN_HEIGHT_VISUAL_PROPERTY);
 
-    Dimension screenSize = getUserScreenSize();
+    final Dimension screenSize = getUserScreenSize();
     // If home frame bounds exist and screen resolution didn't reduce
     if (x != null && y != null
         && width != null && height != null
@@ -356,6 +356,9 @@ public class HomeFramePane extends JRootPane implements View {
                         && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
                         && ev.getOldState() == JFrame.NORMAL))
                   && ev.getNewState() == JFrame.NORMAL) {
+                if (!SwingTools.isRectangleVisibleAtScreen(frameBounds)) {
+                  frameBounds.setBounds(0, 0, screenSize.width * 4 / 5, screenSize.height * 4 / 5);
+                }
                 if (OperatingSystem.isMacOSXLionOrSuperior()) {
                   // Set back frame size later once frame reduce animation is finished
                   new Timer(20, new ActionListener() {
