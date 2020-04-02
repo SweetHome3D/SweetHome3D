@@ -332,18 +332,20 @@ public class HomeFramePane extends JRootPane implements View {
       if (maximized) {
         if (OperatingSystem.isMacOSX()
             && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-          // Display the frame at its maximum size because calling setExtendedState to maximize
-          // the frame moves it to the bottom left at its minimum size
+          // Display the frame at its max size because calling setExtendedState will create
+          // an animation starting at its minimum size with dividers wrongly placed at the end
           Insets insets = frame.getInsets();
           frame.setSize(screenSize.width + insets.left + insets.right,
               screenSize.height + insets.bottom);
+          // Set maximized flag to ensure future resizing will remove it
+          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         } else if (OperatingSystem.isLinux()) {
           EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              // Under Linux, maximize frame once it's displayed
-              frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            }
-          });
+              public void run() {
+                // Under Linux, maximize frame once it's displayed
+                frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+              }
+            });
         } else {
           frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
@@ -358,19 +360,24 @@ public class HomeFramePane extends JRootPane implements View {
                   && ev.getNewState() == JFrame.NORMAL) {
                 if (!SwingTools.isRectangleVisibleAtScreen(frameBounds)) {
                   frameBounds.setBounds(0, 0, screenSize.width * 4 / 5, screenSize.height * 4 / 5);
-                }
-                if (OperatingSystem.isMacOSXLionOrSuperior()) {
-                  // Set back frame size later once frame reduce animation is finished
-                  new Timer(20, new ActionListener() {
-                      public void actionPerformed(ActionEvent ev) {
-                        if (frame.getHeight() < 40) {
-                          ((Timer)ev.getSource()).stop();
-                          frame.setBounds(frameBounds);
-                        }
-                      }
-                    }).start();
                 } else {
-                  frame.setBounds(frameBounds);
+                  System.out
+                      .println(frameBounds);
+                  System.out
+                  .println(frameBounds.getBounds());
+                  if (OperatingSystem.isMacOSXLionOrSuperior()) {
+                    // Set back frame size later once frame reduce animation is finished
+                    new Timer(20, new ActionListener() {
+                        public void actionPerformed(ActionEvent ev) {
+                          if (frame.getHeight() < 40) {
+                            ((Timer)ev.getSource()).stop();
+                            frame.setBounds(frameBounds);
+                          }
+                        }
+                      }).start();
+                  } else {
+                    frame.setBounds(frameBounds);
+                  }
                 }
                 frame.removeWindowStateListener(this);
               }
