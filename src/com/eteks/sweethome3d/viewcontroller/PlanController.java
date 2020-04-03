@@ -2803,43 +2803,30 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
-    boolean reverse = angle > Math.PI / 2 && angle <= 3 * Math.PI / 2;
     boolean pieceFrontSideAlongWallSide = !piece.isDoorOrWindow()
         && Line2D.ptLineDistSq(wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(), piecePoint [0], piecePoint [1])
             > Line2D.ptLineDistSq(wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(), piecePoints [3][0], piecePoints [3][1]);
     if (wallEndPointJoinedToPieceLeftPoint != null) {
-      float offset = (float)Point2D.distance(pieceLeftPoint [0], pieceLeftPoint [1],
-          piecePoints [3][0], piecePoints [3][1]) + 10 / getView().getScale();
+      float offset;
       if (pieceFrontSideAlongWallSide) {
         offset = -(float)Point2D.distance(pieceLeftPoint [0], pieceLeftPoint [1],
             piecePoints [0][0], piecePoints [0][1]) - 10 / getView().getScale();
-      }
-      if (reverse) {
-        dimensionLines.add(new DimensionLine(pieceLeftPoint [0], pieceLeftPoint [1],
-            wallEndPointJoinedToPieceLeftPoint [0],
-            wallEndPointJoinedToPieceLeftPoint [1], -offset));
       } else {
-        dimensionLines.add(new DimensionLine(wallEndPointJoinedToPieceLeftPoint [0],
-            wallEndPointJoinedToPieceLeftPoint [1],
-            pieceLeftPoint [0], pieceLeftPoint [1], offset));
+        offset = (float)Point2D.distance(pieceLeftPoint [0], pieceLeftPoint [1],
+            piecePoints [3][0], piecePoints [3][1]) + 10 / getView().getScale();
       }
+      dimensionLines.add(getDimensionLineBetweenPoints(wallEndPointJoinedToPieceLeftPoint, pieceLeftPoint, offset, 0, false));
     }
     if (wallEndPointJoinedToPieceRightPoint != null) {
-      float offset = (float)Point2D.distance(pieceRightPoint [0], pieceRightPoint [1],
-          piecePoints [2][0], piecePoints [2][1]) + 10 / getView().getScale();
+      float offset;
       if (pieceFrontSideAlongWallSide) {
         offset = -(float)Point2D.distance(pieceRightPoint [0], pieceRightPoint [1],
             piecePoints [1][0], piecePoints [1][1]) - 10 / getView().getScale();
-      }
-      if (reverse) {
-        dimensionLines.add(new DimensionLine(wallEndPointJoinedToPieceRightPoint [0],
-            wallEndPointJoinedToPieceRightPoint [1],
-            pieceRightPoint [0], pieceRightPoint [1], -offset));
       } else {
-        dimensionLines.add(new DimensionLine(pieceRightPoint [0], pieceRightPoint [1],
-            wallEndPointJoinedToPieceRightPoint [0],
-            wallEndPointJoinedToPieceRightPoint [1], offset));
+        offset = (float)Point2D.distance(pieceRightPoint [0], pieceRightPoint [1],
+            piecePoints [2][0], piecePoints [2][1]) + 10 / getView().getScale();
       }
+      dimensionLines.add(getDimensionLineBetweenPoints(pieceRightPoint,  wallEndPointJoinedToPieceRightPoint, offset, 0, false));
     }
     for (int i = dimensionLines.size() - 1; i >= 0; i--) {
       if (dimensionLines.get(i).getLength() < 0.01f) {
@@ -3232,42 +3219,59 @@ public class PlanController extends FurnitureController implements Controller {
           && Line2D.ptSegDistSq(points [i][0], points [i][1],
               points [nextPointIndex][0], points [nextPointIndex][1],
               x, y) <= margin * margin) {
-        double angle = Math.atan2(points [i][1] - points [nextPointIndex][1],
-            points [nextPointIndex][0] - points [i][0]);
-        boolean reverse = angle < -Math.PI / 2 || angle > Math.PI / 2;
-
-        float xStart;
-        float yStart;
-        float xEnd;
-        float yEnd;
-        if (reverse) {
-          // Avoid reversed text on the dimension line
-          xStart = points [nextPointIndex][0];
-          yStart = points [nextPointIndex][1];
-          xEnd = points [i][0];
-          yEnd = points [i][1];
-        } else {
-          xStart = points [i][0];
-          yStart = points [i][1];
-          xEnd = points [nextPointIndex][0];
-          yEnd = points [nextPointIndex][1];
-        }
-
-        if (magnetismEnabled) {
-          float magnetizedLength = this.preferences.getLengthUnit().getMagnetizedLength(
-              (float)Math.sqrt(distanceBetweenPointsSq), getView().getPixelLength());
-          if (reverse) {
-            xEnd = points [nextPointIndex][0] - (float)(magnetizedLength * Math.cos(angle));
-            yEnd = points [nextPointIndex][1] + (float)(magnetizedLength * Math.sin(angle));
-          } else {
-            xEnd = points [i][0] + (float)(magnetizedLength * Math.cos(angle));
-            yEnd = points [i][1] - (float)(magnetizedLength * Math.sin(angle));
-          }
-        }
-        return new DimensionLine(xStart, yStart, xEnd, yEnd, 0);
+        return getDimensionLineBetweenPoints(points [i], points [nextPointIndex], 0, distanceBetweenPointsSq, magnetismEnabled);
       }
     }
     return null;
+  }
+
+  /**
+   * Returns the dimension line between the given points.
+   */
+  private DimensionLine getDimensionLineBetweenPoints(float [] point1, float [] point2, float offset,
+                                                      boolean magnetismEnabled) {
+    return getDimensionLineBetweenPoints(point1, point2, offset,
+        Point2D.distanceSq(point1 [0], point1 [1], point2 [0], point2 [1]), magnetismEnabled);
+  }
+
+  /**
+   * Returns the dimension line between the given points.
+   */
+  private DimensionLine getDimensionLineBetweenPoints(float [] point1, float [] point2, float offset,
+                                                      double distanceBetweenPointsSq,
+                                                      boolean magnetismEnabled) {
+    double angle = Math.atan2(point1 [1] - point2 [1], point2 [0] - point1 [0]);
+    boolean reverse = angle <= -Math.PI / 2 || angle > Math.PI / 2;
+    float xStart;
+    float yStart;
+    float xEnd;
+    float yEnd;
+    if (reverse) {
+      // Avoid reversed text on the dimension line
+      xStart = point2 [0];
+      yStart = point2 [1];
+      xEnd = point1 [0];
+      yEnd = point1 [1];
+      offset = -offset;
+    } else {
+      xStart = point1 [0];
+      yStart = point1 [1];
+      xEnd = point2 [0];
+      yEnd = point2 [1];
+    }
+
+    if (magnetismEnabled) {
+      float magnetizedLength = this.preferences.getLengthUnit().getMagnetizedLength(
+          (float)Math.sqrt(distanceBetweenPointsSq), getView().getPixelLength());
+      if (reverse) {
+        xEnd = point2 [0] - (float)(magnetizedLength * Math.cos(angle));
+        yEnd = point2 [1] + (float)(magnetizedLength * Math.sin(angle));
+      } else {
+        xEnd = point1 [0] + (float)(magnetizedLength * Math.cos(angle));
+        yEnd = point1 [1] - (float)(magnetizedLength * Math.sin(angle));
+      }
+    }
+    return new DimensionLine(xStart, yStart, xEnd, yEnd, offset);
   }
 
   /**
@@ -9289,6 +9293,7 @@ public class PlanController extends FurnitureController implements Controller {
           getXLastMousePress(), getYLastMousePress());
       planView.setAlignmentFeedback(Wall.class, this.selectedWall, this.oldX, this.oldY, false);
       showWallAngleFeedback(this.selectedWall, true);
+      planView.setDimensionLinesFeedback(getDimensionLinesAlongWall(this.selectedWall));
     }
 
     @Override
@@ -9318,8 +9323,66 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall, true), x, y);
       planView.setAlignmentFeedback(Wall.class, this.selectedWall, newX, newY, false);
       showWallAngleFeedback(this.selectedWall, true);
+      planView.setDimensionLinesFeedback(getDimensionLinesAlongWall(this.selectedWall));
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
+    }
+
+    private List<DimensionLine> getDimensionLinesAlongWall(Wall wall) {
+      List<DimensionLine> dimensionLines = new ArrayList<DimensionLine>();
+      if (wall.getArcExtent() == null || wall.getArcExtent() == 0) {
+        float offset = 20 / getView().getScale();
+        float [][] wallPoints = wall.getPoints();
+        // Search among room paths which segment are included in wall sides
+        List<GeneralPath> roomPaths = getRoomPathsFromWalls();
+        for (int i = 0; i < roomPaths.size(); i++) {
+          float [][] roomPoints = getPathPoints(roomPaths.get(i), true);
+          for (int j = 0; j < roomPoints.length; j++) {
+            float [] startPoint = roomPoints [j];
+            float [] endPoint = roomPoints [(j + 1) % roomPoints.length];
+            boolean segmentPartOfLeftSide = Line2D.ptLineDistSq(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], startPoint [0], startPoint [1]) < 0.0001
+                && Line2D.ptLineDistSq(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], endPoint [0], endPoint [1]) < 0.0001;
+            boolean segmentAccepted;
+            if (segmentPartOfLeftSide) {
+              // Check that either end of [startPoint, endPoint] or the wall side belongs to one of the segment
+              segmentAccepted = Line2D.ptSegDistSq(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], startPoint [0], startPoint [1]) < 0.0001
+                  || Line2D.ptSegDistSq(wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], endPoint [0], endPoint [1]) < 0.0001
+                  || Line2D.ptSegDistSq(startPoint [0], startPoint [1], endPoint [0], endPoint [1], wallPoints [0][0], wallPoints [0][1]) < 0.0001
+                  || Line2D.ptSegDistSq(startPoint [0], startPoint [1], endPoint [0], endPoint [1], wallPoints [1][0], wallPoints [1][1]) < 0.0001;
+            } else {
+              segmentAccepted = Line2D.ptLineDistSq(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], startPoint [0], startPoint [1]) < 0.0001
+                  && Line2D.ptLineDistSq(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], endPoint [0], endPoint [1]) < 0.0001
+                  && (Line2D.ptSegDistSq(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], startPoint [0], startPoint [1]) < 0.0001
+                      || Line2D.ptSegDistSq(wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], endPoint [0], endPoint [1]) < 0.0001
+                      || Line2D.ptSegDistSq(startPoint [0], startPoint [1], endPoint [0], endPoint [1], wallPoints [2][0], wallPoints [2][1]) < 0.0001
+                      || Line2D.ptSegDistSq(startPoint [0], startPoint [1], endPoint [0], endPoint [1], wallPoints [3][0], wallPoints [3][1]) < 0.0001);
+            }
+            if (segmentAccepted) {
+              dimensionLines.add(getDimensionLineBetweenPoints(startPoint, endPoint,
+                  isDimensionInsideWall(wall, startPoint, endPoint) ? -offset : offset, false));
+            }
+          }
+        }
+        for (int i = dimensionLines.size() - 1; i >= 0; i--) {
+          if (dimensionLines.get(i).getLength() < 0.01f) {
+            dimensionLines.remove(i);
+          }
+        }
+        if (dimensionLines.size() == 2
+            && Math.abs(dimensionLines.get(0).getLength() - dimensionLines.get(1).getLength()) < 0.01f) {
+          dimensionLines.remove(1);
+        }
+      }
+      return dimensionLines;
+    }
+
+    private boolean isDimensionInsideWall(Wall wall, float [] point1, float [] point2) {
+      // Search the coordinates of the point where the dimension will be displayed
+      AffineTransform rotation = AffineTransform.getRotateInstance(
+          Math.atan2(point2 [1] - point1 [1], point2 [0] - point1 [0]), point1 [0], point1 [1]);
+      float [] dimensionPoint = {(float)(point1 [0] + Point2D.distance(point1 [0], point1 [1], point2 [0], point2 [1]) / 2), point1 [1] + 0.01f};
+      rotation.transform(dimensionPoint, 0, dimensionPoint, 0, 1);
+      return wall.containsPoint(dimensionPoint [0], dimensionPoint [1], 0);
     }
 
     @Override
@@ -11457,6 +11520,41 @@ public class PlanController extends FurnitureController implements Controller {
           points [pointIndex][0], points [pointIndex][1]);
     }
 
+    protected List<DimensionLine> getTriangulationDimensionLines(Room room, int pointIndex) {
+      float [][] points = room.getPoints();
+      float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
+      List<DimensionLine> dimensionLines = new ArrayList<DimensionLine>(3);
+      float offset = 20 / getView().getScale();
+      if (!Arrays.equals(points [pointIndex], previousPoint)) {
+        dimensionLines.add(getDimensionLineBetweenPoints(previousPoint, points [pointIndex],
+            isDimensionInsideRoom(room, previousPoint, points [pointIndex]) ? -offset : offset, false));
+      }
+      if (points.length > 2) {
+        float [] nextPoint = points [pointIndex + 1 < points.length ? pointIndex + 1 : 0];
+        if (!Arrays.equals(points [pointIndex], nextPoint)) {
+          dimensionLines.add(getDimensionLineBetweenPoints(points [pointIndex], nextPoint,
+              isDimensionInsideRoom(room, points [pointIndex], nextPoint) ? -offset : offset, false));
+        }
+        float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
+        if (points.length == 3) {
+          dimensionLines.add(getDimensionLineBetweenPoints(previousPoint, previousPreviousPoint,
+              isDimensionInsideRoom(room, previousPoint, previousPreviousPoint) ? -offset : offset, false));
+        } else if (!Arrays.equals(points [pointIndex], previousPreviousPoint)) {
+          dimensionLines.add(getDimensionLineBetweenPoints(points [pointIndex], previousPreviousPoint, 0, false));
+        }
+      }
+      return dimensionLines;
+    }
+
+    private boolean isDimensionInsideRoom(Room room, float [] point1, float [] point2) {
+      // Search the coordinates of the point where the dimension will be displayed
+      AffineTransform rotation = AffineTransform.getRotateInstance(
+          Math.atan2(point2 [1] - point1 [1], point2 [0] - point1 [0]), point1 [0], point1 [1]);
+      float [] dimensionPoint = {(float)(point1 [0] + Point2D.distance(point1 [0], point1 [1], point2 [0], point2 [1]) / 2), point1 [1] + 1f};
+      rotation.transform(dimensionPoint, 0, dimensionPoint, 0, 1);
+      return room.containsPoint(dimensionPoint [0], dimensionPoint [1], 0);
+    }
+
     /**
      * Returns room side angle at the given point index in degrees.
      */
@@ -11649,6 +11747,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setAlignmentFeedback(Room.class, this.newRoom,
           xEnd, yEnd, magnetizedPoint);
       showRoomAngleFeedback(this.newRoom, this.newRoom.getPointCount() - 1);
+      planView.setDimensionLinesFeedback(getTriangulationDimensionLines(this.newRoom, this.newRoom.getPointCount() - 1));
 
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
@@ -12028,6 +12127,7 @@ public class PlanController extends FurnitureController implements Controller {
         // Update new room
         planView.setAlignmentFeedback(Room.class, this.newRoom, newX, newY, false);
         showRoomAngleFeedback(this.newRoom, roomPoints.length - 1);
+        planView.setDimensionLinesFeedback(getTriangulationDimensionLines(this.newRoom, roomPoints.length - 1));
         // Ensure room side points are visible
         planView.makePointVisible(previousPoint [0], previousPoint [1]);
         planView.makePointVisible(newX, newY);
@@ -12118,6 +12218,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedRoom, this.roomPointIndex),
           getXLastMousePress(), getYLastMousePress());
       showRoomAngleFeedback(this.selectedRoom, this.roomPointIndex);
+      planView.setDimensionLinesFeedback(getTriangulationDimensionLines(this.selectedRoom, this.roomPointIndex));
     }
 
     @Override
@@ -12158,6 +12259,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedRoom, this.roomPointIndex), x, y);
       planView.setAlignmentFeedback(Room.class, this.selectedRoom, newX, newY, magnetizedPoint);
       showRoomAngleFeedback(this.selectedRoom, this.roomPointIndex);
+      planView.setDimensionLinesFeedback(getTriangulationDimensionLines(this.selectedRoom, this.roomPointIndex));
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
     }
