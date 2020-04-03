@@ -4600,10 +4600,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
         g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
 
-        float displayedValue = feedback
-            ? this.preferences.getLengthUnit().getMagnetizedLength(dimensionLineLength, getPixelLength())
-            : dimensionLineLength;
-        String lengthText = this.preferences.getLengthUnit().getFormat().format(displayedValue);
+        String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
         TextStyle lengthStyle = dimensionLine.getLengthStyle();
         if (lengthStyle == null) {
           lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
@@ -4624,7 +4621,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // Draw text outline with half transparent background color
           g2D.setPaint(backgroundColor);
           Composite oldComposite = setTransparency(g2D, 0.7f);
-          g2D.setStroke(new BasicStroke(3 / planScale * this.resolutionScale));
+          g2D.setStroke(new BasicStroke(4 / planScale * this.resolutionScale));
           FontRenderContext fontRenderContext = g2D.getFontRenderContext();
           TextLayout textLayout = new TextLayout(lengthText, font, fontRenderContext);
           g2D.draw(textLayout.getOutline(new AffineTransform()));
