@@ -4621,7 +4621,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // Draw text outline with half transparent background color
           g2D.setPaint(backgroundColor);
           Composite oldComposite = setTransparency(g2D, 0.7f);
-          g2D.setStroke(new BasicStroke(4 / planScale * this.resolutionScale));
+          g2D.setStroke(new BasicStroke(4 / planScale * this.resolutionScale, BasicStroke.CAP_SQUARE, BasicStroke.CAP_ROUND));
           FontRenderContext fontRenderContext = g2D.getFontRenderContext();
           TextLayout textLayout = new TextLayout(lengthText, font, fontRenderContext);
           g2D.draw(textLayout.getOutline(new AffineTransform()));
