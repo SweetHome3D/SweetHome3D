@@ -4971,10 +4971,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                   Paint pointPaint, Stroke pointStroke) {
     g2D.setPaint(pointPaint);
     g2D.setStroke(pointStroke);
-    g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale,
-        (float)locationFeedback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
+    Ellipse2D.Float circle = new Ellipse2D.Float((float)locationFeedback.getX() - 10f / planScale,
+        (float)locationFeedback.getY() - 10f / planScale, 20f / planScale, 20f / planScale);
+    g2D.fill(circle);
     g2D.setPaint(feedbackPaint);
     g2D.setStroke(new BasicStroke(1 / planScale * this.resolutionScale));
+    g2D.draw(circle);
     g2D.draw(new Line2D.Float((float)locationFeedback.getX(),
         (float)locationFeedback.getY() - 5f / planScale,
         (float)locationFeedback.getX(),
