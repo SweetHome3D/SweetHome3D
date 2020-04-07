@@ -77,6 +77,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -503,6 +504,10 @@ public class HomePane extends JRootPane implements HomeView {
     }
 
     if (homeController3D.getView() != null) {
+      // SELECT_OBJECT and TOGGLE_SELECTION actions are actually defined later in updatePickingActions
+      createAction(ActionType.SELECT_OBJECT, preferences);
+      createAction(ActionType.TOGGLE_SELECTION, preferences);
+
       ButtonGroup viewGroup = new ButtonGroup();
       createToggleAction(ActionType.VIEW_FROM_TOP, home.getCamera() == home.getTopCamera(), viewGroup,
           preferences, homeController3D, "viewFromTop");
@@ -2993,6 +2998,33 @@ public class HomePane extends JRootPane implements HomeView {
 
       // Create 3D view popup menu
       JPopupMenu view3DPopup = new JPopupMenu();
+      final JMenuItem selectObjectMenuItem = addActionToPopupMenu(ActionType.SELECT_OBJECT, view3DPopup);
+      if (selectObjectMenuItem != null) {
+        Action toggleSelectionAction = getActionMap().get(ActionType.TOGGLE_SELECTION);
+        if (toggleSelectionAction.getValue(Action.NAME) != null) {
+          // Change "Select object" menu to "Toggle selection" when shift key is pressed
+          final KeyEventDispatcher shiftKeyListener = new KeyEventDispatcher() {
+              public boolean dispatchKeyEvent(KeyEvent ev) {
+                selectObjectMenuItem.setAction(getActionMap().get(ev.isShiftDown()
+                    ? ActionType.TOGGLE_SELECTION
+                    : ActionType.SELECT_OBJECT));
+                return false;
+              }
+            };
+          addAncestorListener(new AncestorListener() {
+              public void ancestorAdded(AncestorEvent event) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(shiftKeyListener);
+              }
+              public void ancestorRemoved(AncestorEvent event) {
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(shiftKeyListener);
+              }
+
+              public void ancestorMoved(AncestorEvent event) {
+              }
+            });
+        }
+      }
+      view3DPopup.addSeparator();
       addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, true, view3DPopup);
       addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, true, view3DPopup);
       addActionToPopupMenu(ActionType.MODIFY_OBSERVER, view3DPopup);
@@ -3017,6 +3049,10 @@ public class HomePane extends JRootPane implements HomeView {
       view3DPopup.addSeparator();
       addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
       SwingTools.hideDisabledMenuItems(view3DPopup);
+      if (selectObjectMenuItem != null) {
+        // Add a popup listener to manage SELECT_OBJECT and TOGGLE_SELECTION actions according to picked point
+        updatePickingActions(selectObjectMenuItem, controller.getHomeController3D(), controller.getPlanController(), preferences);
+      }
       view3D.setComponentPopupMenu(view3DPopup);
 
       if (view3D instanceof Scrollable) {
@@ -3296,6 +3332,76 @@ public class HomePane extends JRootPane implements HomeView {
           public void popupMenuCanceled(PopupMenuEvent ev) {
           }
         });
+  }
+
+  /**
+   * Adds to the menu a listener that updates the actions that allow to
+   * pick and select an object.
+   */
+  private void updatePickingActions(final JMenuItem        selectObjectMenuItem,
+                                    final HomeController3D homeController3D,
+                                    final PlanController   planController,
+                                    final UserPreferences  preferences) {
+    JPopupMenu popupMenu = (JPopupMenu)selectObjectMenuItem.getParent();
+    popupMenu.addPopupMenuListener(new PopupMenuListenerWithMouseLocation((JComponent)homeController3D.getView()) {
+        {
+          selectObjectMenuItem.addActionListener(new ActionListener() {
+              public void actionPerformed(ActionEvent ev) {
+                if ((ev.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) {
+                  planController.toggleItemSelection(selectableItem);
+                } else {
+                  planController.selectItem(selectableItem);
+                  planController.getView().makeSelectionVisible();
+                }
+              }
+            });
+        }
+
+        private Selectable selectableItem;
+
+        public void popupMenuWillBecomeVisible(PopupMenuEvent ev) {
+          super.popupMenuWillBecomeVisible(ev);
+          Point mouseLocation = getMouseLocation();
+          if (mouseLocation != null
+              && homeController3D.getView() instanceof HomeComponent3D
+              && !OperatingSystem.isMacOSX()
+              && OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+            try {
+              // Dirty hack that scales mouse coordinates with xcale and yscale private fields of Canvas3D
+              Component component3D = ((JComponent)((JComponent)homeController3D.getView()).getComponent(0)).getComponent(0);
+              Class canvas3DClass = Class.forName("javax.media.j3d.Canvas3D");
+              if (canvas3DClass.isInstance(component3D)) {
+                Field xscaleField = canvas3DClass.getDeclaredField("xscale");
+                xscaleField.setAccessible(true);
+                double xscale = (Double)(xscaleField.get(component3D));
+                Field yscaleField = canvas3DClass.getDeclaredField("yscale");
+                yscaleField.setAccessible(true);
+                double yscale = (Double)(yscaleField.get(component3D));
+                mouseLocation = new Point((int)(mouseLocation.x * xscale), (int)(mouseLocation.y * yscale));
+              }
+            } catch (Exception ex) {
+              mouseLocation = null;
+            }
+          }
+          if (mouseLocation != null
+              && planController != null
+              && !planController.isModificationState()) {
+            this.selectableItem = homeController3D.getView() instanceof HomeComponent3D
+                ? ((HomeComponent3D)homeController3D.getView()).getClosestItemAt(mouseLocation.x, mouseLocation.y)
+                : null;
+          } else {
+            this.selectableItem = null;
+          }
+          getActionMap().get(ActionType.SELECT_OBJECT).setEnabled(this.selectableItem != null);
+          getActionMap().get(ActionType.TOGGLE_SELECTION).setEnabled(this.selectableItem != null);
+        }
+
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent ev) {
+        }
+
+        public void popupMenuCanceled(PopupMenuEvent ev) {
+        }
+      });
   }
 
   /**
@@ -5170,7 +5276,12 @@ public class HomePane extends JRootPane implements HomeView {
           public void mouseExited(MouseEvent ev) {
             lastMouseMoveLocation = null;
           }
-        });
+
+          @Override
+          public void mouseEntered(MouseEvent ev) {
+            lastMouseMoveLocation = ev.getPoint();
+          }
+       });
     }
 
     protected Point getMouseLocation() {
