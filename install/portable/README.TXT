@@ -1,4 +1,4 @@
-SWEET HOME 3D v 6.2
+SWEET HOME 3D v 6.3
 -------------------
 
 The current folder contains the required applications and data to run Sweet Home 3D
@@ -54,5 +54,5 @@ CAUTION: YOU SHOULD NOT MOVE FILES FOUND IN FOLDERS DIFFERENT FROM THE ONE
 
 Visit http://www.sweethome3d.com to get more information on Sweet Home 3D
    
-Sweet Home 3D, Copyright (c) 2005-2019 Emmanuel PUYBARET / eTeks 
+Sweet Home 3D, Copyright (c) 2005-2020 Emmanuel PUYBARET / eTeks 
 Distributed under GNU General Public License    

@@ -1,4 +1,4 @@
-SWEET HOME 3D VIEWER v 6.2
+SWEET HOME 3D VIEWER v 6.3
 --------------------------
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
@@ -110,5 +110,5 @@ existing viewer if you want it to be able to run under Java 7u45 and superior.
 Mentioning the following copyright on the web page where you use 
 Sweet Home 3D Viewer will be greatly appreciated:
 
-Sweet Home 3D Viewer, Copyright (c) 2005-2019 Emmanuel PUYBARET / eTeks. 
+Sweet Home 3D Viewer, Copyright (c) 2005-2020 Emmanuel PUYBARET / eTeks. 
 Distributed under GNU General Public License    
