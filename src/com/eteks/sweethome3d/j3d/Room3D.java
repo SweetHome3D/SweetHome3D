@@ -90,6 +90,7 @@ public class Room3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_DETACH);
     // Allow to read branch shape children
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+    setCapability(BranchGroup.ALLOW_PICKABLE_WRITE);
 
     // Add room floor and cellar empty shapes to branch
     for (int i = 0; i < 2; i++) {
@@ -163,6 +164,10 @@ public class Room3D extends Object3DBranch {
   private void updateRoomGeometry() {
     updateRoomPartGeometry(FLOOR_PART, ((Room)getUserData()).getFloorTexture());
     updateRoomPartGeometry(CEILING_PART, ((Room)getUserData()).getCeilingTexture());
+    Room room = (Room)getUserData();
+    setPickable(this.home.getEnvironment().getWallsAlpha() == 0
+        || room.getLevel() == null
+        || room.getLevel().getElevation() <= 0);
   }
 
   private void updateRoomPartGeometry(int roomPart, HomeTexture texture) {

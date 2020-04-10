@@ -99,6 +99,7 @@ public class Wall3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_DETACH);
     // Allow to read branch shape children
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+    setCapability(BranchGroup.ALLOW_PICKABLE_WRITE);
 
     // Add wall bottom, baseboard, main and top shapes to branch for left and right side
     for (int i = 0; i < 8; i++) {
@@ -166,6 +167,7 @@ public class Wall3D extends Object3DBranch {
   private void updateWallGeometry(boolean waitDoorOrWindowModelsLoadingEnd) {
     updateWallSideGeometry(WALL_LEFT_SIDE, waitDoorOrWindowModelsLoadingEnd);
     updateWallSideGeometry(WALL_RIGHT_SIDE, waitDoorOrWindowModelsLoadingEnd);
+    setPickable(this.home.getEnvironment().getWallsAlpha() == 0);
   }
 
   private void updateWallSideGeometry(int wallSide,

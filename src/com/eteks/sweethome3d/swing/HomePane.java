@@ -3351,6 +3351,10 @@ public class HomePane extends JRootPane implements HomeView {
                   planController.toggleItemSelection(selectableItem);
                 } else {
                   planController.selectItem(selectableItem);
+                  if (selectableItem instanceof Elevatable
+                      && !((Elevatable)selectableItem).isAtLevel(home.getSelectedLevel())) {
+                    planController.setSelectedLevel(((Elevatable)selectableItem).getLevel());
+                  }
                   planController.getView().makeSelectionVisible();
                 }
               }
