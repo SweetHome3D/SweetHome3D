@@ -141,7 +141,7 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
   private int                    furnitureInformationRow;
   private Popup                  furnitureInformationPopup;
   private AWTEventListener       informationPopupRemovalListener;
-  private final boolean          reorderingEnabled = false;
+  private final boolean          reorderingEnabled;
 
   /**
    * Creates a table that displays furniture of <code>home</code>.
@@ -162,6 +162,12 @@ public class FurnitureTable extends JTable implements FurnitureView, Printable {
   public FurnitureTable(Home home, UserPreferences preferences,
                         FurnitureController controller) {
     this.preferences = preferences;
+    boolean reorderingEnabled = true;
+    try {
+      reorderingEnabled = "true".equals(System.getProperty("com.eteks.sweethome3d.furnitureTableReorderingEnabled", "true"));
+    } catch (AccessControlException ex) {
+    }
+    this.reorderingEnabled = reorderingEnabled;
     float resolutionScale = SwingTools.getResolutionScale();
     if (resolutionScale != 1) {
       // Adapt row height to specified resolution scale
