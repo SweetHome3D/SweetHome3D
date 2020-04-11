@@ -109,7 +109,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class FurnitureCatalogListPanel extends JPanel implements View {
   private static final int DEFAULT_ICON_HEIGHT = 48;
-  
+
   private ListSelectionListener listSelectionListener;
   private JLabel                categoryFilterLabel;
   private JComboBox             categoryFilterComboBox;
@@ -716,7 +716,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       this.nameLabel = new DefaultListCellRenderer() {
           @Override
           public Dimension getPreferredSize() {
-            return new Dimension(Math.max(iconHeight, 48 * 3 / 2) + 5, super.getPreferredSize().height);
+            return new Dimension(Math.max(iconHeight, Math.round(DEFAULT_ICON_HEIGHT * SwingTools.getResolutionScale()) * 3 / 2) + 5, super.getPreferredSize().height);
           }
         };
       this.nameLabel.setHorizontalTextPosition(JLabel.CENTER);
