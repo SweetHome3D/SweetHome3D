@@ -262,8 +262,10 @@ public class HomePane extends JRootPane implements HomeView {
     this.preferences = preferences;
     this.controller = controller;
 
-    JPopupMenu.setDefaultLightWeightPopupEnabled(false);
-    ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+    if (!Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
+      JPopupMenu.setDefaultLightWeightPopupEnabled(false);
+      ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+    }
 
     createActions(home, preferences, controller);
     createMenuActions(preferences, controller);
