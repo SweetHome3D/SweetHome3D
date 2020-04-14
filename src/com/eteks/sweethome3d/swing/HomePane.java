@@ -3469,12 +3469,16 @@ public class HomePane extends JRootPane implements HomeView {
     class MouseAndFocusListener extends MouseAdapter implements FocusListener {
       @Override
       public void mousePressed(MouseEvent ev) {
-        setMenusEnabled(menuBar, false);
+        if (SwingUtilities.isLeftMouseButton(ev)) {
+          setMenusEnabled(menuBar, false);
+        }
       }
 
       @Override
       public void mouseReleased(MouseEvent ev) {
-        setMenusEnabled(menuBar, true);
+        if (SwingUtilities.isLeftMouseButton(ev)) {
+          setMenusEnabled(menuBar, true);
+        }
       }
 
       // Need to take into account focus events because a mouse released event
