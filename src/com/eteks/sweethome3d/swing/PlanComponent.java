@@ -1205,7 +1205,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         this.lastMousePressedLocation = ev.getPoint();
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();
-          if (ev.getButton() == MouseEvent.BUTTON1) {
+          if (SwingUtilities.isLeftMouseButton(ev)) {
             boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
                 ? ev.isShiftDown()
                 : ev.isShiftDown() && !ev.isAltDown();
@@ -1226,7 +1226,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       @Override
       public void mouseReleased(MouseEvent ev) {
-        if (isEnabled() && !ev.isPopupTrigger() && ev.getButton() == MouseEvent.BUTTON1) {
+        if (isEnabled() && !ev.isPopupTrigger() && SwingUtilities.isLeftMouseButton(ev)) {
           controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
         }
       }
