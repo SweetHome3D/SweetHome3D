@@ -102,7 +102,7 @@ public class RoomTest extends ComponentTestFixture {
     // Check room point count and area
     Room room = frame.home.getRooms().get(0);
     assertEquals("Wrong point count", 5, room.getPoints().length);
-    assertEquals("Wrong room area", 69244.76f, room.getArea());
+    assertEquals("Wrong room area", 69244.766f, room.getArea());
     
     // 4. Edit created room
     JDialog attributesDialog = showRoomPanel(frame.preferences, frame.homeController, frame, tester);
