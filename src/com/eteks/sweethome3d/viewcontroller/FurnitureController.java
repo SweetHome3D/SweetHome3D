@@ -484,11 +484,13 @@ public class FurnitureController implements Controller {
       selectedFurniture = new ArrayList<HomePieceOfFurniture>(selectedFurniture);
       for (int i = selectedItems.size() - 1; i >= 0; i--) {
         Selectable item = selectedItems.get(i);
-        int index = selectedFurniture.indexOf(item);
-        if (index >= 0) {
-          selectedFurniture.remove(index);
-        } else if (item instanceof HomePieceOfFurniture) {
-          selectedItems.remove(i);
+        if (item instanceof HomePieceOfFurniture) {
+          int index = selectedFurniture.indexOf((HomePieceOfFurniture)item);
+          if (index >= 0) {
+            selectedFurniture.remove(index);
+          } else {
+            selectedItems.remove(i);
+          }
         }
       }
       selectedItems.addAll(selectedFurniture);
