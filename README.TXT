@@ -1,4 +1,4 @@
-SWEET HOME 3D v 6.2
+SWEET HOME 3D v 6.3
 -------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following SVN command:
 
-svn checkout https://svn.code.sf.net/p/sweethome3d/code/tags/V_6_2/SweetHome3D SweetHome3D
+svn checkout https://svn.code.sf.net/p/sweethome3d/code/tags/V_6_3/SweetHome3D SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -66,5 +66,5 @@ Read LICENSE.TXT file for more details about licenses applicable to this softwar
 and included materials developed by third parties.
     
     
-Sweet Home 3D, Copyright (c) 2005-2019 Emmanuel PUYBARET / eTeks. 
+Sweet Home 3D, Copyright (c) 2005-2020 Emmanuel PUYBARET / eTeks. 
 Distributed under GNU General Public License    
