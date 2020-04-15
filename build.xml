@@ -55,7 +55,7 @@
       </extdirs>
       <classpath>
         <pathelement location="libtest/AppleJavaExtensions.jar"/>
-      	<pathelement location="libtest/javaAwtDesktop.jar"/>
+        <pathelement location="libtest/javaAwtDesktop.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
       </classpath>
     </javac>
@@ -418,7 +418,7 @@
       </extdirs>
       <classpath>
         <pathelement location="libtest/AppleJavaExtensions.jar"/>
-      	<pathelement location="libtest/javaAwtDesktop.jar"/>
+        <pathelement location="libtest/javaAwtDesktop.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
       </classpath>
     </javac>
@@ -511,7 +511,7 @@
         <include name="COPYING.TXT"/>
         <include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
         <include name="THIRDPARTY-LICENSE-BATIK.TXT"/>
-      	<include name="THIRDPARTY-LICENSE-JEKSPARSER.TXT"/>
+        <include name="THIRDPARTY-LICENSE-JEKSPARSER.TXT"/>
         <include name="THIRDPARTY-LICENSE-ITEXT.TXT"/>
         <include name="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"/>
         <include name="THIRDPARTY-LICENSE-SUNFLOW.TXT"/>
@@ -577,7 +577,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/windows/build" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/windows/build" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/windows/build"/>
-  	<copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/windows/build"/>
+    <copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/windows/build"/>
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"          todir="install/windows/build" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/windows/build" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/windows/build" />
@@ -879,7 +879,7 @@
     <copy file="LICENSE.TXT" todir="install/macosx/10.6/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/macosx/10.6/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/macosx/10.6/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/macosx/10.6/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/macosx/10.6/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/macosx/10.6/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"    todir="install/macosx/10.6/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/10.6/SweetHome3D-${version}" />
@@ -1044,7 +1044,7 @@
     <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/macosx/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/SweetHome3D-${version}" />
@@ -1082,6 +1082,51 @@
   <target name="macosxSignedInstaller" depends="macosxBundle"
           description="Builds install/SweetHome3D-version-macosx.dmg archive">
     <input message="Enter certificate name:" addproperty="certificateName"/>
+    <!-- Sign libraries, executables then Sweet Home 3D application bundle for notarization -->
+    <exec executable="find" failonerror="yes">
+      <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents"/>
+      <arg value="-type"/>
+      <arg value="f"/>
+      <arg value="("/>
+      <arg value="-name"/>
+      <arg value="*.dylib"/>
+      <arg value="-or"/>
+      <arg value="-name"/>
+      <arg value="*.jnilib"/>
+      <arg value="-or"/>
+      <arg value="-name"/>
+      <arg value="jspawnhelper"/>
+      <arg value="-or"/>
+      <arg value="-name"/>
+      <arg value="SweetHome3D"/>
+      <arg value=")"/>
+      <arg value="-exec"/>
+      <arg value="codesign"/>
+      <arg value="-v"/>
+      <arg value="-f"/>
+      <arg value="-s"/>
+      <arg value="${certificateName}"/>
+      <arg value="--options=runtime"/>
+      <arg value="{}"/>
+      <arg value=";"/>
+    </exec>
+  
+    <!-- Sign the remaining JRE executables even if they are not necessary  -->
+    <exec executable="find" failonerror="yes">
+      <arg value="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Plugins/Java.runtime/Contents/Home/jre/bin"/>
+      <arg value="-type"/>
+      <arg value="f"/>
+      <arg value="-exec"/>
+      <arg value="codesign"/>
+      <arg value="-v"/>
+      <arg value="-f"/>
+      <arg value="-s"/>
+      <arg value="${certificateName}"/>
+      <arg value="--options=runtime"/>
+      <arg value="{}"/>
+      <arg value=";"/>
+    </exec>
+  
     <!-- Sign Sweet Home 3D application bundle -->
     <exec executable="codesign" failonerror="yes">
       <arg value="-f"/>
@@ -1159,7 +1204,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/linux/x86/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/linux/x86/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/linux/x86/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/linux/x86/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/linux/x86/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"          todir="install/linux/x86/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/x86/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/linux/x86/SweetHome3D-${version}" />
@@ -1242,7 +1287,7 @@
     <!-- Copy SweetHome3D commands -->
     <copy todir="install/linux/x64/SweetHome3D-${version}" file="install/linux/SweetHome3D" />
     <copy todir="install/linux/x64/SweetHome3D-${version}" file="install/linux/SweetHome3D-Java3D-1_5_2"/>
-  	<!-- Change max memory Java parameter -->
+    <!-- Change max memory Java parameter -->
     <replace dir="install/linux/x64" token=" -Xmx1024m " value=" -Xmx2g "/>
 
     <!-- Copy SweetHome3D JARs and its direct libs
@@ -1277,7 +1322,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"      todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"          todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/x64/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/linux/x64/SweetHome3D-${version}" />
@@ -1425,7 +1470,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA.TXT"       todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-BATIK.TXT"      todir="install/portable/SweetHome3D-${version}-portable" />
-  	<copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
+    <copy file="THIRDPARTY-LICENSE-JEKSPARSER.TXT"     todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"          todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/portable/SweetHome3D-${version}-portable" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/portable/SweetHome3D-${version}-portable" />
@@ -1448,7 +1493,7 @@
     <!-- Change executable permission of SweetHome3D lost during copy task -->
     <chmod perm="+x" file="install/portable/SweetHome3D-${version}-portable/SweetHome3D-macosx.app/Contents/MacOS/SweetHome3D"/>
 
-  	<!-- Copy Linux command files -->
+    <!-- Copy Linux command files -->
     <copy file="install/portable/SweetHome3D-linux-x86" todir="install/portable/SweetHome3D-${version}-portable"/>
     <copy file="install/portable/SweetHome3D-linux-x64" todir="install/portable/SweetHome3D-${version}-portable"/>
     <!-- Change executable permission of command files lost during copy task -->
