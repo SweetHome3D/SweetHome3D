@@ -113,9 +113,6 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DViewController.dependsUpon(swingUndo);
     sweetHome3DViewController.dependsUpon(swingText);
     sweetHome3DViewController.dependsUpon(swingTextHtml);
-    sweetHome3DViewController.dependsUpon(xmlParsers);
-    sweetHome3DViewController.dependsUpon(xmlSax);
-    sweetHome3DViewController.dependsUpon(xmlSaxHelpers);
 
     sweetHome3DPlugin.dependsUpon(sweetHome3DModel);
     sweetHome3DPlugin.dependsUpon(sweetHome3DTools);
@@ -205,6 +202,9 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DApplication.dependsUpon(java3d);
     sweetHome3DApplication.dependsUpon(sun3dExpSwing);
     sweetHome3DApplication.dependsUpon(eawt);
+    sweetHome3DApplication.dependsUpon(xmlParsers);
+    sweetHome3DApplication.dependsUpon(xmlSax);
+    sweetHome3DApplication.dependsUpon(xmlSaxHelpers);
     sweetHome3DApplication.dependsUpon(jnlp);
 
     sweetHome3DApplet.dependsUpon(sweetHome3DModel);

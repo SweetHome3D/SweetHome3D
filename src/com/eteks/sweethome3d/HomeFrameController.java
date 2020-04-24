@@ -21,7 +21,6 @@ package com.eteks.sweethome3d;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
-import com.eteks.sweethome3d.plugin.HomePluginController;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.Controller;
@@ -42,10 +41,10 @@ public class HomeFrameController implements Controller {
   private View                  homeFrameView;
 
   private HomeController        homeController;
-  
-  public HomeFrameController(Home home, HomeApplication application, 
+
+  public HomeFrameController(Home home, HomeApplication application,
                              ViewFactory viewFactory,
-                             ContentManager contentManager, 
+                             ContentManager contentManager,
                              PluginManager pluginManager) {
     this.home = home;
     this.application = application;
@@ -64,19 +63,19 @@ public class HomeFrameController implements Controller {
     }
     return this.homeFrameView;
   }
-  
+
   /**
    * Returns the home controller managed by this controller.
    */
   public HomeController getHomeController() {
     // Create sub controller lazily only once it's needed
     if (this.homeController == null) {
-      this.homeController = new HomePluginController(
-          this.home, this.application, this.viewFactory, this.contentManager, this.pluginManager);
+      this.homeController = new DefaultHomeController(this.home, this.application, this.viewFactory, this.contentManager,
+          this.pluginManager);
     }
     return this.homeController;
   }
-  
+
   /**
    * Displays the view controlled by this controller.
    */
