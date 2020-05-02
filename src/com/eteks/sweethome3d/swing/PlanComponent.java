@@ -2770,7 +2770,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (paintMode == PaintMode.PAINT) {
         paintOtherLevels(g2D, planScale, backgroundColor, foregroundColor);
         if (this.preferences.isGridVisible()) {
-          paintGrid(g2D, planScale);
+          paintGrid(g2D, planScale / this.resolutionScale);
         }
       }
     }
