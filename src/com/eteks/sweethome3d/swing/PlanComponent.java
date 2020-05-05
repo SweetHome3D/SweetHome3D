@@ -2357,7 +2357,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Throws an <code>InterruptedRecorderException</code> exception if current thread
+   * Throws an <code>InterruptedIOException</code> exception if current thread
    * is interrupted and <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>.
    */
   private void checkCurrentThreadIsntInterrupted(PaintMode paintMode) throws InterruptedIOException {
