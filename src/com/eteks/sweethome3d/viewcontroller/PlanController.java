@@ -7273,10 +7273,6 @@ public class PlanController extends FurnitureController implements Controller {
    * A point with coordinates computed with angle and wall points magnetism.
    */
   private class WallPointWithAngleMagnetism extends PointWithAngleMagnetism {
-    public WallPointWithAngleMagnetism(float x, float y) {
-      this(null, x, y, x, y);
-    }
-
     public WallPointWithAngleMagnetism(Wall editedWall, float xWall, float yWall, float x, float y) {
       super(xWall, yWall, x, y, preferences.getLengthUnit(), getView().getPixelLength());
       float margin = PIXEL_MARGIN / getScale();
@@ -7367,10 +7363,6 @@ public class PlanController extends FurnitureController implements Controller {
    * A point with coordinates computed with angle and room points magnetism.
    */
   private class RoomPointWithAngleMagnetism extends PointWithAngleMagnetism {
-    public RoomPointWithAngleMagnetism(float x, float y) {
-      this(null, -1, x, y, x, y);
-    }
-
     public RoomPointWithAngleMagnetism(Room editedRoom, int editedPointIndex, float xRoom, float yRoom, float x, float y) {
       super(xRoom, yRoom, x, y, preferences.getLengthUnit(), getView().getPixelLength());
       float planScale = getScale();
@@ -8461,7 +8453,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       if (this.magnetismEnabled) {
-        WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(x, y);
+        WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(null, x, y, x, y);
         x = point.getX();
         y = point.getY();
       }
@@ -8736,7 +8728,7 @@ public class PlanController extends FurnitureController implements Controller {
           this.xStart = this.wallStartAtStart.getXStart();
           this.yStart = this.wallStartAtStart.getYStart();
         } else if (this.magnetismEnabled) {
-          WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(this.xStart, this.yStart);
+          WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(null, this.xStart, this.yStart, this.xStart, this.yStart);
           this.xStart = point.getX();
           this.yStart = point.getY();
         }
@@ -11450,8 +11442,8 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setAlignmentFeedback(Room.class, null, point.getX(),
               point.getY(), point.isMagnetized());
         } else {
-          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
-              getXLastMouseMove(), getYLastMouseMove());
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(null, -1,
+              getXLastMouseMove(), getYLastMouseMove(), getXLastMouseMove(), getYLastMouseMove());
           getView().setAlignmentFeedback(Room.class, null, pointWithAngleMagnetism.getX(),
               pointWithAngleMagnetism.getY(), point.isMagnetized());
         }
@@ -11678,8 +11670,8 @@ public class PlanController extends FurnitureController implements Controller {
           this.xPreviousPoint = point.getX();
           this.yPreviousPoint = point.getY();
         } else {
-          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
-              getXLastMouseMove(), getYLastMouseMove());
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(null, -1,
+              getXLastMouseMove(), getYLastMouseMove(), getXLastMouseMove(), getYLastMouseMove());
           this.xPreviousPoint = pointWithAngleMagnetism.getX();
           this.yPreviousPoint = pointWithAngleMagnetism.getY();
         }
