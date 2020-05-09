@@ -1184,8 +1184,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         // Update view position when scroll bars are visible
         if (extentSize.width < viewSize.width
             || extentSize.height < viewSize.height) {
-          int deltaX = Math.round(((float)this.invalidPlanBounds.getMinX() - planBoundsNewMinX) * getPaintScale());
-          int deltaY = Math.round(((float)this.invalidPlanBounds.getMinY() - planBoundsNewMinY) * getPaintScale());
+          int deltaX = convertLengthToPixel(this.invalidPlanBounds.getMinX() - planBoundsNewMinX);
+          int deltaY = convertLengthToPixel(this.invalidPlanBounds.getMinY() - planBoundsNewMinY);
           parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
         }
       }
@@ -1696,10 +1696,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Insets insets = getInsets();
       Rectangle2D planBounds = getPlanBounds();
       return new Dimension(
-          Math.round(((float)planBounds.getWidth() + MARGIN * 2)
-                     * getPaintScale()) + insets.left + insets.right,
-          Math.round(((float)planBounds.getHeight() + MARGIN * 2)
-                     * getPaintScale()) + insets.top + insets.bottom);
+          convertLengthToPixel(planBounds.getWidth() + MARGIN * 2) + insets.left + insets.right,
+          convertLengthToPixel(planBounds.getHeight() + MARGIN * 2) + insets.top + insets.bottom);
     }
   }
 
@@ -4614,7 +4612,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
         if (feedback && getFont() != null) {
           // Use default for feedback
-          lengthStyle = lengthStyle.deriveStyle(getFont().getSize() / getPaintScale());
+          lengthStyle = lengthStyle.deriveStyle(getFont().getSize() / planScale);
         }
         Font font = getFont(previousFont, lengthStyle);
         FontMetrics lengthFontMetrics = getFontMetrics(font, lengthStyle);
@@ -5447,7 +5445,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   public void makePointVisible(float x, float y) {
     scrollRectToVisible(getShapePixelBounds(
-        new Rectangle2D.Float(x, y, 1 / getPaintScale(), 1 / getPaintScale())));
+        new Rectangle2D.Float(x, y, getPixelLength(), getPixelLength())));
   }
 
   /**
@@ -5457,7 +5455,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (getParent() instanceof JViewport) {
       JViewport viewport = (JViewport)getParent();
       Rectangle viewRectangle = viewport.getViewRect();
-      viewRectangle.translate(Math.round(dx * getPaintScale()), Math.round(dy * getPaintScale()));
+      viewRectangle.translate(convertLengthToPixel(dx), convertLengthToPixel(dy));
       viewRectangle.x = Math.min(Math.max(0, viewRectangle.x), getWidth() - viewRectangle.width);
       viewRectangle.y = Math.min(Math.max(0, viewRectangle.y), getHeight() - viewRectangle.height);
       viewport.setViewPosition(viewRectangle.getLocation());
@@ -5515,7 +5513,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public float convertXPixelToModel(int x) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();
-    return (x - insets.left) / getPaintScale() - MARGIN + (float)planBounds.getMinX();
+    return convertPixelToLength(x - insets.left) - MARGIN + (float)planBounds.getMinX();
   }
 
   /**
@@ -5524,7 +5522,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public float convertYPixelToModel(int y) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();
-    return (y - insets.top) / getPaintScale() - MARGIN + (float)planBounds.getMinY();
+    return convertPixelToLength(y - insets.top) - MARGIN + (float)planBounds.getMinY();
+  }
+
+  /**
+   * Returns the length in model units (cm) of the given <code>size</code> in pixels.
+   */
+  private float convertPixelToLength(int size) {
+    return size * getPixelLength();
   }
 
   /**
@@ -5533,7 +5538,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private int convertXModelToPixel(float x) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();
-    return (int)Math.round((x - planBounds.getMinX() + MARGIN) * getPaintScale()) + insets.left;
+    return convertLengthToPixel(x - planBounds.getMinX() + MARGIN) + insets.left;
   }
 
   /**
@@ -5542,7 +5547,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private int convertYModelToPixel(float y) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();
-    return (int)Math.round((y - planBounds.getMinY() + MARGIN) * getPaintScale()) + insets.top;
+    return convertLengthToPixel(y - planBounds.getMinY() + MARGIN) + insets.top;
+  }
+
+  /**
+   * Returns the size in pixels of the given <code>length</code> in model units (cm).
+   */
+  private int convertLengthToPixel(double length) {
+    return (int)Math.round(length / getPixelLength());
   }
 
   /**
@@ -5579,8 +5591,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     return new Rectangle(
         convertXModelToPixel((float)shapeBounds.getMinX()),
         convertYModelToPixel((float)shapeBounds.getMinY()),
-        (int)Math.round(shapeBounds.getWidth() * getPaintScale()),
-        (int)Math.round(shapeBounds.getHeight() * getPaintScale()));
+        convertLengthToPixel(shapeBounds.getWidth()),
+        convertLengthToPixel(shapeBounds.getHeight()));
   }
 
   /**
@@ -6124,13 +6136,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         int ruleHeight = metrics.getAscent() + 6;
         if (this.orientation == SwingConstants.HORIZONTAL) {
           return new Dimension(
-              Math.round(((float)planBounds.getWidth() + MARGIN * 2)
-                         * getPaintScale()) + insets.left + insets.right,
+              convertLengthToPixel(planBounds.getWidth() + MARGIN * 2) + insets.left + insets.right,
               ruleHeight);
         } else {
           return new Dimension(ruleHeight,
-              Math.round(((float)planBounds.getHeight() + MARGIN * 2)
-                         * getPaintScale()) + insets.top + insets.bottom);
+              convertLengthToPixel(planBounds.getHeight() + MARGIN * 2) + insets.top + insets.bottom);
         }
       }
     }
