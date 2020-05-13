@@ -8502,12 +8502,20 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.wallLengthToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallLengthToolTipFeedback");
-      this.wallAngleToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "wallAngleToolTipFeedback");
+      try {
+        this.wallAngleToolTipFeedback = preferences.getLocalizedString(
+            PlanController.class, "wallAngleToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
       this.wallArcExtentToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallArcExtentToolTipFeedback");
-      this.wallThicknessToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "wallThicknessToolTipFeedback");
+      try {
+        this.wallThicknessToolTipFeedback = preferences.getLocalizedString(
+            PlanController.class, "wallThicknessToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
     }
 
     protected String getToolTipFeedbackText(Wall wall, boolean ignoreArcExtent) {
@@ -8516,11 +8524,16 @@ public class PlanController extends FurnitureController implements Controller {
         return "<html>" + String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(arcExtent)));
       } else {
         float startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
-        return "<html>" + String.format(this.wallLengthToolTipFeedback,
-            preferences.getLengthUnit().getFormatWithUnit().format(startPointToEndPointDistance))
-            + "<br>" + String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, startPointToEndPointDistance))
-            + "<br>" + String.format(this.wallThicknessToolTipFeedback,
-                preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
+        String toolTipFeedbackText = "<html>" + String.format(this.wallLengthToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(startPointToEndPointDistance));
+        if (this.wallAngleToolTipFeedback != null
+            && this.wallAngleToolTipFeedback.length() > 0) {
+          toolTipFeedbackText += "<br>" + String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, startPointToEndPointDistance));
+        }
+        if (this.wallThicknessToolTipFeedback != null
+            && this.wallThicknessToolTipFeedback.length() > 0) {
+          toolTipFeedbackText += "<br>" + String.format(this.wallThicknessToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
+        }
+        return toolTipFeedbackText;
       }
     }
 
@@ -8619,7 +8632,8 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setAngleFeedback(wall.getXArcCircleCenter(), wall.getYArcCircleCenter(),
               wall.getXEnd(), wall.getYEnd(), wall.getXStart(), wall.getYStart());
         }
-      } else {
+      } else if (this.wallAngleToolTipFeedback != null
+                 && this.wallAngleToolTipFeedback.length() > 0) {
         Wall wallAtStart = wall.getWallAtStart();
         if (wallAtStart != null) {
           if (wallAtStart.getWallAtStart() == wall) {
@@ -11493,16 +11507,23 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.roomSideLengthToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "roomSideLengthToolTipFeedback");
-      this.roomSideAngleToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "roomSideAngleToolTipFeedback");
+      try {
+        this.roomSideAngleToolTipFeedback = preferences.getLocalizedString(
+            PlanController.class, "roomSideAngleToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
     }
 
     protected String getToolTipFeedbackText(Room room, int pointIndex) {
       float length = getRoomSideLength(room, pointIndex);
       int angle = getRoomSideAngle(room, pointIndex);
-      return "<html>" + String.format(this.roomSideLengthToolTipFeedback,
-          preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + String.format(this.roomSideAngleToolTipFeedback, angle);
+      String toolTipFeedbackText = "<html>" + String.format(this.roomSideLengthToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(length));
+      if (this.roomSideAngleToolTipFeedback != null
+          && this.roomSideAngleToolTipFeedback.length() > 0) {
+        toolTipFeedbackText += "<br>" + String.format(this.roomSideAngleToolTipFeedback, angle);
+      }
+      return toolTipFeedbackText;
     }
 
     protected float getRoomSideLength(Room room, int pointIndex) {
@@ -11588,7 +11609,9 @@ public class PlanController extends FurnitureController implements Controller {
 
     protected void showRoomAngleFeedback(Room room, int pointIndex) {
       float [][] points = room.getPoints();
-      if (points.length > 2) {
+      if (this.roomSideAngleToolTipFeedback != null
+          && this.roomSideAngleToolTipFeedback.length() > 0
+          && points.length > 2) {
         float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
         float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
         if (getRoomSideAngle(room, pointIndex) > 0) {
@@ -12667,16 +12690,23 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.polylineSegmentLengthToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "polylineSegmentLengthToolTipFeedback");
-      this.polylineSegmentAngleToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "polylineSegmentAngleToolTipFeedback");
+      try {
+        this.polylineSegmentAngleToolTipFeedback = preferences.getLocalizedString(
+            PlanController.class, "polylineSegmentAngleToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
     }
 
     protected String getToolTipFeedbackText(Polyline polyline, int pointIndex) {
       float length = getPolylineSegmentLength(polyline, pointIndex);
       int angle = getPolylineSegmentAngle(polyline, pointIndex);
-      return "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback,
-          preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
+      String toolTipFeedbackText = "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(length));
+      if (this.polylineSegmentAngleToolTipFeedback != null
+          && this.polylineSegmentAngleToolTipFeedback.length() > 0) {
+        toolTipFeedbackText += "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
+      }
+      return toolTipFeedbackText;
     }
 
     protected float getPolylineSegmentLength(Polyline polyline, int pointIndex) {
@@ -12735,8 +12765,10 @@ public class PlanController extends FurnitureController implements Controller {
 
     protected void showPolylineAngleFeedback(Polyline polyline, int pointIndex) {
       float [][] points = polyline.getPoints();
-      if (pointIndex >= 2
-          || points.length > 2 && polyline.isClosedPath()) {
+      if (this.polylineSegmentAngleToolTipFeedback != null
+          && this.polylineSegmentAngleToolTipFeedback.length() > 0
+          && (pointIndex >= 2
+             || points.length > 2 && polyline.isClosedPath())) {
         float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
         float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
         getView().setAngleFeedback(previousPoint [0], previousPoint [1],
