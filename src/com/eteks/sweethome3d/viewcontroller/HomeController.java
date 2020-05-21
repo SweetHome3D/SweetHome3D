@@ -285,6 +285,8 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.PAN, true);
     homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
+    homeView.setEnabled(HomeView.ActionType.ENABLE_MAGNETISM, true);
+    homeView.setEnabled(HomeView.ActionType.DISABLE_MAGNETISM, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_COMPASS, true);
     Level selectedLevel = this.home.getSelectedLevel();
     enableBackgroungImageActions(homeView, selectedLevel != null
@@ -2758,6 +2760,20 @@ public class HomeController implements Controller {
   public void editPreferences() {
     new UserPreferencesController(this.preferences,
         this.viewFactory, this.contentManager, this).displayView(getView());
+  }
+
+  /**
+   * Enables magnetism in preferences.
+   */
+  public void enableMagnetism() {
+    this.preferences.setMagnetismEnabled(true);
+  }
+
+  /**
+   * Disables magnetism in preferences.
+   */
+  public void disableMagnetism() {
+    this.preferences.setMagnetismEnabled(false);
   }
 
   /**

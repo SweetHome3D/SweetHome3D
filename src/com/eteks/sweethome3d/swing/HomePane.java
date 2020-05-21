@@ -284,7 +284,7 @@ public class HomePane extends JRootPane implements HomeView {
     JMenuBar homeMenuBar = createMenuBar(home, preferences, controller);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
-    contentPane.add(createToolBar(home), BorderLayout.NORTH);
+    contentPane.add(createToolBar(home, preferences), BorderLayout.NORTH);
     contentPane.add(createMainPane(home, preferences, controller));
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Under Mac OS X 10.5, add some dummy labels at left and right borders
@@ -466,6 +466,8 @@ public class HomePane extends JRootPane implements HomeView {
       createAction(ActionType.DELETE_SELECTION, preferences, planController, "deleteSelection");
       createAction(ActionType.LOCK_BASE_PLAN, preferences, planController, "lockBasePlan");
       createAction(ActionType.UNLOCK_BASE_PLAN, preferences, planController, "unlockBasePlan");
+      createAction(ActionType.ENABLE_MAGNETISM, preferences, controller, "enableMagnetism");
+      createAction(ActionType.DISABLE_MAGNETISM, preferences, controller, "disableMagnetism");
       createAction(ActionType.FLIP_HORIZONTALLY, preferences, planController, "flipHorizontally");
       createAction(ActionType.FLIP_VERTICALLY, preferences, planController, "flipVertically");
       createAction(ActionType.MODIFY_COMPASS, preferences, planController, "modifyCompass");
@@ -1681,6 +1683,59 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
+   * Returns Enable / Disable magnetism button.
+   */
+  private JComponent createEnableDisableMagnetismButton(final UserPreferences preferences) {
+    ActionMap actionMap = getActionMap();
+    final Action disableMagnetismAction = actionMap.get(ActionType.DISABLE_MAGNETISM);
+    final Action enableMagnetismAction = actionMap.get(ActionType.ENABLE_MAGNETISM);
+    if (disableMagnetismAction != null
+        && disableMagnetismAction.getValue(Action.NAME) != null
+        && enableMagnetismAction.getValue(Action.NAME) != null) {
+      final JButton enableDisableMagnetismButton = new JButton(
+          new ResourceAction.ToolBarAction(preferences.isMagnetismEnabled()
+              ? disableMagnetismAction
+              : enableMagnetismAction));
+      // Add a listener to preferences on magnestismEnabled property change to
+      // switch action according to magnestismEnabled change
+      preferences.addPropertyChangeListener(UserPreferences.Property.MAGNETISM_ENABLED,
+          new MagnetismChangeListener(this, enableDisableMagnetismButton));
+      return enableDisableMagnetismButton;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.
+   */
+  private static class MagnetismChangeListener implements PropertyChangeListener {
+    private WeakReference<HomePane> homePane;
+    private WeakReference<JButton>  enableDisableMagnetismButton;
+
+    public MagnetismChangeListener(HomePane homePane, JButton enableDisableMagnetismButton) {
+      this.enableDisableMagnetismButton = new WeakReference<JButton>(enableDisableMagnetismButton);
+      this.homePane = new WeakReference<HomePane>(homePane);
+    }
+
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from preferences
+      HomePane homePane = this.homePane.get();
+      UserPreferences preferences = (UserPreferences)ev.getSource();
+      UserPreferences.Property property = UserPreferences.Property.valueOf(ev.getPropertyName());
+      if (homePane == null) {
+        preferences.removePropertyChangeListener(property, this);
+      } else {
+        this.enableDisableMagnetismButton.get().setAction(
+            new ResourceAction.ToolBarAction(preferences.isMagnetismEnabled()
+                ? homePane.getActionMap().get(ActionType.DISABLE_MAGNETISM)
+                : homePane.getActionMap().get(ActionType.ENABLE_MAGNETISM)));
+      }
+    }
+  }
+
+  /**
    * Returns text style menu.
    */
   private JMenu createTextStyleMenu(final Home home,
@@ -2099,7 +2154,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Returns the tool bar displayed in this pane.
    */
-  private JToolBar createToolBar(Home home) {
+  private JToolBar createToolBar(Home home, UserPreferences preferences) {
     final JToolBar toolBar = new UnfocusableToolBar();
     addActionToToolBar(ActionType.NEW_HOME, toolBar);
     addActionToToolBar(ActionType.OPEN, toolBar);
@@ -2134,6 +2189,14 @@ public class HomePane extends JRootPane implements HomeView {
     if (previousCount != toolBar.getComponentCount()) {
       toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
       previousCount = toolBar.getComponentCount();
+    }
+
+    if (!OperatingSystem.isMacOSX() || getToolkit().getScreenSize().width >= 1024) {
+      toolBar.add(createEnableDisableMagnetismButton(preferences));
+      if (previousCount != toolBar.getComponentCount()) {
+        toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+        previousCount = toolBar.getComponentCount();
+      }
     }
 
     addActionToToolBar(ActionType.INCREASE_TEXT_SIZE, toolBar);
