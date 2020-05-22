@@ -1536,7 +1536,8 @@ public class HomeController implements Controller {
       // Start a compound edit that adds walls, furniture, rooms, dimension lines, polylines and labels to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
-      if (destinationView == getFurnitureController().getView()) {
+      if (destinationView != null
+          && destinationView == getFurnitureController().getView()) {
         getFurnitureController().addFurniture(Home.getFurnitureSubList(items), (HomePieceOfFurniture)beforeItem);
       } else {
         getPlanController().addItems(items);
