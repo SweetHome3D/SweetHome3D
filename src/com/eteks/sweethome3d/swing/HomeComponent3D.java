@@ -2957,6 +2957,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void deleteObject(Selectable homeObject) {
     this.homeObjects.get(homeObject).detach();
     this.homeObjects.remove(homeObject);
+    if (this.homeObjectsToUpdate != null
+        && this.homeObjectsToUpdate.contains(homeObject)) {
+      this.homeObjectsToUpdate.remove(homeObject);
+    }
     clearPrintedImageCache();
   }
 
