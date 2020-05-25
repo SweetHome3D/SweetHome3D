@@ -6725,16 +6725,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public HomePieceOfFurnitureTopViewIconKey(HomePieceOfFurniture piece) {
       this.piece = piece;
       this.hashCode = (piece.getPlanIcon() != null ? piece.getPlanIcon().hashCode() : piece.getModel().hashCode())
-          + (piece.getColor() != null ? 37 * this.piece.getColor().hashCode() : 1234);
-      if (this.piece.isHorizontallyRotated()
-          || this.piece.getTexture() != null) {
+          + (piece.getColor() != null ? 37 * piece.getColor().hashCode() : 1234);
+      if (piece.isHorizontallyRotated()
+          || piece.getTexture() != null) {
         this.hashCode +=
-              (piece.getTexture() != null ? 37 * this.piece.getTexture().hashCode() : 0)
+              (piece.getTexture() != null ? 37 * piece.getTexture().hashCode() : 0)
             + 37 * Float.valueOf(piece.getWidthInPlan()).hashCode()
             + 37 * Float.valueOf(piece.getDepthInPlan()).hashCode()
             + 37 * Float.valueOf(piece.getHeightInPlan()).hashCode();
       }
-      if (this.piece.getPlanIcon() != null) {
+      if (piece.getPlanIcon() != null) {
         this.hashCode +=
               37 * Arrays.deepHashCode(piece.getModelRotation())
             + 37 * Boolean.valueOf(piece.isModelCenteredAtOrigin()).hashCode()
@@ -6743,7 +6743,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             + 37 * Float.valueOf(piece.getRoll()).hashCode()
             + 37 * Arrays.hashCode(piece.getModelTransformations())
             + 37 * Arrays.hashCode(piece.getModelMaterials())
-            + (piece.getShininess() != null ? 37 * this.piece.getShininess().hashCode() : 3456);
+            + (piece.getShininess() != null ? 37 * piece.getShininess().hashCode() : 3456);
       }
     }
 
