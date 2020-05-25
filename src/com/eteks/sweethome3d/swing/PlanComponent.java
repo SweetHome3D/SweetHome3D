@@ -749,7 +749,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             sortedLevelFurniture = null;
             repaint();
           } else if (doorOrWindowWallThicknessAreasCache != null
-                     && doorOrWindowWallThicknessAreasCache.containsKey(ev.getSource())
                      && (HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
@@ -758,8 +757,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                          || HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName()))) {
-            doorOrWindowWallThicknessAreasCache.remove(ev.getSource());
-            revalidate();
+            if (doorOrWindowWallThicknessAreasCache.remove(ev.getSource()) != null) {
+              System.out.println(ev.getSource());
+              revalidate();
+            }
           } else {
             revalidate();
           }
