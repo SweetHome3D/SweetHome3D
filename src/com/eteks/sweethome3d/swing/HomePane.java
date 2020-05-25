@@ -2192,8 +2192,9 @@ public class HomePane extends JRootPane implements HomeView {
     }
 
     if (!OperatingSystem.isMacOSX() || getToolkit().getScreenSize().width >= 1024) {
-      toolBar.add(createEnableDisableMagnetismButton(preferences));
-      if (previousCount != toolBar.getComponentCount()) {
+      JComponent enableDisableMagnetismButton = createEnableDisableMagnetismButton(preferences);
+      if (enableDisableMagnetismButton != null) {
+        toolBar.add(enableDisableMagnetismButton);
         toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
         previousCount = toolBar.getComponentCount();
       }
