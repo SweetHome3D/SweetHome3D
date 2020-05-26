@@ -195,7 +195,28 @@ public abstract class UserPreferences {
   public abstract void write() throws RecorderException;
 
   /**
-   * Adds the <code>listener</code> in parameter to these preferences.
+   * Adds the property change <code>listener</code> in parameter to these preferences.
+   * <br>Caution: a user preferences instance generally exists during all the application ;
+   * therefore you should take care of not bounding permanently listeners to this
+   * object (for example, do not create anonymous listeners on user preferences
+   * in classes depending on an edited home).
+   * @since 6.4
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from these preferences.
+   * @since 6.4
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  /**
+   * Adds the <code>listener</code> in parameter to these preferences to listen
+   * to the changes of the given <code>property</code>.
    * <br>Caution: a user preferences instance generally exists during all the application ;
    * therefore you should take care of not bounding permanently listeners to this
    * object (for example, do not create anonymous listeners on user preferences

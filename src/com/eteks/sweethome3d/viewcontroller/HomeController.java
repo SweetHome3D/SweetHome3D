@@ -424,11 +424,8 @@ public class HomeController implements Controller {
         new FurnitureCatalogChangeListener(this));
     this.preferences.getTexturesCatalog().addTexturesListener(
         new TexturesCatalogChangeListener(this));
-    UserPreferencesPropertiesChangeListener listener =
-        new UserPreferencesPropertiesChangeListener(this);
-    for (UserPreferences.Property property : UserPreferences.Property.values()) {
-      this.preferences.addPropertyChangeListener(property, listener);
-    }
+    // Listen to all property changes to save them when any of them change
+    this.preferences.addPropertyChangeListener(new UserPreferencesPropertiesChangeListener(this));
 
     addCatalogSelectionListener();
     addHomeBackgroundImageListener();
