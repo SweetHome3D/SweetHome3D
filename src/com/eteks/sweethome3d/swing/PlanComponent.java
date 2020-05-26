@@ -94,6 +94,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -310,6 +311,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Rectangle2D                       invalidPlanBounds;
   private BufferedImage                     backgroundImageCache;
   private Map<TextureImage, BufferedImage>  patternImagesCache;
+  private Set<HomePieceOfFurniture>         invalidFurnitureTopViewIcons;
   private List<Wall>                        otherLevelsWallsCache;
   private Area                              otherLevelsWallAreaCache;
   private List<Room>                        otherLevelsRoomsCache;
@@ -721,13 +723,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 furnitureTopViewIconKeys.remove((HomePieceOfFurniture)ev.getSource());
               } else {
                 // Delay computing of new top view icon
-                controller.addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, new PropertyChangeListener() {
-                    public void propertyChange(PropertyChangeEvent ev2) {
-                      furnitureTopViewIconKeys.remove((HomePieceOfFurniture)ev.getSource());
-                      repaint();
-                      controller.removePropertyChangeListener(PlanController.Property.MODIFICATION_STATE, this);
-                    }
-                  });
+                if (invalidFurnitureTopViewIcons == null) {
+                  invalidFurnitureTopViewIcons = new HashSet<HomePieceOfFurniture>();
+                  controller.addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, new PropertyChangeListener() {
+                      public void propertyChange(PropertyChangeEvent ev2) {
+                        for (HomePieceOfFurniture piece : invalidFurnitureTopViewIcons) {
+                          furnitureTopViewIconKeys.remove(piece);
+                        }
+                        invalidFurnitureTopViewIcons = null;
+                        repaint();
+                        controller.removePropertyChangeListener(PlanController.Property.MODIFICATION_STATE, this);
+                      }
+                    });
+                }
+                invalidFurnitureTopViewIcons.add((HomePieceOfFurniture)ev.getSource());
               }
             }
             revalidate();
