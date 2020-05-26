@@ -322,8 +322,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<HomePieceOfFurniture, HomePieceOfFurnitureTopViewIconKey> furnitureTopViewIconKeys;
   private Map<HomePieceOfFurnitureTopViewIconKey, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
-
-
   private static ExecutorService            backgroundImageLoader;
 
   private static final Shape       POINT_INDICATOR;
@@ -365,7 +363,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   private static final BufferedImage ERROR_TEXTURE_IMAGE;
   private static final BufferedImage WAIT_TEXTURE_IMAGE;
-
 
   static {
     POINT_INDICATOR = new Ellipse2D.Float(-1.5f, -1.5f, 3, 3);
