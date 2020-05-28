@@ -24,4 +24,9 @@ package com.eteks.sweethome3d.viewcontroller;
  * @author Emmanuel Puybaret
  */
 public interface View {
+  /**
+   * The pointer types that the user may use to interact with the plan
+   */
+  public enum PointerType {MOUSE, TOUCH}
+
 }

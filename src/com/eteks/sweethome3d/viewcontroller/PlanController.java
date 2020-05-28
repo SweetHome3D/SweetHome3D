@@ -181,6 +181,7 @@ public class PlanController extends FurnitureController implements Controller {
   private boolean                         alignmentActivatedLastMousePress;
   private boolean                         duplicationActivatedLastMousePress;
   private boolean                         magnetismToggledLastMousePress;
+  private View.PointerType                pointerTypeLastMousePress;
   private float                           xLastMouseMove;
   private float                           yLastMouseMove;
   private Area                            wallsAreaCache;
@@ -189,6 +190,8 @@ public class PlanController extends FurnitureController implements Controller {
   private List<GeneralPath>               roomPathsCache;
   private Map<HomePieceOfFurniture, Area> furnitureSidesCache;
   private List<Selectable>                draggedItems;
+
+
 
   /**
    * Creates the controller of plan view.
@@ -279,9 +282,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Changes current state of controller.
    */
   protected void setState(ControllerState state) {
+    Mode oldMode = null;
     boolean oldModificationState = false;
     boolean oldBasePlanModificationState = false;
     if (this.state != null) {
+      oldMode = this.state.getMode();
       oldModificationState = this.state.isModificationState();
       oldBasePlanModificationState = this.state.isBasePlanModificationState();
       this.state.exit();
@@ -291,6 +296,10 @@ public class PlanController extends FurnitureController implements Controller {
     this.state = state;
     this.state.enter();
 
+    if (oldMode != state.getMode()) {
+      this.propertyChangeSupport.firePropertyChange(Property.MODE.name(),
+          oldMode, state.getMode());
+    }
     if (oldModificationState != state.isModificationState()) {
       this.propertyChangeSupport.firePropertyChange(Property.MODIFICATION_STATE.name(),
           oldModificationState, !oldModificationState);
@@ -425,6 +434,16 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public void pressMouse(float x, float y, int clickCount, boolean shiftDown,
                          boolean alignmentActivated, boolean duplicationActivated, boolean magnetismToggled) {
+    pressMouse(x, y, clickCount, shiftDown, alignmentActivated, duplicationActivated, magnetismToggled, null);
+  }
+
+  /**
+   * Processes a mouse button pressed event.
+   * @since 6.4
+   */
+  public void pressMouse(float x, float y, int clickCount, boolean shiftDown,
+                         boolean alignmentActivated, boolean duplicationActivated, boolean magnetismToggled,
+                         View.PointerType pointerType) {
     // Store the last coordinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
@@ -433,6 +452,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.shiftDownLastMousePress = shiftDown;
     this.alignmentActivatedLastMousePress = alignmentActivated;
     this.duplicationActivatedLastMousePress = duplicationActivated;
+    this.pointerTypeLastMousePress = pointerType;
     this.magnetismToggledLastMousePress = magnetismToggled;
     this.state.pressMouse(x, y, clickCount, shiftDown, duplicationActivated);
   }
@@ -792,6 +812,14 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected boolean wasDuplicationActivatedLastMousePress() {
     return this.duplicationActivatedLastMousePress;
+  }
+
+  /**
+   * Returns the pointer type used at the last mouse press.
+   * @since 6.4
+   */
+  protected View.PointerType getPointerTypeLastMousePress() {
+    return this.pointerTypeLastMousePress;
   }
 
   /**
@@ -3691,6 +3719,17 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the tolerance margin to handle an indicator.
+   */
+  private float getIndicatorMargin() {
+    float indicatorPixelMagin = INDICATOR_PIXEL_MARGIN;
+    if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+      indicatorPixelMagin *= 3;
+    }
+    return indicatorPixelMagin / getScale();
+  }
+
+  /**
    * Returns the selected wall with a start point
    * at (<code>x</code>, <code>y</code>).
    */
@@ -3700,7 +3739,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.containsWallStartAt(x, y, margin)) {
         return wall;
@@ -3718,7 +3757,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.containsWallEndAt(x, y, margin)) {
         return wall;
@@ -3736,7 +3775,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.isMiddlePointAt(x, y, margin)) {
         return wall;
@@ -3764,7 +3803,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemResizable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getPointIndexAt(x, y, margin) != -1) {
         return room;
@@ -3782,7 +3821,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getName() != null
           && room.getName().trim().length() > 0
@@ -3803,7 +3842,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getName() != null
           && room.getName().trim().length() > 0
@@ -3825,7 +3864,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.isAreaVisible()
           && room.isAreaCenterPointAt(x, y, margin)) {
@@ -3845,7 +3884,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.isAreaVisible()) {
         float area = room.getArea();
@@ -3918,7 +3957,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public boolean isRoomPointDeletableAt(Room room, float x, float y) {
     return isItemResizable(room)
-        && room.getPointIndexAt(x, y, INDICATOR_PIXEL_MARGIN / getScale()) >= 0;
+        && room.getPointIndexAt(x, y, getIndicatorMargin()) >= 0;
   }
 
   /**
@@ -3931,7 +3970,7 @@ public class PlanController extends FurnitureController implements Controller {
         && oldSelectedItems.get(0) instanceof Room
         && isItemResizable(oldSelectedItems.get(0))) {
       final Room room = (Room)oldSelectedItems.get(0);
-      final int index = room.getPointIndexAt(x, y, INDICATOR_PIXEL_MARGIN / getScale());
+      final int index = room.getPointIndexAt(x, y, getIndicatorMargin());
       if (index >= 0) {
         float [][] points = room.getPoints();
         float [] point = points [index];
@@ -3989,7 +4028,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.containsStartExtensionLinetAt(x, y, margin)) {
         return dimensionLine;
@@ -4008,7 +4047,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.containsEndExtensionLineAt(x, y, margin)) {
         return dimensionLine;
@@ -4027,7 +4066,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.isMiddlePointAt(x, y, margin)) {
         return dimensionLine;
@@ -4059,7 +4098,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Polyline
         && isItemResizable(selectedItems.get(0))) {
       Polyline polyline = (Polyline)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (polyline.isAtLevel(this.home.getSelectedLevel())
           && polyline.getPointIndexAt(x, y, margin) != -1) {
         return polyline;
@@ -4382,7 +4421,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isTopLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4399,7 +4438,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isTopRightPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4417,7 +4456,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (!selectedPiece.isHorizontallyRotated()
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
@@ -4437,7 +4476,7 @@ public class PlanController extends FurnitureController implements Controller {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null
         && this.getView().isFurnitureSizeInPlanSupported()) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.getPitch() != 0
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
@@ -4457,7 +4496,7 @@ public class PlanController extends FurnitureController implements Controller {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null
         && this.getView().isFurnitureSizeInPlanSupported()) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.getRoll() != 0
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
@@ -4476,7 +4515,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isBottomRightPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4533,7 +4572,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomeLight getModifiedLightPowerAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedPieceOfFurniture();
     if (selectedPiece instanceof HomeLight) {
-      float margin = INDICATOR_PIXEL_MARGIN * (1 / getScale());
+      float margin = getIndicatorMargin();
       if (selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4550,7 +4589,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getPieceOfFurnitureNameAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isNameVisible()
           && selectedPiece.getName().trim().length() > 0
           && selectedPiece.isNameCenterPointAt(x, y, margin)) {
@@ -4567,7 +4606,7 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getPieceOfFurnitureRotatedNameAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isNameVisible()
           && selectedPiece.getName().trim().length() > 0
           && isTextAnglePointAt(selectedPiece, selectedPiece.getName(), selectedPiece.getNameStyle(),
@@ -4614,7 +4653,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Label
         && isItemMovable(selectedItems.get(0))) {
       Label label = (Label)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (label.isAtLevel(this.home.getSelectedLevel())
           && isTextAnglePointAt(label, label.getText(), label.getStyle(),
                 label.getX(), label.getY(), label.getAngle(), x, y, margin)) {
@@ -4634,7 +4673,7 @@ public class PlanController extends FurnitureController implements Controller {
       Label label = (Label)selectedItems.get(0);
       if (label.getPitch() != null
           && isItemMovable(label)) {
-        float margin = INDICATOR_PIXEL_MARGIN / getScale();
+        float margin = getIndicatorMargin();
         if (label.isAtLevel(this.home.getSelectedLevel())) {
           TextStyle style = label.getStyle();
           if (style == null) {
@@ -4674,7 +4713,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the last points
       // of the rectangle surrounding camera
@@ -4700,7 +4739,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the second and the third points
       // of the rectangle surrounding camera
@@ -4726,7 +4765,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the second points
       // of the rectangle surrounding camera
@@ -4752,7 +4791,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Compass
         && isItemMovable(selectedItems.get(0))) {
       Compass compass = (Compass)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] compassPoints = compass.getPoints();
       // Check if (x,y) matches the point between the third and the fourth points (South point)
       // of the rectangle surrounding compass
@@ -4778,7 +4817,7 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof Compass
         && isItemMovable(selectedItems.get(0))) {
       Compass compass = (Compass)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] compassPoints = compass.getPoints();
       // Check if (x,y) matches the point between the second and the third points (East point)
       // of the rectangle surrounding compass
@@ -7575,6 +7614,110 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
 
+  /**
+   * A decorator on controller state, useful to change the behavior of an existing state.
+   * @since 6.4
+   */
+  protected static abstract class ControllerStateDecorator extends ControllerState {
+    private final ControllerState state;
+
+    public ControllerStateDecorator(ControllerState state) {
+      this.state = state;
+    }
+
+    @Override
+    public void enter() {
+      this.state.enter();
+    }
+
+    @Override
+    public void exit() {
+      this.state.exit();
+    }
+
+    @Override
+    public Mode getMode() {
+      return this.state.getMode();
+    }
+
+    @Override
+    public void setMode(Mode mode) {
+      this.state.setMode(mode);
+    }
+
+    @Override
+    public boolean isModificationState() {
+      return this.state.isModificationState();
+    }
+
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.state.isBasePlanModificationState();
+    }
+
+    @Override
+    public void deleteSelection() {
+      this.state.deleteSelection();
+    }
+
+    @Override
+    public void escape() {
+      this.state.escape();
+    }
+
+    @Override
+    public void moveSelection(float dx, float dy) {
+      this.state.moveSelection(dx, dy);
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      this.state.toggleMagnetism(magnetismToggled);
+    }
+
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.state.setAlignmentActivated(alignmentActivated);
+    }
+
+    @Override
+    public void setDuplicationActivated(boolean duplicationActivated) {
+      this.state.setDuplicationActivated(duplicationActivated);
+    }
+
+    @Override
+    public void setEditionActivated(boolean editionActivated) {
+      this.state.setEditionActivated(editionActivated);
+    }
+
+    @Override
+    public void updateEditableProperty(EditableProperty editableField,
+                                       Object value) {
+      this.state.updateEditableProperty(editableField, value);
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount,
+                           boolean shiftDown, boolean duplicationActivated) {
+      this.state.pressMouse(x, y, clickCount, shiftDown, duplicationActivated);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      this.state.releaseMouse(x, y);
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      this.state.moveMouse(x, y);
+    }
+
+    @Override
+    public void zoom(float factor) {
+      this.state.zoom(factor);
+    }
+  }
+
   // ControllerState subclasses
 
   /**
@@ -7706,6 +7849,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 1) {
+        if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+          moveMouse(x, y); // Update cursor
+        }
         if (getRotatedLabelAt(x, y) != null) {
           setState(getLabelRotationState());
         } else if (getYawRotatedCameraAt(x, y) != null) {
@@ -7761,9 +7907,10 @@ public class PlanController extends FurnitureController implements Controller {
         } else if (getResizedCompassAt(x, y) != null) {
           setState(getCompassResizeState());
         } else {
-          Selectable item = getSelectableItemAt(x, y);
           // If shift isn't pressed, and an item is under cursor position
-          if (!shiftDown && item != null) {
+          if (!shiftDown
+              && (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+                  || getSelectableItemAt(x, y) != null)) {
             // Change state to SelectionMoveState
             setState(getSelectionMoveState());
           } else {
@@ -7815,6 +7962,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                yLastMouseMove;
     private boolean              mouseMoved;
     private List<Selectable>     oldSelection;
+    private boolean              selectionUpdateNeeded;
     private List<Selectable>     movedItems;
     private List<Selectable>     duplicatedItems;
     private HomePieceOfFurniture movedPieceOfFurniture;
@@ -7862,10 +8010,13 @@ public class PlanController extends FurnitureController implements Controller {
       }
       this.oldSelection = home.getSelectedItems();
       toggleMagnetism(wasMagnetismToggledLastMousePress());
-      // If no selectable item under the cursor belongs to selection
-      if (Collections.disjoint(selectableItemsAndGroupsFurnitureUnderCursor, this.oldSelection)) {
+      this.selectionUpdateNeeded = Collections.disjoint(selectableItemsAndGroupsFurnitureUnderCursor, this.oldSelection);
+      if (this.selectionUpdateNeeded
+          && getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
         // Select only the item with highest priority under cursor position
         selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress(), false));
+        // In touch environment, wait either for mouse move to switch to panning state
+        // or mouse release to update the selection
       }
       List<Selectable> selectedItems = home.getSelectedItems();
       this.movedItems = new ArrayList<Selectable>(selectedItems.size());
@@ -7893,55 +8044,83 @@ public class PlanController extends FurnitureController implements Controller {
       this.duplicatedItems = null;
       this.duplicationActivated = wasDuplicationActivatedLastMousePress() && !home.isAllLevelsSelection();
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
-      getView().setCursor(PlanView.CursorType.MOVE);
+      if (!(getPointerTypeLastMousePress() == View.PointerType.TOUCH
+            && this.selectionUpdateNeeded)) {
+        getView().setCursor(PlanView.CursorType.MOVE);
+      }
     }
 
     @Override
     public void moveMouse(float x, float y) {
-      if (!this.mouseMoved) {
-        toggleDuplication(this.duplicationActivated);
-      }
-      if (this.alignmentActivated) {
-        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(getXLastMousePress(), getYLastMousePress(),
-            x, y, preferences.getLengthUnit(), getView().getPixelLength(), 4);
-        x = alignedPoint.getX();
-        y = alignedPoint.getY();
-      }
-      if (this.movedPieceOfFurniture != null) {
-        // Reset to default piece values and adjust piece of furniture location, angle and depth
-        this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
-        this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
-        this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-        if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow
-            && this.movedPieceOfFurniture.isResizable()
-            && isItemResizable(this.movedPieceOfFurniture)) {
-          this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
-        }
-        this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
-        this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
-        if (this.magnetismEnabled && !this.alignmentActivated) {
-          boolean elevationAdjusted = adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) != null;
-          Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y, false);
-          if (!elevationAdjusted) {
-            adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall);
-          }
-          if (magnetWall != null) {
-            getView().setDimensionLinesFeedback(getDimensionLinesAlongWall(this.movedPieceOfFurniture, magnetWall));
-          } else {
-            getView().setDimensionLinesFeedback(null);
-          }
-        }
-      } else {
-        moveItems(this.movedItems, x - this.xLastMouseMove, y - this.yLastMouseMove);
-      }
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+          && this.selectionUpdateNeeded) {
+        // When the user touched an unselected item
+        // go to panning state for one shot, returning to selection state once panning is done
+        setState(new ControllerStateDecorator(getPanningState()) {
+            @Override
+            public void enter() {
+              super.enter();
+              pressMouse(getXLastMousePress(), getYLastMousePress(), 1, wasShiftDownLastMousePress(), wasDuplicationActivatedLastMousePress());
+              moveMouse(getXLastMouseMove(), getYLastMouseMove());
+            }
 
-      if (!this.mouseMoved) {
-        selectItems(this.movedItems, home.isAllLevelsSelection());
+            @Override
+            public void releaseMouse(float x, float y) {
+              escape();
+            }
+
+            @Override
+            public void escape() {
+              super.escape();
+              setState(getSelectionState());
+            }
+          });
+      } else {
+        if (!this.mouseMoved) {
+          toggleDuplication(this.duplicationActivated);
+        }
+        if (this.alignmentActivated) {
+          PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(getXLastMousePress(), getYLastMousePress(),
+              x, y, preferences.getLengthUnit(), getView().getPixelLength(), 4);
+          x = alignedPoint.getX();
+          y = alignedPoint.getY();
+        }
+        if (this.movedPieceOfFurniture != null) {
+          // Reset to default piece values and adjust piece of furniture location, angle and depth
+          this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
+          if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow
+              && this.movedPieceOfFurniture.isResizable()
+              && isItemResizable(this.movedPieceOfFurniture)) {
+            this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+          }
+          this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
+          if (this.magnetismEnabled && !this.alignmentActivated) {
+            boolean elevationAdjusted = adjustPieceOfFurnitureElevation(this.movedPieceOfFurniture) != null;
+            Wall magnetWall = adjustPieceOfFurnitureOnWallAt(this.movedPieceOfFurniture, x, y, false);
+            if (!elevationAdjusted) {
+              adjustPieceOfFurnitureSideBySideAt(this.movedPieceOfFurniture, false, magnetWall);
+            }
+            if (magnetWall != null) {
+              getView().setDimensionLinesFeedback(getDimensionLinesAlongWall(this.movedPieceOfFurniture, magnetWall));
+            } else {
+              getView().setDimensionLinesFeedback(null);
+            }
+          }
+        } else {
+          moveItems(this.movedItems, x - this.xLastMouseMove, y - this.yLastMouseMove);
+        }
+
+        if (!this.mouseMoved) {
+          selectItems(this.movedItems, home.isAllLevelsSelection());
+        }
+        getView().makePointVisible(x, y);
+        this.xLastMouseMove = x;
+        this.yLastMouseMove = y;
+        this.mouseMoved = true;
       }
-      getView().makePointVisible(x, y);
-      this.xLastMouseMove = x;
-      this.yLastMouseMove = y;
-      this.mouseMoved = true;
     }
 
     @Override
@@ -7968,12 +8147,15 @@ public class PlanController extends FurnitureController implements Controller {
         }
       } else {
         // If mouse didn't move, select only the item at (x,y)
-        boolean selectionChanged = Collections.disjoint(home.getSelectedItems(), this.oldSelection);
-        if (!selectionChanged) {
+        if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+            || !Collections.disjoint(home.getSelectedItems(), this.oldSelection)) {
           Selectable itemUnderCursor = getSelectableItemAt(x, y, false);
           if (itemUnderCursor != null) {
             // Select only the item under cursor position
             selectItem(itemUnderCursor);
+          } else {
+            // May happen only in touch environment
+            deselectAll();
           }
         }
       }
@@ -8040,12 +8222,21 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void setAlignmentActivated(boolean alignmentActivated) {
-      this.alignmentActivated = alignmentActivated;
-      if (this.mouseMoved) {
-        moveMouse(getXLastMouseMove(), getYLastMouseMove());
-      }
-      if (this.alignmentActivated) {
-        getView().deleteFeedback();
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+          && this.selectionUpdateNeeded
+          && !this.duplicationActivated) {
+        // When the user touched an unselected item and simulated a shift press
+        // go back to selection state, simulating a click with shift key pressed
+        setState(getSelectionState());
+        PlanController.this.pressMouse(getXLastMousePress(), getYLastMousePress(), 1, true, false, false, false, getPointerTypeLastMousePress());
+      } else {
+        this.alignmentActivated = alignmentActivated;
+        if (this.mouseMoved) {
+          moveMouse(getXLastMouseMove(), getYLastMouseMove());
+        }
+        if (this.alignmentActivated) {
+          getView().deleteFeedback();
+        }
       }
     }
 
@@ -9012,8 +9203,12 @@ public class PlanController extends FurnitureController implements Controller {
         postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         selectItems(this.newWalls);
       }
-      // Change state to WallCreationState
-      setState(getWallCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to WallCreationState
+        setState(getWallCreationState());
+      }
     }
 
     private void endWallCreation() {
@@ -10926,6 +11121,9 @@ public class PlanController extends FurnitureController implements Controller {
               dimensionLine.getXStart(), dimensionLine.getYStart(),
               dimensionLine.getXEnd(), dimensionLine.getYEnd(),
               dimensionLine.getOffset());
+          if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+            validateDrawnDimensionLine();
+          }
         } else {
           setState(getDimensionLineCreationState());
           return;
@@ -10934,7 +11132,8 @@ public class PlanController extends FurnitureController implements Controller {
       // Create a new dimension line only when it will have a length > 0
       // meaning after the first mouse move
       if (this.newDimensionLine != null) {
-        if (this.offsetChoice) {
+        if (this.offsetChoice
+            || getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
           validateDrawnDimensionLine();
         } else {
           // Switch to offset choice
@@ -10952,8 +11151,12 @@ public class PlanController extends FurnitureController implements Controller {
       postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}),
           this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
       this.newDimensionLine = null;
-      // Change state to DimensionLineCreationState
-      setState(getDimensionLineCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to DimensionLineCreationState
+        setState(getDimensionLineCreationState());
+      }
     }
 
     @Override
@@ -11088,8 +11291,12 @@ public class PlanController extends FurnitureController implements Controller {
         // Delete current created dimension line
         home.deleteDimensionLine(this.newDimensionLine);
       }
-      // Change state to DimensionLineCreationState
-      setState(getDimensionLineCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to DimensionLineCreationState
+        setState(getDimensionLineCreationState());
+      }
     }
 
     @Override
@@ -11812,8 +12019,12 @@ public class PlanController extends FurnitureController implements Controller {
               this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         }
       }
-      // Change state to RoomCreationState
-      setState(getRoomCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to RoomCreationState
+        setState(getRoomCreationState());
+      }
     }
 
     private void endRoomSide() {
@@ -12218,7 +12429,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       super.enter();
       this.selectedRoom = (Room)home.getSelectedItems().get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       this.roomPointIndex = this.selectedRoom.getPointIndexAt(
           getXLastMousePress(), getYLastMousePress(), margin);
       float [][] roomPoints = this.selectedRoom.getPoints();
@@ -12912,7 +13123,11 @@ public class PlanController extends FurnitureController implements Controller {
           }
           validateDrawnPolyline();
         } else {
-          setState(getPolylineCreationState());
+          if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+            setState(getSelectionState());
+          } else {
+            setState(getPolylineCreationState());
+          }
         }
       } else {
         endPolylineSegment();
@@ -12931,8 +13146,12 @@ public class PlanController extends FurnitureController implements Controller {
               this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         }
       }
-      // Change state to PolylineCreationState
-      setState(getPolylineCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to PolylineCreationState
+        setState(getPolylineCreationState());
+      }
     }
 
     private void endPolylineSegment() {
@@ -13160,7 +13379,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.selectedPolyline = (Polyline)home.getSelectedItems().get(0);
       this.polylines = new ArrayList<Polyline>(home.getPolylines());
       this.polylines.remove(this.selectedPolyline);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       this.polylinePointIndex = this.selectedPolyline.getPointIndexAt(
           getXLastMousePress(), getYLastMousePress(), margin);
       float [][] polylinePoints = this.selectedPolyline.getPoints();
@@ -13265,6 +13484,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
       createLabel(x, y);
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      }
     }
   }
 
