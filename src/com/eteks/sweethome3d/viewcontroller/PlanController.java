@@ -2520,7 +2520,7 @@ public class PlanController extends FurnitureController implements Controller {
           : Point2D.distance(wallPoints [2][0], wallPoints [2][1], x, y);
       boolean adjustOrientation = forceOrientation
           || piece.isDoorOrWindow()
-          || referenceWall.containsPoint(x, y, includeBaseboards, PIXEL_MARGIN / getScale());
+          || referenceWall.containsPoint(x, y, includeBaseboards, margin);
       if (adjustOrientation) {
         double distanceToPieceLeftSide = Line2D.ptLineDist(
             piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
@@ -3202,7 +3202,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private DimensionLine getMeasuringDimensionLineAt(float x, float y,
                                                     boolean magnetismEnabled) {
-    float margin = PIXEL_MARGIN / getScale();
+    float margin = getSelectionMargin();
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)) {
         DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(piece.getPoints(), x, y, margin, magnetismEnabled);
@@ -4108,10 +4108,21 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the tolerance margin to select an item.
+   */
+  private float getSelectionMargin() {
+    float indicatorPixelMagin = PIXEL_MARGIN;
+    if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+      indicatorPixelMagin *= 2;
+    }
+    return indicatorPixelMagin / getScale();
+  }
+
+  /**
    * Returns the selected item at (<code>x</code>, <code>y</code>) point.
    */
   private boolean isItemSelectedAt(float x, float y) {
-    float margin = PIXEL_MARGIN / getScale();
+    float margin = getSelectionMargin();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item.containsPoint(x, y, margin)) {
         return true;
@@ -4153,8 +4164,8 @@ public class PlanController extends FurnitureController implements Controller {
                                                 boolean stopAtFirstItem,
                                                 boolean ignoreGroupsFurniture) {
     List<Selectable> items = new ArrayList<Selectable>();
-    float margin = PIXEL_MARGIN / getScale();
-    float textMargin = PIXEL_MARGIN / 2 / getScale();
+    float margin = getSelectionMargin();
+    float textMargin = margin / 2;
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null
         && camera == this.home.getCamera()
@@ -7498,7 +7509,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     public PointMagnetizedToClosestWallOrRoomPoint(Room editedRoom, int editedPointIndex, float x, float y) {
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = getSelectionMargin();
       // Find the closest wall point to (x,y)
       double smallestDistance = Double.MAX_VALUE;
       for (GeneralPath roomPath : getRoomPathsFromWalls()) {
@@ -7999,10 +8010,11 @@ public class PlanController extends FurnitureController implements Controller {
       this.mouseMoved = false;
       List<Selectable> selectableItemsUnderCursor = getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
       List<Selectable> selectableItemsAndGroupsFurnitureUnderCursor = new ArrayList<Selectable>(selectableItemsUnderCursor);
+      float selectionMargin = getSelectionMargin();
       for (Selectable item : selectableItemsUnderCursor) {
         if (item instanceof HomeFurnitureGroup) {
           for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getAllFurniture()) {
-            if (piece.containsPoint(getXLastMousePress(), getYLastMousePress(), PIXEL_MARGIN / getScale())) {
+            if (piece.containsPoint(getXLastMousePress(), getYLastMousePress(), selectionMargin)) {
               selectableItemsAndGroupsFurnitureUnderCursor.add(piece);
             }
           }
@@ -11132,8 +11144,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Create a new dimension line only when it will have a length > 0
       // meaning after the first mouse move
       if (this.newDimensionLine != null) {
-        if (this.offsetChoice
-            || getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        if (this.offsetChoice) {
           validateDrawnDimensionLine();
         } else {
           // Switch to offset choice
@@ -11142,6 +11153,14 @@ public class PlanController extends FurnitureController implements Controller {
           planView.setCursor(PlanView.CursorType.HEIGHT);
           planView.deleteFeedback();
         }
+      }
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+          && this.newDimensionLine != null) {
+        validateDrawnDimensionLine();
       }
     }
 
@@ -13116,7 +13135,7 @@ public class PlanController extends FurnitureController implements Controller {
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 2) {
         if (this.newPolyline != null) {
-          int pointIndex = this.newPolyline.getPointIndexAt(x, y, PIXEL_MARGIN / getScale());
+          int pointIndex = this.newPolyline.getPointIndexAt(x, y, getSelectionMargin());
           if (pointIndex == 0) {
             this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
             this.newPolyline.setClosedPath(true);
