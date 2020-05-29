@@ -5234,32 +5234,34 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintAngleFeedback(Graphics2D g2D, Point2D center,
                                   Point2D point1, Point2D point2,
                                   float planScale, Color selectionColor) {
-    g2D.setColor(selectionColor);
-    g2D.setStroke(new BasicStroke(1 / planScale));
-    // Compute angles
-    double angle1 = Math.atan2(center.getY() - point1.getY(), point1.getX() - center.getX());
-    if (angle1 < 0) {
-      angle1 = 2 * Math.PI + angle1;
+    if (!point1.equals(center) && !point2.equals(center)) {
+      g2D.setColor(selectionColor);
+      g2D.setStroke(new BasicStroke(1 / planScale));
+      // Compute angles
+      double angle1 = Math.atan2(center.getY() - point1.getY(), point1.getX() - center.getX());
+      if (angle1 < 0) {
+        angle1 = 2 * Math.PI + angle1;
+      }
+      double angle2 = Math.atan2(center.getY() - point2.getY(), point2.getX() - center.getX());
+      if (angle2 < 0) {
+        angle2 = 2 * Math.PI + angle2;
+      }
+      double extent = angle2 - angle1;
+      if (angle1 > angle2) {
+        extent = 2 * Math.PI + extent;
+      }
+      AffineTransform previousTransform = g2D.getTransform();
+      // Draw an arc
+      g2D.translate(center.getX(), center.getY());
+      float radius = 20 / planScale;
+      g2D.draw(new Arc2D.Double(-radius, -radius,
+          radius * 2, radius * 2, Math.toDegrees(angle1), Math.toDegrees(extent), Arc2D.OPEN));
+      // Draw two radius
+      radius += 5 / planScale;
+      g2D.draw(new Line2D.Double(0, 0, radius * Math.cos(angle1), -radius * Math.sin(angle1)));
+      g2D.draw(new Line2D.Double(0, 0, radius * Math.cos(angle1 + extent), -radius * Math.sin(angle1 + extent)));
+      g2D.setTransform(previousTransform);
     }
-    double angle2 = Math.atan2(center.getY() - point2.getY(), point2.getX() - center.getX());
-    if (angle2 < 0) {
-      angle2 = 2 * Math.PI + angle2;
-    }
-    double extent = angle2 - angle1;
-    if (angle1 > angle2) {
-      extent = 2 * Math.PI + extent;
-    }
-    AffineTransform previousTransform = g2D.getTransform();
-    // Draw an arc
-    g2D.translate(center.getX(), center.getY());
-    float radius = 20 / planScale;
-    g2D.draw(new Arc2D.Double(-radius, -radius,
-        radius * 2, radius * 2, Math.toDegrees(angle1), Math.toDegrees(extent), Arc2D.OPEN));
-    // Draw two radius
-    radius += 5 / planScale;
-    g2D.draw(new Line2D.Double(0, 0, radius * Math.cos(angle1), -radius * Math.sin(angle1)));
-    g2D.draw(new Line2D.Double(0, 0, radius * Math.cos(angle1 + extent), -radius * Math.sin(angle1 + extent)));
-    g2D.setTransform(previousTransform);
   }
 
   /**
