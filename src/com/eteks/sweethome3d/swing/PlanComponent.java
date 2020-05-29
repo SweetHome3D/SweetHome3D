@@ -762,10 +762,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                          || HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
                          || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
-                         || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName()))) {
-            if (doorOrWindowWallThicknessAreasCache.remove(ev.getSource()) != null) {
-              revalidate();
-            }
+                         || HomePieceOfFurniture.Property.LEVEL.name().equals(ev.getPropertyName()))
+                     && doorOrWindowWallThicknessAreasCache.remove(ev.getSource()) != null) {
+            revalidate();
           } else {
             revalidate();
           }
