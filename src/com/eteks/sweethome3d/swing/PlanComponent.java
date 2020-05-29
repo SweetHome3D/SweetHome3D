@@ -4972,19 +4972,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                   Paint pointPaint, Stroke pointStroke) {
     g2D.setPaint(pointPaint);
     g2D.setStroke(pointStroke);
-    Ellipse2D.Float circle = new Ellipse2D.Float((float)locationFeedback.getX() - 10f / planScale,
-        (float)locationFeedback.getY() - 10f / planScale, 20f / planScale, 20f / planScale);
+    float radius = 10;
+    Ellipse2D.Float circle = new Ellipse2D.Float((float)locationFeedback.getX() - radius / planScale,
+        (float)locationFeedback.getY() - radius / planScale, 2 * radius / planScale, 2 * radius / planScale);
     g2D.fill(circle);
     g2D.setPaint(feedbackPaint);
     g2D.setStroke(new BasicStroke(1 / planScale));
     g2D.draw(circle);
     g2D.draw(new Line2D.Float((float)locationFeedback.getX(),
-        (float)locationFeedback.getY() - 5f / planScale,
+        (float)locationFeedback.getY() - radius / planScale,
         (float)locationFeedback.getX(),
-        (float)locationFeedback.getY() + 5f / planScale));
-    g2D.draw(new Line2D.Float((float)locationFeedback.getX() - 5f / planScale,
+        (float)locationFeedback.getY() + radius / planScale));
+    g2D.draw(new Line2D.Float((float)locationFeedback.getX() - radius / planScale,
         (float)locationFeedback.getY(),
-        (float)locationFeedback.getX() + 5f / planScale,
+        (float)locationFeedback.getX() + radius / planScale,
         (float)locationFeedback.getY()));
   }
 
