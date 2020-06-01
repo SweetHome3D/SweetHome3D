@@ -1203,60 +1203,60 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void addMouseListeners(final PlanController controller) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
-      private Point lastMousePressedLocation;
+        private Point lastMousePressedLocation;
 
-      @Override
-      public void mousePressed(MouseEvent ev) {
-        this.lastMousePressedLocation = ev.getPoint();
-        if (isEnabled() && !ev.isPopupTrigger()) {
-          requestFocusInWindow();
-          if (SwingUtilities.isLeftMouseButton(ev)) {
-            boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
-                ? ev.isShiftDown()
-                : ev.isShiftDown() && !ev.isAltDown();
-            boolean duplicationActivated = OperatingSystem.isMacOSX()
-                ? ev.isAltDown()
-                : ev.isControlDown();
-            boolean magnetismToggled = OperatingSystem.isWindows()
-                ? ev.isAltDown()
-                : (OperatingSystem.isMacOSX()
-                       ? ev.isMetaDown()
-                       : ev.isShiftDown() && ev.isAltDown());
-            controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()),
-                ev.getClickCount(), ev.isShiftDown() && !ev.isControlDown() && !ev.isAltDown() && !ev.isMetaDown(),
-                alignmentActivated, duplicationActivated, magnetismToggled);
+        @Override
+        public void mousePressed(MouseEvent ev) {
+          this.lastMousePressedLocation = ev.getPoint();
+          if (isEnabled() && !ev.isPopupTrigger()) {
+            requestFocusInWindow();
+            if (SwingUtilities.isLeftMouseButton(ev)) {
+              boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX()
+                  ? ev.isShiftDown()
+                  : ev.isShiftDown() && !ev.isAltDown();
+              boolean duplicationActivated = OperatingSystem.isMacOSX()
+                  ? ev.isAltDown()
+                  : ev.isControlDown();
+              boolean magnetismToggled = OperatingSystem.isWindows()
+                  ? ev.isAltDown()
+                  : (OperatingSystem.isMacOSX()
+                         ? ev.isMetaDown()
+                         : ev.isShiftDown() && ev.isAltDown());
+              controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()),
+                  ev.getClickCount(), ev.isShiftDown() && !ev.isControlDown() && !ev.isAltDown() && !ev.isMetaDown(),
+                  alignmentActivated, duplicationActivated, magnetismToggled);
+            }
           }
         }
-      }
 
-      @Override
-      public void mouseReleased(MouseEvent ev) {
-        if (isEnabled() && !ev.isPopupTrigger() && SwingUtilities.isLeftMouseButton(ev)) {
-          controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+        @Override
+        public void mouseMoved(MouseEvent ev) {
+          // Ignore mouseMoved events that follows a mousePressed at the same location (Linux notifies this kind of events)
+          if (this.lastMousePressedLocation != null
+              && !this.lastMousePressedLocation.equals(ev.getPoint())) {
+            this.lastMousePressedLocation = null;
+          }
+          if (this.lastMousePressedLocation == null) {
+            if (isEnabled()) {
+              controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+            }
+          }
         }
-      }
 
-      @Override
-      public void mouseMoved(MouseEvent ev) {
-        // Ignore mouseMoved events that follows a mousePressed at the same location (Linux notifies this kind of events)
-        if (this.lastMousePressedLocation != null
-            && !this.lastMousePressedLocation.equals(ev.getPoint())) {
-          this.lastMousePressedLocation = null;
-        }
-        if (this.lastMousePressedLocation == null) {
+        @Override
+        public void mouseDragged(MouseEvent ev) {
           if (isEnabled()) {
-            controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+            mouseMoved(ev);
           }
         }
-      }
 
-      @Override
-      public void mouseDragged(MouseEvent ev) {
-        if (isEnabled()) {
-          mouseMoved(ev);
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          if (isEnabled() && !ev.isPopupTrigger() && SwingUtilities.isLeftMouseButton(ev)) {
+            controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+          }
         }
-      }
-    };
+      };
     addMouseListener(mouseListener);
     addMouseMotionListener(mouseListener);
     addMouseWheelListener(new MouseWheelListener() {

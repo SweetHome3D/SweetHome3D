@@ -1469,18 +1469,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
 
         @Override
-        public void mouseReleased(MouseEvent ev) {
-          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
-            if (ev.isPopupTrigger()) {
-              JPopupMenu componentPopupMenu = getComponentPopupMenu();
-              if (componentPopupMenu != null) {
-                componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
-              }
-            }
-          }
-        }
-
-        @Override
         public void mouseClicked(MouseEvent ev) {
           retargetMouseEventToNavigationPanelChildren(ev);
         }
@@ -1519,6 +1507,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
               this.xLastMouseMove = ev.getX();
               this.yLastMouseMove = ev.getY();
+            }
+          }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+            if (ev.isPopupTrigger()) {
+              JPopupMenu componentPopupMenu = getComponentPopupMenu();
+              if (componentPopupMenu != null) {
+                componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
+              }
             }
           }
         }
@@ -1794,12 +1794,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     super.addMouseListener(l);
     if (this.component3D != null) {
       this.component3D.addMouseListener(new MouseListener() {
-          public void mouseReleased(MouseEvent ev) {
-            l.mouseReleased(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
-          }
-
           public void mousePressed(MouseEvent ev) {
             l.mousePressed(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+
+          public void mouseClicked(MouseEvent ev) {
+            l.mouseClicked(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
+          }
+
+          public void mouseReleased(MouseEvent ev) {
+            l.mouseReleased(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
 
           public void mouseExited(MouseEvent ev) {
@@ -1808,10 +1812,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
           public void mouseEntered(MouseEvent ev) {
             l.mouseEntered(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
-          }
-
-          public void mouseClicked(MouseEvent ev) {
-            l.mouseClicked(SwingUtilities.convertMouseEvent(component3D, ev, HomeComponent3D.this));
           }
         });
     }
