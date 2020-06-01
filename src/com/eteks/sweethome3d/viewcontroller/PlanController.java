@@ -8683,7 +8683,9 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
     }
 
     @Override
@@ -10959,7 +10961,9 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
     }
 
     @Override
@@ -11712,8 +11716,10 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
-      // Compute again feedback point as if mouse moved
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
+        // Compute again feedback point as if mouse moved
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
     }
 
     @Override
