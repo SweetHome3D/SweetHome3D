@@ -33,7 +33,7 @@
 -->
 <project basedir="." default="jarExecutable" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="6.3"/>
+  <property name="version" value="6.4"/>
 
   <target name="build"
           description="Builds build/SweetHome3D.jar with all its classes">
