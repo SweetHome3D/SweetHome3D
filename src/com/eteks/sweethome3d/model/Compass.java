@@ -36,17 +36,17 @@ import java.util.TimeZone;
 
 /**
  * A compass used to locate where a home is located and how it's oriented towards North.
- * @since 3.0 
+ * @since 3.0
  * @author Emmanuel Puybaret
  * @author Frédéric Mantegazza (Sun location algorithm)
  */
 public class Compass extends HomeObject implements Selectable {
   /**
-   * The properties of a compass that may change. <code>PropertyChangeListener</code>s added 
+   * The properties of a compass that may change. <code>PropertyChangeListener</code>s added
    * to a wall will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {X, Y, DIAMETER, VISIBLE, NORTH_DIRECTION, LATITUDE, LONGITUDE, TIME_ZONE}
-  
+
   private static final long serialVersionUID = 1L;
 
   private float               x;
@@ -57,7 +57,7 @@ public class Compass extends HomeObject implements Selectable {
   private float               latitude;
   private float               longitude;
   private TimeZone            timeZone;
-  
+
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
   private transient Calendar   dateCache;
@@ -69,21 +69,33 @@ public class Compass extends HomeObject implements Selectable {
 
   /**
    * Creates a compass drawn at the given point.
-   * North direction is set to zero, time zone to default 
+   * North direction is set to zero, time zone to default
    * and the latitudeInDegrees and the longitudeInDegrees of this new compass is equal
    * to the geographic point matching the default time zone.
    */
   public Compass(float x, float y, float diameter) {
+    this(createID("compass"), x, y, diameter);
+  }
+
+  /**
+   * Creates a compass drawn at the given point.
+   * North direction is set to zero, time zone to default
+   * and the latitudeInDegrees and the longitudeInDegrees of this new compass is equal
+   * to the geographic point matching the default time zone.
+   * @since 6.4
+   */
+  public Compass(String id, float x, float y, float diameter) {
+    super(id);
     this.x = x;
     this.y = y;
     this.diameter = diameter;
     this.visible = true;
     this.timeZone = TimeZone.getDefault();
     initGeographicPoint();
-  }  
+  }
 
   /**
-   * Initializes compass transient fields  
+   * Initializes compass transient fields
    * and reads compass from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -111,9 +123,9 @@ public class Compass extends HomeObject implements Selectable {
   public float getX() {
     return this.x;
   }
-  
+
   /**
-   * Sets the abscissa of the center of this compass. Once this compass is updated, 
+   * Sets the abscissa of the center of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    */
   public void setX(float x) {
@@ -124,16 +136,16 @@ public class Compass extends HomeObject implements Selectable {
       this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
-  
+
   /**
    * Returns the ordinate of the center of this compass.
    */
   public float getY() {
     return this.y;
   }
-  
+
   /**
-   * Sets the ordinate of the center of this compass. Once this compass is updated, 
+   * Sets the ordinate of the center of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    */
   public void setY(float y) {
@@ -151,9 +163,9 @@ public class Compass extends HomeObject implements Selectable {
   public float getDiameter() {
     return this.diameter;
   }
-  
+
   /**
-   * Sets the diameter of this compass. Once this compass is updated, 
+   * Sets the diameter of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    */
   public void setDiameter(float diameter) {
@@ -171,9 +183,9 @@ public class Compass extends HomeObject implements Selectable {
   public boolean isVisible() {
     return this.visible;
   }
-  
+
   /**
-   * Sets whether this compass is visible or not. Once this compass is updated, 
+   * Sets whether this compass is visible or not. Once this compass is updated,
    * listeners added to this piece will receive a change notification.
    */
   public void setVisible(boolean visible) {
@@ -189,9 +201,9 @@ public class Compass extends HomeObject implements Selectable {
   public float getNorthDirection() {
     return this.northDirection;
   }
-  
+
   /**
-   * Sets the North direction angle of this compass. Once this compass is updated, 
+   * Sets the North direction angle of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    */
   public void setNorthDirection(float northDirection) {
@@ -202,16 +214,16 @@ public class Compass extends HomeObject implements Selectable {
       this.propertyChangeSupport.firePropertyChange(Property.NORTH_DIRECTION.name(), oldNorthDirection, northDirection);
     }
   }
-  
+
   /**
    * Returns the latitudeInDegrees of this compass in radians.
    */
   public final float getLatitude() {
     return this.latitude;
   }
-  
+
   /**
-   * Sets the latitudeInDegrees of this compass. Once this compass is updated, 
+   * Sets the latitudeInDegrees of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    */
   public void setLatitude(float latitude) {
@@ -222,16 +234,16 @@ public class Compass extends HomeObject implements Selectable {
       this.propertyChangeSupport.firePropertyChange(Property.LATITUDE.name(), oldLatitude, latitude);
     }
   }
-  
+
   /**
    * Returns the longitudeInDegrees of this compass in radians.
    */
   public final float getLongitude() {
     return this.longitude;
   }
-  
+
   /**
-   * Sets the longitudeInDegrees of the center of this compass. Once this compass is updated, 
+   * Sets the longitudeInDegrees of the center of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    */
   public void setLongitude(float longitude) {
@@ -242,7 +254,7 @@ public class Compass extends HomeObject implements Selectable {
       this.propertyChangeSupport.firePropertyChange(Property.LONGITUDE.name(), oldLongitude, longitude);
     }
   }
-  
+
   /**
    * Returns the time zone identifier of this compass.
    * @see java.util.TimeZone
@@ -250,9 +262,9 @@ public class Compass extends HomeObject implements Selectable {
   public String getTimeZone() {
     return this.timeZone.getID();
   }
-  
+
   /**
-   * Sets the time zone identifier of this compass. Once this compass is updated, 
+   * Sets the time zone identifier of this compass. Once this compass is updated,
    * listeners added to this compass will receive a change notification.
    * @throws IllegalArgumentException if <code>timeZone</code> is <code>null</code> or contains an unknown identifier.
    * @see java.util.TimeZone
@@ -268,9 +280,9 @@ public class Compass extends HomeObject implements Selectable {
       this.propertyChangeSupport.firePropertyChange(Property.TIME_ZONE.name(), oldTimeZone, timeZone);
     }
   }
-  
+
   /**
-   * Returns the corner points of the square that contains compass disc.  
+   * Returns the corner points of the square that contains compass disc.
    */
   public float [][] getPoints() {
     if (this.pointsCache == null) {
@@ -288,7 +300,7 @@ public class Compass extends HomeObject implements Selectable {
         it.next();
       }
     }
-    return new float [][] {this.pointsCache [0].clone(), this.pointsCache [1].clone(), 
+    return new float [][] {this.pointsCache [0].clone(), this.pointsCache [1].clone(),
                            this.pointsCache [2].clone(), this.pointsCache [3].clone()};
   }
 
@@ -297,15 +309,15 @@ public class Compass extends HomeObject implements Selectable {
    * with the horizontal rectangle which opposite corners are at points
    * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
    */
-  public boolean intersectsRectangle(float x0, float y0, 
+  public boolean intersectsRectangle(float x0, float y0,
                                      float x1, float y1) {
     Rectangle2D rectangle = new Rectangle2D.Float(x0, y0, 0, 0);
     rectangle.add(x1, y1);
     return new Ellipse2D.Float(getX() - getDiameter() / 2, getY() - getDiameter() / 2, getDiameter(), getDiameter()).intersects(rectangle);
   }
-  
+
   /**
-   * Returns <code>true</code> if the disc of this compass contains 
+   * Returns <code>true</code> if the disc of this compass contains
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    */
@@ -337,20 +349,20 @@ public class Compass extends HomeObject implements Selectable {
   }
 
   /**
-   * Returns the elevation angle of the Sun in the sky in radians at a given 
+   * Returns the elevation angle of the Sun in the sky in radians at a given
    * <code>date</code> in milliseconds since the Epoch.
-   * See <a href="http://en.wikipedia.org/wiki/Horizontal_coordinate_system">Sun 
+   * See <a href="http://en.wikipedia.org/wiki/Horizontal_coordinate_system">Sun
    * azimuth and elevation angles</a> for more information.
    */
   public float getSunElevation(long date) {
     updateSunLocation(date);
     return this.sunElevationCache;
   }
-  
+
   /**
-   * Returns the azimuth angle of the Sun in the sky in radians at a given 
+   * Returns the azimuth angle of the Sun in the sky in radians at a given
    * <code>date</code> in milliseconds since the Epoch.
-   * See <a href="http://en.wikipedia.org/wiki/Horizontal_coordinate_system">Sun 
+   * See <a href="http://en.wikipedia.org/wiki/Horizontal_coordinate_system">Sun
    * azimuth and elevation angles</a> for more information.
    */
   public float getSunAzimuth(long date) {
@@ -366,7 +378,7 @@ public class Compass extends HomeObject implements Selectable {
         || this.dateCache.getTimeInMillis() != date) {
       this.dateCache = new GregorianCalendar(this.timeZone);
       this.dateCache.setTimeInMillis(date);
-  
+
       int year = this.dateCache.get(Calendar.YEAR);
       int month = this.dateCache.get(Calendar.MONTH) + 1; // Based on 1 for January
       int day = this.dateCache.get(Calendar.DAY_OF_MONTH);
@@ -375,13 +387,13 @@ public class Compass extends HomeObject implements Selectable {
       int second = this.dateCache.get(Calendar.SECOND);
       int timeZone = this.dateCache.getTimeZone().getRawOffset() / 3600000;
       int savingTime = this.dateCache.get(Calendar.DST_OFFSET) / 3600000;
-      
+
       double julianDay = computeJulianDay(year, month, day, hour, minute, second, timeZone, savingTime);
       double siderealTime = toSiderealTime(julianDay);
       double angleH = 360. * siderealTime / 23.9344;
       double angleT = (hour - (timeZone + savingTime) - 12. + minute / 60. + second / 3600.) * 360. / 23.9344;
       double angle = angleH + angleT;
-  
+
       // Compute equatorial coordinates
       double g = 357.529 + 0.98560028 * julianDay;
       double q = 280.459 + 0.98564736 * julianDay;
@@ -395,7 +407,7 @@ public class Compass extends HomeObject implements Selectable {
         rightAscension += 24.;
       }
       double declination = Math.asin(Math.sin(Math.toRadians(e)) * Math.sin(Math.toRadians(l)));
-  
+
       double hourAngle = Math.toRadians(angle - rightAscension * 15. + Math.toDegrees(this.longitude));
       double elevation = Math.asin(Math.sin(declination) * Math.sin(this.latitude) - Math.cos(declination) * Math.cos(this.latitude) * Math.cos(hourAngle));
       double azimuth = Math.acos((Math.sin(declination) - Math.sin(this.latitude) * Math.sin(elevation)) / (Math.cos(this.latitude) * Math.cos(elevation)));
@@ -403,12 +415,12 @@ public class Compass extends HomeObject implements Selectable {
       if (sinAzimuth < 0.) {
         azimuth = Math.PI * 2 - azimuth;
       }
-  
+
       this.sunElevationCache = (float)elevation;
       this.sunAzimuthCache = (float)azimuth;
     }
-  }  
-  
+  }
+
   private double computeJulianDay(int year, int month, int day, int hour, int minute, int second, int timeZone, int savingTime) {
     double dayPart = day + hour / 24. + minute / 1440. + second / 86400.;
     if (month == 1 || month == 2) {
@@ -429,7 +441,7 @@ public class Compass extends HomeObject implements Selectable {
     double siderealTime = (24110.54841 + (8640184.812866 * centuries) + (0.093104 * Math.pow(centuries, 2.)) - (0.0000062 * Math.pow(centuries, 3.))) / 3600.;
     return ((siderealTime / 24.) - (int)(siderealTime / 24.)) * 24.;
   }
-  
+
   /**
    * Inits the latitudeInDegrees and longitudeInDegrees where this compass is located from the id of the default time zone.
    */
@@ -466,7 +478,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("America/Anchorage", anchorage);
       timeZoneGeographicPoints.put("America/Juneau", new GeographicPoint(58.3019444f, -134.4197222f));
       timeZoneGeographicPoints.put("America/Nome", new GeographicPoint(64.5011111f, -165.4063889f));
-      timeZoneGeographicPoints.put("America/Yakutat", new GeographicPoint(59.5469444f, -139.7272222f)); 
+      timeZoneGeographicPoints.put("America/Yakutat", new GeographicPoint(59.5469444f, -139.7272222f));
       timeZoneGeographicPoints.put("Etc/GMT+9", anchorage); // Anchorage
       timeZoneGeographicPoints.put("Pacific/Gambier", new GeographicPoint(-23.1178f, -134.97f));
       timeZoneGeographicPoints.put("SystemV/YST9", anchorage); // Anchorage
@@ -483,7 +495,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("Canada/Pacific", new GeographicPoint(49.25f, -123.133333f)); // Vancouver
       timeZoneGeographicPoints.put("Canada/Yukon", new GeographicPoint(60.716667f, -135.05f)); // Whitehorse
       timeZoneGeographicPoints.put("Etc/GMT+8", losAngeles); // Los Angeles
-      timeZoneGeographicPoints.put("Mexico/BajaNorte", new GeographicPoint(32.533333f, -117.016667f)); // Tijuana 
+      timeZoneGeographicPoints.put("Mexico/BajaNorte", new GeographicPoint(32.533333f, -117.016667f)); // Tijuana
       timeZoneGeographicPoints.put("Pacific/Pitcairn", new GeographicPoint(-25.0667f, -130.1f)); // Adamstown
       timeZoneGeographicPoints.put("SystemV/PST8", losAngeles); // Los Angeles
       timeZoneGeographicPoints.put("SystemV/PST8PDT", losAngeles); // Los Angeles
@@ -504,7 +516,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("America/Shiprock", new GeographicPoint(36.7855556f, -108.6863889f));
       timeZoneGeographicPoints.put("America/Yellowknife", new GeographicPoint(62.45f, -114.35f));
       timeZoneGeographicPoints.put("Canada/Mountain", new GeographicPoint(53.55f, -113.5f)); // Edmonton
-      timeZoneGeographicPoints.put("Etc/GMT+7", denver); // Denver 
+      timeZoneGeographicPoints.put("Etc/GMT+7", denver); // Denver
       timeZoneGeographicPoints.put("Mexico/BajaSur", new GeographicPoint(32.567f, -116.633f)); // Tecate
       timeZoneGeographicPoints.put("SystemV/MST7", denver); // Denver
       timeZoneGeographicPoints.put("SystemV/MST7MDT", denver); // Denver
@@ -659,7 +671,7 @@ public class Compass extends HomeObject implements Selectable {
       GeographicPoint azores = new GeographicPoint(37.4833333f, -2.5666667f);
       timeZoneGeographicPoints.put("Atlantic/Azores", azores);
       timeZoneGeographicPoints.put("Atlantic/Cape_Verde", new GeographicPoint(14.9166667f, -23.5166667f)); // Praia
-      timeZoneGeographicPoints.put("Etc/GMT+1", azores); // Azores 
+      timeZoneGeographicPoints.put("Etc/GMT+1", azores); // Azores
       timeZoneGeographicPoints.put("Africa/Abidjan", new GeographicPoint(5.341111f, -4.028056f));
       timeZoneGeographicPoints.put("Africa/Accra", new GeographicPoint(5.55f, -0.2166667f));
       timeZoneGeographicPoints.put("Africa/Bamako", new GeographicPoint(12.65f, -8.0f));
@@ -718,7 +730,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("Arctic/Longyearbyen", new GeographicPoint(78.2166667f, 15.6333333f));
       timeZoneGeographicPoints.put("Atlantic/Jan_Mayen", new GeographicPoint(71f, -8.333f));
       GeographicPoint paris = new GeographicPoint(48.866667f, 2.333333f);
-      timeZoneGeographicPoints.put("Etc/GMT-1", paris); // Paris 
+      timeZoneGeographicPoints.put("Etc/GMT-1", paris); // Paris
       timeZoneGeographicPoints.put("Europe/Amsterdam", new GeographicPoint(52.35f, 4.9166667f));
       timeZoneGeographicPoints.put("Europe/Andorra", new GeographicPoint(42.5f, 1.5166667f));
       timeZoneGeographicPoints.put("Europe/Belgrade", new GeographicPoint(44.818611f, 20.468056f));
@@ -879,7 +891,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("Asia/Pontianak", new GeographicPoint(-0.0333333f, 109.3333333f));
       timeZoneGeographicPoints.put("Asia/Saigon", new GeographicPoint(10.75f, 106.6666667f));
       timeZoneGeographicPoints.put("Asia/Vientiane", new GeographicPoint(17.966667f, 102.6f));
-      timeZoneGeographicPoints.put("Etc/GMT-7", bangkok); // Bangkok 
+      timeZoneGeographicPoints.put("Etc/GMT-7", bangkok); // Bangkok
       timeZoneGeographicPoints.put("Indian/Christmas", new GeographicPoint(-10.4166667f, 105.7166667f)); // Flying Fish Cove
       timeZoneGeographicPoints.put("Asia/Brunei", new GeographicPoint(4.8833333f, 114.9333333f));
       timeZoneGeographicPoints.put("Asia/Choibalsan", new GeographicPoint(48.0666667f, 114.5f));
@@ -977,9 +989,9 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("Pacific/Enderbury", enderbury);
       timeZoneGeographicPoints.put("Pacific/Tongatapu", new GeographicPoint(-21.2114f, -175.153f));
       GeographicPoint kiritimati = new GeographicPoint(1.883f, -157.4f);
-      timeZoneGeographicPoints.put("Etc/GMT-14", kiritimati); // Kiritimati 
+      timeZoneGeographicPoints.put("Etc/GMT-14", kiritimati); // Kiritimati
       timeZoneGeographicPoints.put("Pacific/Kiritimati", kiritimati);
-      
+
       timeZoneGeographicPoints.put("MIT", apia); // Apia
       timeZoneGeographicPoints.put("HST", honolulu); // Honolulu
       timeZoneGeographicPoints.put("PST", losAngeles); // Los Angeles
@@ -988,13 +1000,13 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("MST7MDT", denver); // Denver
       timeZoneGeographicPoints.put("Navajo", new GeographicPoint(35.6728f, -109.0622f)); // Window Rock
       timeZoneGeographicPoints.put("PNT", new GeographicPoint(33.4483333f, -112.0733333f)); // Phoenix
-      timeZoneGeographicPoints.put("America/Indiana/Knox", new GeographicPoint(41.2958333f, -86.6250000f)); 
-      timeZoneGeographicPoints.put("America/Indiana/Tell_City", new GeographicPoint(37.953f, -86.7614f)); 
-      timeZoneGeographicPoints.put("America/North_Dakota/Center", new GeographicPoint(47.115f, -101.3003f)); 
-      timeZoneGeographicPoints.put("America/North_Dakota/New_Salem", new GeographicPoint(46.843f, 101.4119f)); 
+      timeZoneGeographicPoints.put("America/Indiana/Knox", new GeographicPoint(41.2958333f, -86.6250000f));
+      timeZoneGeographicPoints.put("America/Indiana/Tell_City", new GeographicPoint(37.953f, -86.7614f));
+      timeZoneGeographicPoints.put("America/North_Dakota/Center", new GeographicPoint(47.115f, -101.3003f));
+      timeZoneGeographicPoints.put("America/North_Dakota/New_Salem", new GeographicPoint(46.843f, 101.4119f));
       timeZoneGeographicPoints.put("CST", chicago); // Chicago
       timeZoneGeographicPoints.put("CST6CDT", chicago); // Chicago
-      timeZoneGeographicPoints.put("America/Indiana/Indianapolis", new GeographicPoint(39.7683333f, -86.1580556f)); 
+      timeZoneGeographicPoints.put("America/Indiana/Indianapolis", new GeographicPoint(39.7683333f, -86.1580556f));
       timeZoneGeographicPoints.put("America/Indiana/Marengo", new GeographicPoint(36.3706f, -86.3433f));
       timeZoneGeographicPoints.put("America/Indiana/Petersburg", new GeographicPoint(38.4917f, -87.2803f));
       timeZoneGeographicPoints.put("America/Indiana/Vevay", new GeographicPoint(38.7458f, -85.0711f));
@@ -1017,7 +1029,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("America/Argentina/ComodRivadavia", new GeographicPoint(-42.7578f, -65.0297f));
       timeZoneGeographicPoints.put("America/Argentina/Cordoba", new GeographicPoint(-31.4f, -64.1833333f));
       timeZoneGeographicPoints.put("America/Argentina/Jujuy", new GeographicPoint(-24.1833333f, -65.3f));
-      timeZoneGeographicPoints.put("America/Argentina/La_Rioja", new GeographicPoint(-29.4144f, -66.8552f)); 
+      timeZoneGeographicPoints.put("America/Argentina/La_Rioja", new GeographicPoint(-29.4144f, -66.8552f));
       timeZoneGeographicPoints.put("America/Argentina/Mendoza", new GeographicPoint(-32.8833333f, -68.8166667f));
       timeZoneGeographicPoints.put("America/Argentina/Rio_Gallegos", new GeographicPoint(-51.625f, -69.2286f));
       timeZoneGeographicPoints.put("America/Argentina/Salta", new GeographicPoint(-24.7833333f, -65.4166667f));
@@ -1048,7 +1060,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("Egypt", new GeographicPoint(30.05f, 31.25f)); // Cairo
       timeZoneGeographicPoints.put("Israel", new GeographicPoint(32.0666667f, 34.7666667f)); // Tel Aviv
       timeZoneGeographicPoints.put("Libya", new GeographicPoint(32.8925f, 13.18f)); // Tripoli
-      timeZoneGeographicPoints.put("Turkey", new GeographicPoint(41.0186111f, 28.9647222f)); // Istanbul 
+      timeZoneGeographicPoints.put("Turkey", new GeographicPoint(41.0186111f, 28.9647222f)); // Istanbul
       timeZoneGeographicPoints.put("EAT", new GeographicPoint(-1.2833333f, 36.8166667f)); // Nairobi
       timeZoneGeographicPoints.put("W-SU", moscow); // Moscow
       timeZoneGeographicPoints.put("Iran", new GeographicPoint(35.6719444f, 51.4244444f)); // Tehran
@@ -1056,7 +1068,7 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("PLT", new GeographicPoint(24.8666667f, 67.05f)); // Karachi
       timeZoneGeographicPoints.put("IST", calcutta); // Calcutta
       timeZoneGeographicPoints.put("BST", dacca); // Dacca
-      timeZoneGeographicPoints.put("VST", bangkok); // Bangkok 
+      timeZoneGeographicPoints.put("VST", bangkok); // Bangkok
       timeZoneGeographicPoints.put("CTT", shanghai); // Shanghai
       timeZoneGeographicPoints.put("Hongkong", new GeographicPoint(22.2833333f, 114.15f));
       timeZoneGeographicPoints.put("PRC", shanghai); // Shanghai
@@ -1071,8 +1083,8 @@ public class Compass extends HomeObject implements Selectable {
       timeZoneGeographicPoints.put("NST", auckland); // Auckland
       timeZoneGeographicPoints.put("NZ", auckland); // Auckland
       timeZoneGeographicPoints.put("NZ-CHAT", new GeographicPoint(-43.883f, -176.517f)); // Chatham
-      
-      // Store geographic points in a weak reference because it should be used only to init a new compass  
+
+      // Store geographic points in a weak reference because it should be used only to init a new compass
       timeZoneGeographicPointsReference = new WeakReference<Map<String,GeographicPoint>>(timeZoneGeographicPoints);
     } else {
       timeZoneGeographicPoints = timeZoneGeographicPointsReference.get();
@@ -1085,7 +1097,7 @@ public class Compass extends HomeObject implements Selectable {
     this.latitude = (float)Math.toRadians(point.getLatitudeInDegrees());
     this.longitude = (float)Math.toRadians(point.getLongitudeInDegrees());
   }
-  
+
   /**
    * A geographic point used to store known points.
    */
@@ -1097,11 +1109,11 @@ public class Compass extends HomeObject implements Selectable {
       this.latitudeInDegrees = latitudeInDegrees;
       this.longitudeInDegrees = longitudeInDegrees;
     }
-    
+
     public float getLatitudeInDegrees() {
       return this.latitudeInDegrees;
     }
-    
+
     public float getLongitudeInDegrees() {
       return this.longitudeInDegrees;
     }

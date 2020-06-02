@@ -24,20 +24,57 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
- * An object with data where users can stored their own properties.
+ * An object with and ID and data where users can stored their own properties.
  * @author Emmanuel Puybaret
  * @since 5.3
  */
 public abstract class HomeObject implements Serializable, Cloneable {
   private static final long serialVersionUID = 1L;
-  
+
+  private final String id;
   private Map<String, String> properties;
-  
+
+  /**
+   * Creates a new object with a unique ID prefixed by <code>object-</code>.
+   * @since 6.4
+   */
+  public HomeObject() {
+    this(createID("object"));
+  }
+
+  /**
+   * Returns a new ID prefixed by the given string.
+   */
+  protected static String createID(String prefix) {
+    return prefix + "-" + UUID.randomUUID();
+  }
+
+  /**
+   * Creates a new object with the given <code>id</code>.
+   * @since 6.4
+   */
+  protected HomeObject(String id) {
+    if (id == null) {
+      throw new IllegalArgumentException("ID must exist");
+    }
+    this.id = id;
+  }
+
+  /**
+   * Returns the ID of this object.
+   * @return a unique ID
+   * @since 6.4
+   */
+  public final String getId() {
+    return this.id;
+  }
+
   /**
    * Returns the value of the property <code>name</code> associated with this object.
-   * @return the value of the property or <code>null</code> if it doesn't exist. 
+   * @return the value of the property or <code>null</code> if it doesn't exist.
    */
   public String getProperty(String name) {
     if (this.properties != null) {
@@ -46,11 +83,11 @@ public abstract class HomeObject implements Serializable, Cloneable {
       return null;
     }
   }
-  
+
   /**
    * Sets a property associated with this object.
    * @param name   the name of the property to set
-   * @param value  the new value of the property 
+   * @param value  the new value of the property
    */
   public void setProperty(String name, String value) {
     if (value == null) {
@@ -61,14 +98,14 @@ public abstract class HomeObject implements Serializable, Cloneable {
             this.properties = null;
           }
         } catch (UnsupportedOperationException ex) {
-          // Exception thrown by singleton map when an entry is removed 
+          // Exception thrown by singleton map when an entry is removed
           this.properties = null;
         }
       }
     } else {
       if (this.properties == null) {
         // Create properties map on the fly with a singleton map first
-        this.properties = Collections.singletonMap(name, value); 
+        this.properties = Collections.singletonMap(name, value);
       } else {
         if (this.properties.size() == 1) {
           // Then a HashMap if the user needs more than a property
@@ -78,10 +115,10 @@ public abstract class HomeObject implements Serializable, Cloneable {
       }
     }
   }
-  
+
   /**
    * Returns the property names.
-   * @return a collection of all the names of the properties set with {@link #setProperty(String, String) setProperty} 
+   * @return a collection of all the names of the properties set with {@link #setProperty(String, String) setProperty}
    */
   public Collection<String> getPropertyNames() {
     if (this.properties != null) {
@@ -99,13 +136,13 @@ public abstract class HomeObject implements Serializable, Cloneable {
     try {
       HomeObject clone = (HomeObject)super.clone();
       if (this.properties != null) {
-        clone.properties = clone.properties.size() == 1 
+        clone.properties = clone.properties.size() == 1
             ? Collections.singletonMap(this.properties.keySet().iterator().next(), this.properties.values().iterator().next())
             : new HashMap<String, String>(this.properties);
       }
       return clone;
     } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable"); 
+      throw new IllegalStateException("Super class isn't cloneable");
     }
   }
 }

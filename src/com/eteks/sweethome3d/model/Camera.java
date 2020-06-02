@@ -37,16 +37,16 @@ public class Camera extends HomeObject {
    * @author Emmanuel Puybaret
    * @since 3.0
    */
-  public enum Lens {PINHOLE, NORMAL, FISHEYE, SPHERICAL} 
+  public enum Lens {PINHOLE, NORMAL, FISHEYE, SPHERICAL}
 
   /**
-   * The properties of a camera that may change. <code>PropertyChangeListener</code>s added 
+   * The properties of a camera that may change. <code>PropertyChangeListener</code>s added
    * to a camera will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, X, Y, Z, YAW, PITCH, FIELD_OF_VIEW, TIME, LENS}
-  
+
   private static final long serialVersionUID = 1L;
-  
+
   private String              name;
   private float               x;
   private float               y;
@@ -56,7 +56,7 @@ public class Camera extends HomeObject {
   private float               fieldOfView;
   private long                time;
   private transient Lens      lens;
-  // Lens is saved as a string to be able to keep backward compatibility 
+  // Lens is saved as a string to be able to keep backward compatibility
   // if new constants are added to Lens enum in future versions
   private String              lensName;
 
@@ -70,11 +70,30 @@ public class Camera extends HomeObject {
   }
 
   /**
+   * Creates a camera at given location and angles at midday and using a pinhole lens.
+   * @since 6.4
+   */
+  public Camera(String id, float x, float y, float z, float yaw, float pitch, float fieldOfView) {
+    this(id, x, y, z, yaw, pitch, fieldOfView, midday(), Lens.PINHOLE);
+  }
+
+  /**
    * Creates a camera at given location and angles.
    * @since 3.0
    */
-  public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView, 
+  public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView,
                 long time, Lens lens) {
+    this(createID("camera"), x, y, z, yaw, pitch, fieldOfView, time, lens);
+  }
+
+
+  /**
+   * Creates a camera at given location and angles.
+   * @since 6.4
+   */
+  public Camera(String id, float x, float y, float z, float yaw, float pitch, float fieldOfView,
+                long time, Lens lens) {
+    super(id);
     this.x = x;
     this.y = y;
     this.z = z;
@@ -96,9 +115,9 @@ public class Camera extends HomeObject {
     midday.set(Calendar.MILLISECOND, 0);
     return midday.getTimeInMillis();
   }
-  
+
   /**
-   * Initializes new camera transient fields  
+   * Initializes new camera transient fields
    * and reads its properties from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -107,22 +126,22 @@ public class Camera extends HomeObject {
     this.lens = Lens.PINHOLE;
     in.defaultReadObject();
     try {
-      // Read lens from a string 
+      // Read lens from a string
       if (this.lensName != null) {
         this.lens = Lens.valueOf(this.lensName);
       }
     } catch (IllegalArgumentException ex) {
-      // Ignore malformed enum constant 
+      // Ignore malformed enum constant
     }
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write lens as a string to be able to read lens later 
+    // Write lens as a string to be able to read lens later
     // even if enum changed in later versions
     this.lensName = this.lens.name();
     out.defaultWriteObject();
   }
-  
+
   /**
    * Adds the property change <code>listener</code> in parameter to this camera.
    */
@@ -146,7 +165,7 @@ public class Camera extends HomeObject {
   }
 
   /**
-   * Sets the name of this camera and notifies listeners of this change. 
+   * Sets the name of this camera and notifies listeners of this change.
    * @since 3.0
    */
   public void setName(String name) {
@@ -167,7 +186,7 @@ public class Camera extends HomeObject {
 
   /**
    * Sets the yaw angle in radians of this camera and notifies listeners of this change.
-   * Yaw axis is vertical axis. 
+   * Yaw axis is vertical axis.
    */
   public void setYaw(float yaw) {
     if (yaw != this.yaw) {
@@ -176,7 +195,7 @@ public class Camera extends HomeObject {
       this.propertyChangeSupport.firePropertyChange(Property.YAW.name(), oldYaw, yaw);
     }
   }
-  
+
   /**
    * Returns the pitch angle in radians of this camera.
    */
@@ -186,7 +205,7 @@ public class Camera extends HomeObject {
 
   /**
    * Sets the pitch angle in radians of this camera and notifies listeners of this change.
-   * Pitch axis is horizontal transverse axis. 
+   * Pitch axis is horizontal transverse axis.
    */
   public void setPitch(float pitch) {
     if (pitch != this.pitch) {
@@ -231,7 +250,7 @@ public class Camera extends HomeObject {
       this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
-  
+
   /**
    * Returns the ordinate of this camera.
    */
@@ -249,14 +268,14 @@ public class Camera extends HomeObject {
       this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
-  
+
   /**
    * Returns the elevation of this camera.
    */
   public float getZ() {
     return this.z;
   }
-  
+
   /**
    * Sets the elevation of this camera and notifies listeners of this change.
    */
@@ -278,24 +297,24 @@ public class Camera extends HomeObject {
   }
 
   /**
-   * Sets the use time in milliseconds since the Epoch in UTC time zone, 
-   * and notifies listeners of this change. 
+   * Sets the use time in milliseconds since the Epoch in UTC time zone,
+   * and notifies listeners of this change.
    * @since 3.0
    */
   public void setTime(long time) {
     if (this.time != time) {
       long oldTime = this.time;
       this.time = time;
-      this.propertyChangeSupport.firePropertyChange(Property.TIME.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.TIME.name(),
           oldTime, time);
     }
   }
 
   /**
-   * Returns a time expressed in UTC time zone converted to the given time zone. 
+   * Returns a time expressed in UTC time zone converted to the given time zone.
    * @since 3.0
    */
-  public static long convertTimeToTimeZone(long utcTime, String timeZone) { 
+  public static long convertTimeToTimeZone(long utcTime, String timeZone) {
     Calendar utcCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     utcCalendar.setTimeInMillis(utcTime);
     Calendar convertedCalendar = new GregorianCalendar(TimeZone.getTimeZone(timeZone));
@@ -316,7 +335,7 @@ public class Camera extends HomeObject {
   public Lens getLens() {
     return this.lens;
   }
-  
+
   /**
    * Sets the lens of this camera and notifies listeners of this change.
    * @since 3.0
@@ -341,7 +360,7 @@ public class Camera extends HomeObject {
     setPitch(camera.getPitch());
     setFieldOfView(camera.getFieldOfView());
   }
-  
+
   /**
    * Returns a clone of this camera.
    * @since 2.3

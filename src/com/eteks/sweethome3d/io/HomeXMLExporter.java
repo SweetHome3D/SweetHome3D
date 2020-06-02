@@ -92,16 +92,13 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
    */
   @Override
   public void writeElement(XMLWriter writer, Home home) throws IOException {
-    // Create level IDs
-    int levelIndex = this.levelIds.size();
+    // Store level ids
     for (Level level : home.getLevels()) {
-      String levelId = "level" + levelIndex++;
-      this.levelIds.put(level, levelId);
+      this.levelIds.put(level, level.getId());
     }
-    // Create wall IDs
-    int wallIndex = this.wallIds.size();
+    // Store wall ids
     for (Wall wall : home.getWalls()) {
-      this.wallIds.put(wall, "wall" + wallIndex++);
+      this.wallIds.put(wall, wall.getId());
     }
     super.writeElement(writer, home);
   }
@@ -298,6 +295,10 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
           @Override
           protected void writeAttributes(XMLWriter writer, Camera camera) throws IOException {
             writer.writeAttribute("attribute", attributeName, null);
+            if (!"observerCamera".equals(attributeName)
+                && !"topCamera".equals(attributeName)) {
+              writer.writeAttribute("id", camera.getId());
+            }
             writer.writeAttribute("name", camera.getName(), null);
             writer.writeAttribute("lens", camera.getLens().name());
             writer.writeFloatAttribute("x", camera.getX());
@@ -327,7 +328,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     new ObjectXMLExporter<Level>() {
         @Override
         protected void writeAttributes(XMLWriter writer, Level level) throws IOException {
-          writer.writeAttribute("id", getId(level));
+          writer.writeAttribute("id", level.getId());
           writer.writeAttribute("name", level.getName());
           writer.writeFloatAttribute("elevation", level.getElevation());
           writer.writeFloatAttribute("floorThickness", level.getFloorThickness());
@@ -361,6 +362,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
 
     @Override
     protected void writeAttributes(XMLWriter writer, HomePieceOfFurniture piece) throws IOException {
+      writer.writeAttribute("id", piece.getId());
       if (piece.getLevel() != null) {
         writer.writeAttribute("level", getId(piece.getLevel()));
       }
@@ -532,7 +534,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     new ObjectXMLExporter<Wall>() {
         @Override
         protected void writeAttributes(XMLWriter writer, Wall wall) throws IOException {
-          writer.writeAttribute("id", getId(wall));
+          writer.writeAttribute("id", wall.getId());
           if (wall.getLevel() != null) {
             writer.writeAttribute("level", getId(wall.getLevel()));
           }
@@ -586,6 +588,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     new ObjectXMLExporter<Room>() {
         @Override
         protected void writeAttributes(XMLWriter writer, Room room) throws IOException {
+          writer.writeAttribute("id", room.getId());
           if (room.getLevel() != null) {
             writer.writeAttribute("level", getId(room.getLevel()));
           }
@@ -629,6 +632,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     new ObjectXMLExporter<Polyline>() {
         @Override
         protected void writeAttributes(XMLWriter writer, Polyline polyline) throws IOException {
+          writer.writeAttribute("id", polyline.getId());
           if (polyline.getLevel() != null) {
             writer.writeAttribute("level", getId(polyline.getLevel()));
           }
@@ -675,6 +679,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     new ObjectXMLExporter<DimensionLine>() {
         @Override
         protected void writeAttributes(XMLWriter writer, DimensionLine dimensionLine) throws IOException {
+          writer.writeAttribute("id", dimensionLine.getId());
           if (dimensionLine.getLevel() != null) {
             writer.writeAttribute("level", getId(dimensionLine.getLevel()));
           }
@@ -700,6 +705,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
     new ObjectXMLExporter<Label>() {
         @Override
         protected void writeAttributes(XMLWriter writer, Label label) throws IOException {
+          writer.writeAttribute("id", label.getId());
           if (label.getLevel() != null) {
             writer.writeAttribute("level", getId(label.getLevel()));
           }

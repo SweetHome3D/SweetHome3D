@@ -102,6 +102,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
 
   /**
    * Creates a polyline from the given coordinates.
+   * @since 6.4
+   */
+  public Polyline(String id, float [][] points) {
+    this(id, points, 1, CapStyle.BUTT, JoinStyle.MITER, DashStyle.SOLID, 0f, ArrowStyle.NONE, ArrowStyle.NONE, false, 0xFF000000);
+  }
+
+  /**
+   * Creates a polyline from the given coordinates.
    */
   public Polyline(float [][] points, float thickness,
                   CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
@@ -118,6 +126,19 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
                   CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
                   float dashOffset, ArrowStyle startArrowStyle,
                   ArrowStyle endArrowStyle, boolean closedPath, int color) {
+    this(createID("polyline"), points, thickness, capStyle, joinStyle, dashStyle, dashOffset,
+        startArrowStyle, endArrowStyle, closedPath, color);
+  }
+
+  /**
+   * Creates a polyline from the given coordinates.
+   * @since 6.4
+   */
+  public Polyline(String id, float [][] points, float thickness,
+                  CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
+                  float dashOffset, ArrowStyle startArrowStyle,
+                  ArrowStyle endArrowStyle, boolean closedPath, int color) {
+    super(id);
     this.points = deepCopy(points);
     this.thickness = thickness;
     this.capStyle = capStyle;

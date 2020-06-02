@@ -58,6 +58,16 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
    * to (<code>xEnd</code>, <code>yEnd</code>), with a given offset.
    */
   public DimensionLine(float xStart, float yStart, float xEnd, float yEnd, float offset) {
+    this(createID("dimensionLine"), xStart, yStart, xEnd, yEnd, offset);
+  }
+
+  /**
+   * Creates a dimension line from (<code>xStart</code>,<code>yStart</code>)
+   * to (<code>xEnd</code>, <code>yEnd</code>), with a given offset.
+   * @since 6.4
+   */
+  public DimensionLine(String id, float xStart, float yStart, float xEnd, float yEnd, float offset) {
+    super(id);
     this.xStart = xStart;
     this.yStart = yStart;
     this.xEnd = xEnd;

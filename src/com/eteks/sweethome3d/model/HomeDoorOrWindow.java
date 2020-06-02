@@ -47,7 +47,17 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
    * @param doorOrWindow the door or window from which data are copied
    */
   public HomeDoorOrWindow(DoorOrWindow doorOrWindow) {
-    super(doorOrWindow);
+    this(createID("doorOrWindow"), doorOrWindow);
+  }
+
+  /**
+   * Creates a home door or window from an existing one.
+   * @param id           the ID of the object
+   * @param doorOrWindow the door or window from which data are copied
+   * @since 6.4
+   */
+  public HomeDoorOrWindow(String id, DoorOrWindow doorOrWindow) {
+    super(id, doorOrWindow);
     this.wallThickness = doorOrWindow.getWallThickness();
     this.wallDistance = doorOrWindow.getWallDistance();
     this.wallWidth = 1;

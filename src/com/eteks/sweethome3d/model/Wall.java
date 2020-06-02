@@ -97,6 +97,16 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     this(xStart, yStart, xEnd, yEnd, thickness, height, null);
   }
 
+ /**
+   * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
+   * to (<code>xEnd</code>, <code>yEnd</code>),
+   * with given thickness and height. Pattern, left and right colors are <code>null</code>.
+   * @since 6.4
+   */
+  public Wall(String id, float xStart, float yStart, float xEnd, float yEnd, float thickness, float height) {
+    this(id, xStart, yStart, xEnd, yEnd, thickness, height, null);
+  }
+
   /**
    * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
    * to (<code>xEnd</code>, <code>yEnd</code>),
@@ -105,6 +115,18 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    * @since 4.0
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height, TextureImage pattern) {
+    this(createID("wall"), xStart, yStart, xEnd, yEnd, thickness, height, pattern);
+  }
+
+  /**
+   * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
+   * to (<code>xEnd</code>, <code>yEnd</code>),
+   * with given thickness, height and pattern.
+   * Colors are <code>null</code>.
+   * @since 6.4
+   */
+  public Wall(String id, float xStart, float yStart, float xEnd, float yEnd, float thickness, float height, TextureImage pattern) {
+    super(id);
     this.xStart = xStart;
     this.yStart = yStart;
     this.xEnd = xEnd;

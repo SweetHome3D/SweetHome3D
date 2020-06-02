@@ -339,6 +339,17 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * @param piece the piece from which data are copied
    */
   public HomePieceOfFurniture(PieceOfFurniture piece) {
+    this(createID("pieceOfFurniture"), piece);
+  }
+
+  /**
+   * Creates a home piece of furniture from an existing piece.
+   * @param id    the ID of the piece
+   * @param piece the piece from which data are copied
+   * @since 6.4
+   */
+  public HomePieceOfFurniture(String id, PieceOfFurniture piece) {
+    super(id);
     this.name = piece.getName();
     this.description = piece.getDescription();
     this.information = piece.getInformation();

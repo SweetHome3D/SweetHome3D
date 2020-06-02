@@ -91,7 +91,20 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             float angle, boolean modelMirrored,
                             String name) {
-    super(furniture.get(0));
+    this(createID("furnitureGroup"), furniture, angle, modelMirrored, name);
+  }
+
+  /**
+   * Creates a group from the given <code>furniture</code> list.
+   * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
+   * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
+   * @since 6.4
+   */
+  public HomeFurnitureGroup(String id,
+                            List<HomePieceOfFurniture> furniture,
+                            float angle, boolean modelMirrored,
+                            String name) {
+    super(id, furniture.get(0));
     this.furniture = Collections.unmodifiableList(furniture);
     this.resizable = true;
     this.deformable = true;
