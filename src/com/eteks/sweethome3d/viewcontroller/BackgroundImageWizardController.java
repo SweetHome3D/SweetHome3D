@@ -25,10 +25,8 @@ import java.beans.PropertyChangeSupport;
 import java.net.URL;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
@@ -41,12 +39,12 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * Wizard controller for background image in plan.
  * @author Emmanuel Puybaret
  */
-public class BackgroundImageWizardController extends WizardController 
+public class BackgroundImageWizardController extends WizardController
                                              implements Controller {
   public enum Property {STEP, IMAGE, SCALE_DISTANCE, SCALE_DISTANCE_POINTS, X_ORIGIN, Y_ORIGIN}
 
   public enum Step {CHOICE, SCALE, ORIGIN};
-  
+
   private final Home                           home;
   private final UserPreferences                preferences;
   private final ViewFactory                    viewFactory;
@@ -58,7 +56,7 @@ public class BackgroundImageWizardController extends WizardController
   private final BackgroundImageWizardStepState imageScaleStepState;
   private final BackgroundImageWizardStepState imageOriginStepState;
   private View                                 stepsView;
-  
+
   private Step            step;
   private BackgroundImage referenceBackgroundImage;
   private Content         image;
@@ -69,20 +67,20 @@ public class BackgroundImageWizardController extends WizardController
   private float           scaleDistanceYEnd;
   private float           xOrigin;
   private float           yOrigin;
-  
-  public BackgroundImageWizardController(Home home, 
+
+  public BackgroundImageWizardController(Home home,
                                          UserPreferences preferences,
                                          ViewFactory viewFactory,
                                          ContentManager contentManager,
                                          UndoableEditSupport undoSupport) {
     super(preferences, viewFactory);
     this.home = home;
-    this.preferences = preferences; 
+    this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    setTitle(preferences.getLocalizedString(BackgroundImageWizardController.class, "wizard.title"));    
+    setTitle(preferences.getLocalizedString(BackgroundImageWizardController.class, "wizard.title"));
     setResizable(true);
     // Initialize states
     this.imageChoiceStepState = new ImageChoiceStepState();
@@ -97,7 +95,7 @@ public class BackgroundImageWizardController extends WizardController
       for (int i = levelIndex - 1; i >= 0 && this.referenceBackgroundImage == null; i--) {
         this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
       }
-      // If no background image exists on previous level, search in upper levels 
+      // If no background image exists on previous level, search in upper levels
       for (int i = levelIndex + 1; i < levels.size() && this.referenceBackgroundImage == null; i++) {
         this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
       }
@@ -116,7 +114,7 @@ public class BackgroundImageWizardController extends WizardController
     float [][] scaleDistancePoints = getScaleDistancePoints();
     BackgroundImage image = new BackgroundImage(getImage(),
         getScaleDistance(), scaleDistancePoints [0][0], scaleDistancePoints [0][1],
-        scaleDistancePoints [1][0], scaleDistancePoints [1][1], 
+        scaleDistancePoints [1][0], scaleDistancePoints [1][1],
         getXOrigin(), getYOrigin());
     if (selectedLevel != null) {
       selectedLevel.setBackgroundImage(image);
@@ -124,34 +122,32 @@ public class BackgroundImageWizardController extends WizardController
       this.home.setBackgroundImage(image);
     }
     boolean modification = oldImage == null;
-    UndoableEdit undoableEdit = 
-        new BackgroundImageUndoableEdit(this.home, selectedLevel, 
-            this.preferences, modification, oldImage, image);
-    this.undoSupport.postEdit(undoableEdit);
+    this.undoSupport.postEdit(new BackgroundImageUndoableEdit(this.home, this.preferences,
+        selectedLevel, oldImage, image, modification));
   }
 
   /**
    * Undoable edit for background image. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class BackgroundImageUndoableEdit extends AbstractUndoableEdit {
+  private static class BackgroundImageUndoableEdit extends LocalizedUndoableEdit {
     private final Home            home;
     private final Level           level;
-    private final UserPreferences preferences;
-    private final boolean         modification;
     private final BackgroundImage oldImage;
     private final BackgroundImage image;
 
     private BackgroundImageUndoableEdit(Home home,
-                                        Level level, 
                                         UserPreferences preferences,
-                                        boolean modification,
+                                        Level level,
                                         BackgroundImage oldImage,
-                                        BackgroundImage image) {
+                                        BackgroundImage image,
+                                        boolean modification) {
+      super(preferences, BackgroundImageWizardController.class,
+            modification
+              ? "undoImportBackgroundImageName"
+              : "undoModifyBackgroundImageName");
       this.home = home;
       this.level = level;
-      this.preferences = preferences;
-      this.modification = modification;
       this.oldImage = oldImage;
       this.image = image;
     }
@@ -164,7 +160,7 @@ public class BackgroundImageWizardController extends WizardController
         this.level.setBackgroundImage(this.oldImage);
       } else {
         this.home.setBackgroundImage(this.oldImage);
-      } 
+      }
     }
 
     @Override
@@ -175,15 +171,7 @@ public class BackgroundImageWizardController extends WizardController
         this.level.setBackgroundImage(this.image);
       } else {
         this.home.setBackgroundImage(this.image);
-      } 
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(BackgroundImageWizardController.class,
-          this.modification 
-              ? "undoImportBackgroundImageName"
-              : "undoModifyBackgroundImageName");
+      }
     }
   }
 
@@ -201,7 +189,7 @@ public class BackgroundImageWizardController extends WizardController
   protected BackgroundImageWizardStepState getStepState() {
     return (BackgroundImageWizardStepState)super.getStepState();
   }
-  
+
   /**
    * Returns the image choice step state.
    */
@@ -222,7 +210,7 @@ public class BackgroundImageWizardController extends WizardController
   protected BackgroundImageWizardStepState getImageScaleStepState() {
     return this.imageScaleStepState;
   }
- 
+
   /**
    * Returns the unique wizard view used for all steps.
    */
@@ -248,7 +236,7 @@ public class BackgroundImageWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.STEP.name(), oldStep, step);
     }
   }
-  
+
   /**
    * Returns the current step in wizard view.
    */
@@ -271,14 +259,14 @@ public class BackgroundImageWizardController extends WizardController
   }
 
   /**
-   * Returns the background image of another level that can be used to initialize 
+   * Returns the background image of another level that can be used to initialize
    * the scale values of the edited image.
    * @since 5.3
    */
   public BackgroundImage getReferenceBackgroundImage() {
     return this.referenceBackgroundImage;
   }
-  
+
   /**
    * Sets the image content of the background image.
    */
@@ -289,7 +277,7 @@ public class BackgroundImageWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.IMAGE.name(), oldImage, image);
     }
   }
-  
+
   /**
    * Returns the image content of the background image.
    */
@@ -308,7 +296,7 @@ public class BackgroundImageWizardController extends WizardController
           Property.SCALE_DISTANCE.name(), oldScaleDistance, scaleDistance);
     }
   }
-  
+
   /**
    * Returns the scale distance of the background image.
    */
@@ -319,7 +307,7 @@ public class BackgroundImageWizardController extends WizardController
   /**
    * Sets the coordinates of the scale distance points of the background image.
    */
-  public void setScaleDistancePoints(float scaleDistanceXStart, float scaleDistanceYStart, 
+  public void setScaleDistancePoints(float scaleDistanceXStart, float scaleDistanceYStart,
                                      float scaleDistanceXEnd, float scaleDistanceYEnd) {
     if (scaleDistanceXStart != this.scaleDistanceXStart
         || scaleDistanceYStart != this.scaleDistanceYStart
@@ -332,12 +320,12 @@ public class BackgroundImageWizardController extends WizardController
       this.scaleDistanceXEnd = scaleDistanceXEnd;
       this.scaleDistanceYEnd = scaleDistanceYEnd;
       this.propertyChangeSupport.firePropertyChange(
-          Property.SCALE_DISTANCE_POINTS.name(), oldDistancePoints, 
+          Property.SCALE_DISTANCE_POINTS.name(), oldDistancePoints,
           new float [][] {{scaleDistanceXStart, scaleDistanceYStart},
                           {scaleDistanceXEnd, scaleDistanceYEnd}});
     }
   }
-  
+
   /**
    * Returns the coordinates of the scale distance points of the background image.
    */
@@ -345,7 +333,7 @@ public class BackgroundImageWizardController extends WizardController
     return new float [][] {{this.scaleDistanceXStart, this.scaleDistanceYStart},
                            {this.scaleDistanceXEnd, this.scaleDistanceYEnd}};
   }
-  
+
   /**
    * Sets the origin of the background image.
    */
@@ -377,57 +365,57 @@ public class BackgroundImageWizardController extends WizardController
   public float getYOrigin() {
     return this.yOrigin;
   }
-  
+
   /**
    * Step state superclass. All step state share the same step view,
-   * that will display a different component depending on their class name. 
+   * that will display a different component depending on their class name.
    */
   protected abstract class BackgroundImageWizardStepState extends WizardControllerStepState {
     private URL icon = BackgroundImageWizardController.class.getResource("resources/backgroundImageWizard.png");
-    
+
     public abstract Step getStep();
 
     @Override
     public void enter() {
       setStep(getStep());
     }
-    
+
     @Override
     public View getView() {
       return getStepsView();
-    }    
-    
+    }
+
     @Override
     public URL getIcon() {
       return this.icon;
     }
   }
-    
+
   /**
    * Image choice step state (first step).
    */
   private class ImageChoiceStepState extends BackgroundImageWizardStepState {
     public ImageChoiceStepState() {
-      BackgroundImageWizardController.this.addPropertyChangeListener(Property.IMAGE, 
+      BackgroundImageWizardController.this.addPropertyChangeListener(Property.IMAGE,
           new PropertyChangeListener() {
               public void propertyChange(PropertyChangeEvent evt) {
                 setNextStepEnabled(getImage() != null);
               }
             });
     }
-    
+
     @Override
     public void enter() {
       super.enter();
       setFirstStep(true);
       setNextStepEnabled(getImage() != null);
     }
-    
+
     @Override
     public Step getStep() {
       return Step.CHOICE;
     }
-    
+
     @Override
     public void goToNextStep() {
       setStepState(getImageScaleStepState());
@@ -439,30 +427,30 @@ public class BackgroundImageWizardController extends WizardController
    */
   private class ImageScaleStepState extends BackgroundImageWizardStepState {
     public ImageScaleStepState() {
-      BackgroundImageWizardController.this.addPropertyChangeListener(Property.SCALE_DISTANCE, 
+      BackgroundImageWizardController.this.addPropertyChangeListener(Property.SCALE_DISTANCE,
           new PropertyChangeListener() {
               public void propertyChange(PropertyChangeEvent evt) {
                 setNextStepEnabled(getScaleDistance() != null);
               }
             });
     }
-    
+
     @Override
     public void enter() {
       super.enter();
       setNextStepEnabled(getScaleDistance() != null);
     }
-    
+
     @Override
     public Step getStep() {
       return Step.SCALE;
     }
-    
+
     @Override
     public void goBackToPreviousStep() {
       setStepState(getImageChoiceStepState());
     }
-    
+
     @Override
     public void goToNextStep() {
       setStepState(getImageOriginStepState());
@@ -480,12 +468,12 @@ public class BackgroundImageWizardController extends WizardController
       // Last step is always valid by default
       setNextStepEnabled(true);
     }
-    
+
     @Override
     public Step getStep() {
       return Step.ORIGIN;
     }
-    
+
     @Override
     public void goBackToPreviousStep() {
       setStepState(getImageScaleStepState());

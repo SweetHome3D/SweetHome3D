@@ -23,9 +23,9 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -1374,7 +1374,7 @@ public class WallController implements Controller {
           height, heightAtEnd, thickness, arcExtent);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home,
-            this.preferences, oldSelection, modifiedWalls,
+            this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]) , modifiedWalls,
             this.preferences.getNewWallBaseboardThickness(), this.preferences.getNewWallBaseboardHeight(),
             xStart, yStart, xEnd, yEnd,
             leftSidePaint, leftSideColor, leftSideTexture, leftSideShininess,
@@ -1394,10 +1394,9 @@ public class WallController implements Controller {
    * Undoable edit for walls modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class WallsModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class WallsModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home             home;
-    private final UserPreferences  preferences;
-    private final List<Selectable> oldSelection;
+    private final Selectable []    oldSelection;
     private final ModifiedWall []  modifiedWalls;
     private final float            newWallBaseboardThickness;
     private final float            newWallBaseboardHeight;
@@ -1435,7 +1434,7 @@ public class WallController implements Controller {
 
     private WallsModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
-                                          List<Selectable> oldSelection, ModifiedWall [] modifiedWalls,
+                                          Selectable [] oldSelection, ModifiedWall [] modifiedWalls,
                                           float newWallBaseboardThickness, float newWallBaseboardHeight,
                                           Float xStart, Float yStart, Float xEnd, Float yEnd,
                                           WallPaint leftSidePaint, Integer leftSideColor,
@@ -1453,8 +1452,8 @@ public class WallController implements Controller {
                                           Float heightAtEnd,
                                           Float thickness,
                                           Float arcExtent) {
+      super(preferences, WallController.class, "undoModifyWallsName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedWalls = modifiedWalls;
       this.newWallBaseboardThickness = newWallBaseboardThickness;
@@ -1496,7 +1495,7 @@ public class WallController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyWalls(this.modifiedWalls);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
@@ -1512,12 +1511,7 @@ public class WallController implements Controller {
           this.rightSideBaseboardPaint, this.rightSideBaseboardColor, this.rightSideBaseboardTexture,
           this.pattern, this.modifiedTopColor, this.topColor,
           this.height, this.heightAtEnd, this.thickness, this.arcExtent);
-      this.home.setSelectedItems(this.oldSelection);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(WallController.class, "undoModifyWallsName");
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
   }
 

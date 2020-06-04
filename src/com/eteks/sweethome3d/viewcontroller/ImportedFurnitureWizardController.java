@@ -26,7 +26,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -47,14 +46,14 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * Wizard controller to manage furniture importation.
  * @author Emmanuel Puybaret
  */
-public class ImportedFurnitureWizardController extends WizardController 
+public class ImportedFurnitureWizardController extends WizardController
                                                implements Controller {
-  public enum Property {STEP, NAME, CREATOR, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
+  public enum Property {STEP, NAME, CREATOR, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE,
       DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHOWN, MODEL_SIZE, MODEL_ROTATION, STAIRCASE_CUT_OUT_SHAPE,
       ICON_YAW, PROPORTIONAL}
 
   public enum Step {MODEL, ROTATION, ATTRIBUTES, ICON};
-  
+
   private final Home                             home;
   private final CatalogPieceOfFurniture          piece;
   private final String                           modelName;
@@ -69,7 +68,7 @@ public class ImportedFurnitureWizardController extends WizardController
   private final ImportedFurnitureWizardStepState furnitureAttributesStepState;
   private final ImportedFurnitureWizardStepState furnitureIconStepState;
   private ImportedFurnitureWizardStepsView       stepsView;
-  
+
   private Step                             step;
   private String                           name;
   private String                           creator;
@@ -92,7 +91,7 @@ public class ImportedFurnitureWizardController extends WizardController
   private float                            iconYaw;
   private boolean                          proportional;
   private final ViewFactory viewFactory;
-  
+
   /**
    * Creates a controller that edits a new catalog piece of furniture.
    */
@@ -101,9 +100,9 @@ public class ImportedFurnitureWizardController extends WizardController
                                            ContentManager contentManager) {
     this(null, null, null, preferences, null, viewFactory, contentManager, null);
   }
-  
+
   /**
-   * Creates a controller that edits a new catalog piece of furniture with a given 
+   * Creates a controller that edits a new catalog piece of furniture with a given
    * <code>modelName</code>.
    */
   public ImportedFurnitureWizardController(String modelName,
@@ -112,21 +111,21 @@ public class ImportedFurnitureWizardController extends WizardController
                                            ContentManager contentManager) {
     this(null, null, modelName, preferences, null, viewFactory, contentManager, null);
   }
-  
+
   /**
    * Creates a controller that edits <code>piece</code> values.
    */
-  public ImportedFurnitureWizardController(CatalogPieceOfFurniture piece, 
+  public ImportedFurnitureWizardController(CatalogPieceOfFurniture piece,
                                            UserPreferences preferences,
                                            ViewFactory    viewFactory,
                                            ContentManager contentManager) {
     this(null, piece, null, preferences, null, viewFactory, contentManager, null);
   }
-  
+
   /**
    * Creates a controller that edits a new imported home piece of furniture.
    */
-  public ImportedFurnitureWizardController(Home home, 
+  public ImportedFurnitureWizardController(Home home,
                                            UserPreferences preferences,
                                            FurnitureController furnitureController,
                                            ViewFactory    viewFactory,
@@ -134,7 +133,7 @@ public class ImportedFurnitureWizardController extends WizardController
                                            UndoableEditSupport undoSupport) {
     this(home, null, null, preferences, furnitureController, viewFactory, contentManager, undoSupport);
   }
-  
+
   /**
    * Creates a controller that edits a new imported home piece of furniture
    * with a given <code>modelName</code>.
@@ -148,11 +147,11 @@ public class ImportedFurnitureWizardController extends WizardController
                                            UndoableEditSupport undoSupport) {
     this(home, null, modelName, preferences, furnitureController, viewFactory, contentManager, undoSupport);
   }
-  
+
   /**
    * Creates a controller that edits <code>piece</code> values.
    */
-  private ImportedFurnitureWizardController(Home home, 
+  private ImportedFurnitureWizardController(Home home,
                                             CatalogPieceOfFurniture piece,
                                             String modelName,
                                             UserPreferences preferences,
@@ -171,9 +170,9 @@ public class ImportedFurnitureWizardController extends WizardController
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     setTitle(this.preferences.getLocalizedString(ImportedFurnitureWizardController.class,
-        piece == null 
-            ? "importFurnitureWizard.title" 
-            : "modifyFurnitureWizard.title"));    
+        piece == null
+            ? "importFurnitureWizard.title"
+            : "modifyFurnitureWizard.title"));
     // Initialize states
     this.furnitureModelStepState = new FurnitureModelStepState();
     this.furnitureOrientationStepState = new FurnitureOrientationStepState();
@@ -189,19 +188,19 @@ public class ImportedFurnitureWizardController extends WizardController
   public void finish() {
     CatalogPieceOfFurniture newPiece;
     if (isDoorOrWindow()) {
-      newPiece = new CatalogDoorOrWindow(getName(), getIcon(), getModel(),  
-          getWidth(), getDepth(), getHeight(), getElevation(), 
-          isMovable(), 1, 0, new Sash [0], getColor(), 
+      newPiece = new CatalogDoorOrWindow(getName(), getIcon(), getModel(),
+          getWidth(), getDepth(), getHeight(), getElevation(),
+          isMovable(), 1, 0, new Sash [0], getColor(),
           getModelRotation(), isBackFaceShown(), getModelSize(), getCreator(),
           getIconYaw(), isProportional());
     } else {
-      newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), getWidth(), 
-          getDepth(), getHeight(), getElevation(), isMovable(), 
-          getStaircaseCutOutShape(), getColor(), 
+      newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), getWidth(),
+          getDepth(), getHeight(), getElevation(), isMovable(),
+          getStaircaseCutOutShape(), getColor(),
           getModelRotation(), isBackFaceShown(), getModelSize(), getCreator(),
           getIconYaw(), isProportional());
     }
-    
+
     if (this.home != null) {
       // Add new piece to home
       addPieceOfFurniture(this.furnitureController.createHomePieceOfFurniture(newPiece));
@@ -216,56 +215,55 @@ public class ImportedFurnitureWizardController extends WizardController
       catalog.add(this.category, newPiece);
     }
   }
-  
+
   /**
-   * Controls new piece added to home. 
-   * Once added the furniture will be selected in view 
+   * Controls new piece added to home.
+   * Once added the furniture will be selected in view
    * and undo support will receive a new undoable edit.
    * @param piece the piece of furniture to add.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
     boolean basePlanLocked = this.home.isBasePlanLocked();
     boolean allLevelsSelection = this.home.isAllLevelsSelection();
-    List<Selectable> oldSelection = this.home.getSelectedItems(); 
+    List<Selectable> oldSelection = this.home.getSelectedItems();
     // Get index of the piece added to home
     int pieceIndex = this.home.getFurniture().size();
-    
+
     this.home.addPieceOfFurniture(piece, pieceIndex);
-    this.home.setSelectedItems(Arrays.asList(piece)); 
+    this.home.setSelectedItems(Arrays.asList(piece));
     if (!piece.isMovable() && basePlanLocked) {
       this.home.setBasePlanLocked(false);
     }
     this.home.setAllLevelsSelection(false);
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new PieceOfFurnitureImportationUndoableEdit(
-          this.home, this.preferences, oldSelection, basePlanLocked, allLevelsSelection,
-          piece, pieceIndex);
+          this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
+          basePlanLocked, allLevelsSelection, piece, pieceIndex);
       this.undoSupport.postEdit(undoableEdit);
     }
   }
-  
+
   /**
    * Undoable edit for piece importation. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class PieceOfFurnitureImportationUndoableEdit extends AbstractUndoableEdit {
+  private static class PieceOfFurnitureImportationUndoableEdit extends LocalizedUndoableEdit {
     private final Home                 home;
-    private final UserPreferences      preferences;
-    private final List<Selectable>     oldSelection;
+    private final Selectable []        oldSelection;
     private final boolean              oldBasePlanLocked;
     private final boolean              oldAllLevelsSelection;
     private final HomePieceOfFurniture piece;
     private final int                  pieceIndex;
 
     private PieceOfFurnitureImportationUndoableEdit(Home home,
-                                                    UserPreferences preferences, 
-                                                    List<Selectable> oldSelection,
+                                                    UserPreferences preferences,
+                                                    Selectable [] oldSelection,
                                                     boolean oldBasePlanLocked,
-                                                    boolean oldAllLevelsSelection, 
-                                                    HomePieceOfFurniture piece, 
+                                                    boolean oldAllLevelsSelection,
+                                                    HomePieceOfFurniture piece,
                                                     int pieceIndex) {
+      super(preferences, ImportedFurnitureWizardController.class, "undoImportFurnitureName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.oldBasePlanLocked = oldBasePlanLocked;
       this.oldAllLevelsSelection = oldAllLevelsSelection;
@@ -277,7 +275,7 @@ public class ImportedFurnitureWizardController extends WizardController
     public void undo() throws CannotUndoException {
       super.undo();
       this.home.deletePieceOfFurniture(this.piece);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
       this.home.setAllLevelsSelection(this.oldAllLevelsSelection);
       this.home.setBasePlanLocked(this.oldBasePlanLocked);
     }
@@ -286,17 +284,11 @@ public class ImportedFurnitureWizardController extends WizardController
     public void redo() throws CannotRedoException {
       super.redo();
       this.home.addPieceOfFurniture(this.piece, this.pieceIndex);
-      this.home.setSelectedItems(Arrays.asList(this.piece)); 
+      this.home.setSelectedItems(Arrays.asList(this.piece));
       if (!piece.isMovable() && this.oldBasePlanLocked) {
         this.home.setBasePlanLocked(false);
       }
       this.home.setAllLevelsSelection(false);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(ImportedFurnitureWizardController.class, 
-          "undoImportFurnitureName");
     }
   }
 
@@ -314,7 +306,7 @@ public class ImportedFurnitureWizardController extends WizardController
   protected ImportedFurnitureWizardStepState getStepState() {
     return (ImportedFurnitureWizardStepState)super.getStepState();
   }
-  
+
   /**
    * Returns the furniture choice step state.
    */
@@ -335,14 +327,14 @@ public class ImportedFurnitureWizardController extends WizardController
   protected ImportedFurnitureWizardStepState getFurnitureAttributesStepState() {
     return this.furnitureAttributesStepState;
   }
- 
+
   /**
    * Returns the furniture icon step state.
    */
   protected ImportedFurnitureWizardStepState getFurnitureIconStepState() {
     return this.furnitureIconStepState;
   }
- 
+
   /**
    * Returns the unique wizard view used for all steps.
    */
@@ -365,7 +357,7 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.STEP.name(), oldStep, step);
     }
   }
-  
+
   /**
    * Returns the current step in wizard view.
    */
@@ -393,7 +385,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public Content getModel() {
     return this.model;
   }
-  
+
   /**
    * Sets the model content of the imported piece.
    */
@@ -404,7 +396,7 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.MODEL.name(), oldModel, model);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if imported piece back face should be shown.
    */
@@ -428,7 +420,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public long getModelSize() {
     return this.modelSize;
   }
-  
+
   /**
    * Sets the model size of the content of the imported piece.
    */
@@ -439,7 +431,7 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.MODEL_SIZE.name(), oldModelSize, modelSize);
     }
   }
-  
+
   /**
    * Returns the pitch angle of the imported piece model.
    */
@@ -464,7 +456,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public String getName() {
     return this.name;
   }
-  
+
   /**
    * Sets the name of the imported piece.
    */
@@ -477,7 +469,7 @@ public class ImportedFurnitureWizardController extends WizardController
       }
     }
   }
-  
+
   /**
    * Returns the creator of the imported piece.
    * @since 5.5
@@ -485,7 +477,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public String getCreator() {
     return this.creator;
   }
-  
+
   /**
    * Sets the creator of the imported piece.
    * @since 5.5
@@ -499,14 +491,14 @@ public class ImportedFurnitureWizardController extends WizardController
       }
     }
   }
-  
+
   /**
    * Returns the width.
    */
   public float getWidth() {
     return this.width;
   }
-  
+
   /**
    * Sets the width of the imported piece.
    */
@@ -593,7 +585,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public float getElevation() {
     return this.elevation;
   }
-  
+
   /**
    * Sets the elevation of the imported piece.
    */
@@ -604,7 +596,7 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if imported piece is movable.
    */
@@ -649,7 +641,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public String getStaircaseCutOutShape() {
     return this.staircaseCutOutShape;
   }
-  
+
   /**
    * Sets the shape used to cut out upper levels at its intersection with a staircase.
    */
@@ -666,14 +658,14 @@ public class ImportedFurnitureWizardController extends WizardController
       }
     }
   }
-  
+
   /**
    * Returns the color of the imported piece.
    */
   public Integer getColor() {
     return this.color;
   }
-  
+
   /**
    * Sets the color of the imported piece.
    */
@@ -684,14 +676,14 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
-  
+
   /**
    * Returns the category of the imported piece.
    */
   public FurnitureCategory getCategory() {
     return this.category;
   }
-  
+
   /**
    * Sets the category of the imported piece.
    */
@@ -702,21 +694,21 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.name(), oldCategory, category);
     }
   }
-  
+
   /**
    * Returns the icon of the imported piece.
    */
   private Content getIcon() {
     return getStepsView().getIcon();
   }
-  
+
   /**
    * Returns the yaw of the piece icon.
    */
   public float getIconYaw() {
     return this.iconYaw;
   }
-  
+
   /**
    * Sets the yaw angle of the piece icon.
    */
@@ -727,14 +719,14 @@ public class ImportedFurnitureWizardController extends WizardController
       this.propertyChangeSupport.firePropertyChange(Property.ICON_YAW.name(), oldIconYaw, iconYaw);
     }
   }
-  
+
   /**
    * Returns <code>true</code> if piece proportions should be kept.
    */
   public boolean isProportional() {
     return this.proportional;
   }
-  
+
   /**
    * Sets whether piece proportions should be kept or not.
    */
@@ -755,29 +747,29 @@ public class ImportedFurnitureWizardController extends WizardController
 
   /**
    * Step state superclass. All step state share the same step view,
-   * that will display a different component depending on their class name. 
+   * that will display a different component depending on their class name.
    */
   protected abstract class ImportedFurnitureWizardStepState extends WizardControllerStepState {
     private URL icon = ImportedFurnitureWizardController.class.getResource("resources/importedFurnitureWizard.png");
-    
+
     public abstract Step getStep();
 
     @Override
     public void enter() {
       setStep(getStep());
     }
-    
+
     @Override
     public View getView() {
       return getStepsView();
-    }    
-    
+    }
+
     @Override
     public URL getIcon() {
       return this.icon;
     }
   }
-    
+
   /**
    * Furniture model step state (first step).
    */
@@ -787,7 +779,7 @@ public class ImportedFurnitureWizardController extends WizardController
           setNextStepEnabled(getModel() != null);
         }
       };
-      
+
     @Override
     public void enter() {
       super.enter();
@@ -801,12 +793,12 @@ public class ImportedFurnitureWizardController extends WizardController
     public Step getStep() {
       return Step.MODEL;
     }
-    
+
     @Override
     public void goToNextStep() {
       setStepState(getFurnitureOrientationStepState());
     }
-    
+
     @Override
     public void exit() {
       removePropertyChangeListener(Property.MODEL, this.modelChangeListener);
@@ -828,12 +820,12 @@ public class ImportedFurnitureWizardController extends WizardController
     public Step getStep() {
       return Step.ROTATION;
     }
-    
+
     @Override
     public void goBackToPreviousStep() {
       setStepState(getFurnitureModelStepState());
     }
-    
+
     @Override
     public void goToNextStep() {
       setStepState(getFurnitureAttributesStepState());
@@ -849,12 +841,12 @@ public class ImportedFurnitureWizardController extends WizardController
           if (isProportional()) {
             ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.DEPTH, depthChangeListener);
             ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.HEIGHT, heightChangeListener);
-            
+
             // If proportions should be kept, update depth and height
             float ratio = (Float)ev.getNewValue() / (Float)ev.getOldValue();
-            setDepth(proportionalDepth * ratio, true); 
+            setDepth(proportionalDepth * ratio, true);
             setHeight(proportionalHeight * ratio, true);
-            
+
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.DEPTH, depthChangeListener);
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.HEIGHT, heightChangeListener);
           }
@@ -865,12 +857,12 @@ public class ImportedFurnitureWizardController extends WizardController
           if (isProportional()) {
             ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.WIDTH, widthChangeListener);
             ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.HEIGHT, heightChangeListener);
-            
+
             // If proportions should be kept, update width and height
             float ratio = (Float)ev.getNewValue() / (Float)ev.getOldValue();
-            setWidth(proportionalWidth * ratio, true); 
+            setWidth(proportionalWidth * ratio, true);
             setHeight(proportionalHeight * ratio, true);
-            
+
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.WIDTH, widthChangeListener);
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.HEIGHT, heightChangeListener);
           }
@@ -881,12 +873,12 @@ public class ImportedFurnitureWizardController extends WizardController
           if (isProportional()) {
             ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.WIDTH, widthChangeListener);
             ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.DEPTH, depthChangeListener);
-            
+
             // If proportions should be kept, update width and depth
             float ratio = (Float)ev.getNewValue() / (Float)ev.getOldValue();
-            setWidth(proportionalWidth * ratio, true); 
+            setWidth(proportionalWidth * ratio, true);
             setDepth(proportionalDepth * ratio, true);
-            
+
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.WIDTH, widthChangeListener);
             ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.DEPTH, depthChangeListener);
           }
@@ -897,7 +889,7 @@ public class ImportedFurnitureWizardController extends WizardController
           checkPieceOfFurnitureNameInCategory();
         }
       };
-    
+
     @Override
     public void enter() {
       super.enter();
@@ -909,7 +901,7 @@ public class ImportedFurnitureWizardController extends WizardController
       checkPieceOfFurnitureNameInCategory();
     }
 
-    private void checkPieceOfFurnitureNameInCategory() {      
+    private void checkPieceOfFurnitureNameInCategory() {
       setNextStepEnabled(isPieceOfFurnitureNameValid());
     }
 
@@ -917,7 +909,7 @@ public class ImportedFurnitureWizardController extends WizardController
     public Step getStep() {
       return Step.ATTRIBUTES;
     }
-    
+
     @Override
     public void goBackToPreviousStep() {
       setStepState(getFurnitureOrientationStepState());
@@ -927,7 +919,7 @@ public class ImportedFurnitureWizardController extends WizardController
     public void goToNextStep() {
       setStepState(getFurnitureIconStepState());
     }
-    
+
     @Override
     public void exit() {
       ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.WIDTH, this.widthChangeListener);
@@ -949,12 +941,12 @@ public class ImportedFurnitureWizardController extends WizardController
       // Step always valid by default
       setNextStepEnabled(true);
     }
-    
+
     @Override
     public Step getStep() {
       return Step.ICON;
     }
-    
+
     @Override
     public void goBackToPreviousStep() {
       setStepState(getFurnitureAttributesStepState());

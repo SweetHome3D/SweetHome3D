@@ -23,10 +23,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
@@ -341,15 +339,14 @@ public class Home3DAttributesController implements Controller {
     doModify3DAttributes(home, groundColor, groundTexture, backgroundImageVisibleOnGround3D, skyColor,
         skyTexture, lightColor, wallsAlpha);
     if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new Home3DAttributesModificationUndoableEdit(
+      this.undoSupport.postEdit(new Home3DAttributesModificationUndoableEdit(
           this.home, this.preferences,
           oldGroundColor, oldGroundTexture,
           oldBackgroundImageVisibleOnGround3D, oldSkyColor,
           oldSkyTexture, oldLightColor, oldWallsAlpha,
           groundColor, groundTexture,
           backgroundImageVisibleOnGround3D, skyColor,
-          skyTexture, lightColor, wallsAlpha);
-      this.undoSupport.postEdit(undoableEdit);
+          skyTexture, lightColor, wallsAlpha));
     }
   }
 
@@ -357,9 +354,8 @@ public class Home3DAttributesController implements Controller {
    * Undoable edit for 3D attributes modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class Home3DAttributesModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class Home3DAttributesModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home            home;
-    private final UserPreferences preferences;
     private final int             oldGroundColor;
     private final HomeTexture     oldGroundTexture;
     private final boolean         oldBackgroundImageVisibleOnGround3D;
@@ -391,8 +387,8 @@ public class Home3DAttributesController implements Controller {
                                                      HomeTexture skyTexture,
                                                      int lightColor,
                                                      float wallsAlpha) {
+      super(preferences, Home3DAttributesController.class, "undoModify3DAttributesName");
       this.home = home;
-      this.preferences = preferences;
       this.oldGroundColor = oldGroundColor;
       this.oldGroundTexture = oldGroundTexture;
       this.oldBackgroundImageVisibleOnGround3D = oldBackgroundImageVisibleOnGround3D;
@@ -421,12 +417,6 @@ public class Home3DAttributesController implements Controller {
       super.redo();
       doModify3DAttributes(this.home, this.groundColor, this.groundTexture, this.backgroundImageVisibleOnGround3D,
           this.skyColor, this.skyTexture, this.lightColor, this.wallsAlpha);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(
-          Home3DAttributesController.class, "undoModify3DAttributesName");
     }
   }
 

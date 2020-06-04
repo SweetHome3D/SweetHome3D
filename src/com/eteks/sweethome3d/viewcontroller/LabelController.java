@@ -24,7 +24,6 @@ import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -437,7 +436,8 @@ public class LabelController implements Controller {
       doAddLabel(this.home, label, newBasePlanLocked);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LabelCreationUndoableEdit(
-            this.home, this.preferences, oldSelection, basePlanLocked, allLevelsSelection, label, newBasePlanLocked);
+            this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
+            basePlanLocked, allLevelsSelection, label, newBasePlanLocked);
         this.undoSupport.postEdit(undoableEdit);
       }
       if (text.indexOf('\n') < 0) {
@@ -450,24 +450,23 @@ public class LabelController implements Controller {
    * Undoable edit for label creation. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class LabelCreationUndoableEdit extends AbstractUndoableEdit {
-    private final Home             home;
-    private final UserPreferences  preferences;
-    private final List<Selectable> oldSelection;
-    private final boolean          oldBasePlanLocked;
-    private final boolean          oldAllLevelsSelection;
-    private final Label            label;
-    private final boolean          newBasePlanLocked;
+  private static class LabelCreationUndoableEdit extends LocalizedUndoableEdit {
+    private final Home          home;
+    private final Selectable [] oldSelection;
+    private final boolean       oldBasePlanLocked;
+    private final boolean       oldAllLevelsSelection;
+    private final Label         label;
+    private final boolean       newBasePlanLocked;
 
     private LabelCreationUndoableEdit(Home home,
                                       UserPreferences preferences,
-                                      List<Selectable> oldSelection,
+                                      Selectable [] oldSelection,
                                       boolean oldBasePlanLocked,
                                       boolean oldAllLevelsSelection,
                                       Label label,
                                       boolean newBasePlanLocked) {
+      super(preferences, LabelController.class, "undoCreateLabelName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.oldBasePlanLocked = oldBasePlanLocked;
       this.oldAllLevelsSelection = oldAllLevelsSelection;
@@ -479,7 +478,7 @@ public class LabelController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       doDeleteLabel(this.home, this.label, this.oldBasePlanLocked);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
       this.home.setAllLevelsSelection(this.oldAllLevelsSelection);
     }
 
@@ -487,11 +486,6 @@ public class LabelController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       doAddLabel(this.home, this.label, this.newBasePlanLocked);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(LabelController.class, "undoCreateLabelName");
     }
   }
 
@@ -549,7 +543,8 @@ public class LabelController implements Controller {
       doModifyLabels(modifiedLabels, text, alignment, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LabelModificationUndoableEdit(this.home,
-            this.preferences, oldSelection, modifiedLabels, text, alignment, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
+            this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
+            modifiedLabels, text, alignment, fontName, fontNameSet, fontSize, defaultStyle, color, pitch, pitchEnabled, elevation);
         this.undoSupport.postEdit(undoableEdit);
       }
       if (text.indexOf('\n') < 0) {
@@ -562,10 +557,9 @@ public class LabelController implements Controller {
    * Undoable edit for label modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class LabelModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class LabelModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home                home;
-    private final UserPreferences     preferences;
-    private final List<Selectable>    oldSelection;
+    private final Selectable []       oldSelection;
     private final ModifiedLabel []    modifiedLabels;
     private final String              text;
     private final TextStyle.Alignment alignment;
@@ -580,15 +574,15 @@ public class LabelController implements Controller {
 
     private LabelModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
-                                          List<Selectable> oldSelection,
+                                          Selectable [] oldSelection,
                                           ModifiedLabel [] modifiedLabels,
                                           String text, TextStyle.Alignment alignment,
                                           String fontName, boolean fontNameSet,
                                           Float fontSize, TextStyle defaultStyle,
                                           Integer color, Float pitch, Boolean pitchEnabled,
                                           Float elevation) {
+      super(preferences, LabelController.class, "undoModifyLabelsName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedLabels = modifiedLabels;
       this.text = text;
@@ -607,7 +601,7 @@ public class LabelController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyLabels(this.modifiedLabels);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
@@ -615,13 +609,7 @@ public class LabelController implements Controller {
       super.redo();
       doModifyLabels(this.modifiedLabels, this.text, this.alignment, this.fontName, this.fontNameSet, this.fontSize, this.defaultStyle,
           this.color, this.pitch, this.pitchEnabled, this.elevation);
-      this.home.setSelectedItems(this.oldSelection);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(LabelController.class,
-          "undoModifyLabelsName");
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
   }
 

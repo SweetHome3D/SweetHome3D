@@ -24,7 +24,6 @@ import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -534,7 +533,7 @@ public class PolylineController implements Controller {
           capStyle, joinStyle, dashStyle, dashPattern, dashOffset, startArrowStyle, endArrowStyle, color, elevation, elevationEnabled);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new PolylinesModificationUndoableEdit(
-            this.home, this.preferences, oldSelection,
+            this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
             modifiedPolylines, thickness, capStyle, joinStyle, dashStyle, dashPattern, dashOffset,
             startArrowStyle, endArrowStyle, color, elevation, elevationEnabled);
         this.undoSupport.postEdit(undoableEdit);
@@ -546,39 +545,38 @@ public class PolylineController implements Controller {
    * Undoable edit for polylines modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class PolylinesModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class PolylinesModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home                home;
-    private final UserPreferences     preferences;
-    private final List<Selectable>    oldSelection;
+    private final Selectable []       oldSelection;
     private final ModifiedPolyline [] modifiedPolylines;
-    private Float                     thickness;
-    private Polyline.CapStyle         capStyle;
-    private Polyline.JoinStyle        joinStyle;
-    private Polyline.DashStyle        dashStyle;
-    private float []                  dashPattern;
-    private Float                     dashOffset;
-    private Polyline.ArrowStyle       startArrowStyle;
-    private Polyline.ArrowStyle       endArrowStyle;
-    private Integer                   color;
+    private final Float               thickness;
+    private final Polyline.CapStyle   capStyle;
+    private final Polyline.JoinStyle  joinStyle;
+    private final Polyline.DashStyle  dashStyle;
+    private final float []            dashPattern;
+    private final Float               dashOffset;
+    private final Polyline.ArrowStyle startArrowStyle;
+    private final Polyline.ArrowStyle endArrowStyle;
+    private final Integer             color;
     private final Float               elevation;
     private final Boolean             elevationEnabled;
 
     private PolylinesModificationUndoableEdit(Home home,
-                                          UserPreferences preferences,
-                                          List<Selectable> oldSelection,
-                                          ModifiedPolyline [] modifiedPolylines,
-                                          Float thickness,
-                                          Polyline.CapStyle capStyle,
-                                          Polyline.JoinStyle joinStyle,
-                                          Polyline.DashStyle dashStyle,
-                                          float [] dashPattern,
-                                          Float dashOffset,
-                                          Polyline.ArrowStyle startArrowStyle,
-                                          Polyline.ArrowStyle endArrowStyle,
-                                          Integer color,
-                                          Float elevation, Boolean elevationEnabled) {
+                                              UserPreferences preferences,
+                                              Selectable []  oldSelection,
+                                              ModifiedPolyline [] modifiedPolylines,
+                                              Float thickness,
+                                              Polyline.CapStyle capStyle,
+                                              Polyline.JoinStyle joinStyle,
+                                              Polyline.DashStyle dashStyle,
+                                              float [] dashPattern,
+                                              Float dashOffset,
+                                              Polyline.ArrowStyle startArrowStyle,
+                                              Polyline.ArrowStyle endArrowStyle,
+                                              Integer color,
+                                              Float elevation, Boolean elevationEnabled) {
+      super(preferences, PolylineController.class, "undoModifyPolylinesName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedPolylines = modifiedPolylines;
       this.thickness = thickness;
@@ -598,7 +596,7 @@ public class PolylineController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyPolylines(this.modifiedPolylines);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
@@ -608,12 +606,7 @@ public class PolylineController implements Controller {
           this.capStyle, this.joinStyle, this.dashStyle, this.dashPattern, this.dashOffset,
           this.startArrowStyle, this.endArrowStyle, this.color,
           this.elevation, this.elevationEnabled);
-      this.home.setSelectedItems(this.oldSelection);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(PolylineController.class, "undoModifyPolylinesName");
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
   }
 

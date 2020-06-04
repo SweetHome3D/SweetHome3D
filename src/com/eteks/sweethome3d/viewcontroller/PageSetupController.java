@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -38,10 +37,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class PageSetupController implements Controller {
   /**
-   * The property that may be edited by the view associated to this controller. 
+   * The property that may be edited by the view associated to this controller.
    */
   public enum Property {PRINT}
-  
+
   private final Home                  home;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
@@ -50,20 +49,20 @@ public class PageSetupController implements Controller {
   private DialogView                  pageSetupView;
 
   private HomePrint print;
-  
+
   /**
    * Creates the controller of page setup with undo support.
    */
   public PageSetupController(Home home,
                              UserPreferences preferences,
-                             ViewFactory viewFactory, 
+                             ViewFactory viewFactory,
                              UndoableEditSupport undoSupport) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     setPrint(home.getPrint());
   }
 
@@ -77,7 +76,7 @@ public class PageSetupController implements Controller {
     }
     return this.pageSetupView;
   }
-  
+
   /**
    * Displays the view controlled by this controller.
    */
@@ -133,9 +132,8 @@ public class PageSetupController implements Controller {
    * Undoable edit for home print modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class HomePrintModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class HomePrintModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home            home;
-    private final UserPreferences preferences;
     private final HomePrint       oldHomePrint;
     private final HomePrint       homePrint;
 
@@ -143,8 +141,8 @@ public class PageSetupController implements Controller {
                                               UserPreferences preferences,
                                               HomePrint oldHomePrint,
                                               HomePrint homePrint) {
+      super(preferences, PageSetupController.class, "undoPageSetupName");
       this.home = home;
-      this.preferences = preferences;
       this.oldHomePrint = oldHomePrint;
       this.homePrint = homePrint;
     }
@@ -159,11 +157,6 @@ public class PageSetupController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       this.home.setPrint(this.homePrint);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(PageSetupController.class, "undoPageSetupName");
     }
   }
 }

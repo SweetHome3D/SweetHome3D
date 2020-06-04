@@ -29,10 +29,8 @@ import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Content;
@@ -1643,14 +1641,13 @@ public class HomeFurnitureController implements Controller {
           paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
       if (this.undoSupport != null) {
         List<Selectable> newSelection = this.home.getSelectedItems();
-        UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
-            this.home, this.preferences, oldSelection, newSelection, modifiedFurniture,
-            name, nameVisible, description, price, removePrice, valueAddedTaxPercentage, removeValueAddedTaxPercentage, currency,
+        this.undoSupport.postEdit(new FurnitureModificationUndoableEdit(this.home, this.preferences,
+            oldSelection.toArray(new Selectable [oldSelection.size()]), newSelection.toArray(new Selectable [newSelection.size()]),
+            modifiedFurniture, name, nameVisible, description, price, removePrice, valueAddedTaxPercentage, removeValueAddedTaxPercentage, currency,
             x, y, elevation, angle, roll, pitch, horizontalAxis, basePlanItem,
             width, depth, height, proportional, modelTransformations,
             this.wallThickness, this.wallDistance, this.wallWidth, this.wallLeft, this.wallHeight, this.wallTop, this.sashes,
-            paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower);
-        this.undoSupport.postEdit(undoableEdit);
+            paint, color, texture, modelMaterials, defaultShininess, shininess, visible, modelMirrored, lightPower));
       }
       if (name != null) {
         this.preferences.addAutoCompletionString("HomePieceOfFurnitureName", name);
@@ -1668,12 +1665,11 @@ public class HomeFurnitureController implements Controller {
    * Undoable edit for furniture modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class FurnitureModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class FurnitureModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home                        home;
-    private final UserPreferences             preferences;
     private final ModifiedPieceOfFurniture [] modifiedFurniture;
-    private final List<Selectable>            oldSelection;
-    private final List<Selectable>            newSelection;
+    private final Selectable []               oldSelection;
+    private final Selectable []               newSelection;
     private final String                      name;
     private final Boolean                     nameVisible;
     private final String                      description;
@@ -1714,8 +1710,8 @@ public class HomeFurnitureController implements Controller {
 
     private FurnitureModificationUndoableEdit(Home home,
                                               UserPreferences preferences,
-                                              List<Selectable> oldSelection,
-                                              List<Selectable> newSelection,
+                                              Selectable [] oldSelection,
+                                              Selectable [] newSelection,
                                               ModifiedPieceOfFurniture [] modifiedFurniture,
                                               String name, Boolean nameVisible, String description,
                                               BigDecimal price, boolean removePrice, BigDecimal valueAddedTaxPercentage, boolean removeValueAddedTaxPercenage, String currency,
@@ -1729,8 +1725,8 @@ public class HomeFurnitureController implements Controller {
                                               Boolean visible,
                                               Boolean modelMirrored,
                                               Float lightPower) {
+      super(preferences, HomeFurnitureController.class, "undoModifyFurnitureName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.newSelection = newSelection;
       this.modifiedFurniture = modifiedFurniture;
@@ -1777,7 +1773,7 @@ public class HomeFurnitureController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyFurniture(this.modifiedFurniture);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
@@ -1792,13 +1788,7 @@ public class HomeFurnitureController implements Controller {
           this.paint, this.color, this.texture, this.modelMaterials,
           this.defaultShininess, this.shininess,
           this.visible, this.modelMirrored, this.lightPower);
-      this.home.setSelectedItems(this.newSelection);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(HomeFurnitureController.class,
-          "undoModifyFurnitureName");
+      this.home.setSelectedItems(Arrays.asList(this.newSelection));
     }
   }
 

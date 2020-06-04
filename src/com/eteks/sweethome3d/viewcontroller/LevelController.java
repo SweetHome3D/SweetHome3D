@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -43,10 +42,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class LevelController implements Controller {
   /**
-   * The properties that may be edited by the view associated to this controller. 
+   * The properties that may be edited by the view associated to this controller.
    */
   public enum Property {VIEWABLE, NAME, ELEVATION, ELEVATION_INDEX, FLOOR_THICKNESS, HEIGHT, LEVELS, SELECT_LEVEL_INDEX}
-  
+
   private final Home                  home;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
@@ -62,20 +61,20 @@ public class LevelController implements Controller {
   private Float    height;
   private Level [] levels;
   private Integer  selectedLevelIndex;
-  
+
   /**
    * Creates the controller of home levels view with undo support.
    */
-  public LevelController(Home home, 
-                         UserPreferences preferences, 
-                         ViewFactory viewFactory, 
+  public LevelController(Home home,
+                         UserPreferences preferences,
+                         ViewFactory viewFactory,
                          UndoableEditSupport undoSupport) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     updateProperties();
   }
 
@@ -85,11 +84,11 @@ public class LevelController implements Controller {
   public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.homeLevelView == null) {
-      this.homeLevelView = this.viewFactory.createLevelView(this.preferences, this); 
+      this.homeLevelView = this.viewFactory.createLevelView(this.preferences, this);
     }
     return this.homeLevelView;
   }
-  
+
   /**
    * Displays the view controlled by this controller.
    */
@@ -123,7 +122,7 @@ public class LevelController implements Controller {
       setViewable(Boolean.TRUE);
       setElevation(null, false);
       setFloorThickness(null);
-      setHeight(null);      
+      setHeight(null);
       setElevationIndex(null, false);
     } else {
       setSelectedLevelIndex(this.home.getLevels().indexOf(selectedLevel));
@@ -134,8 +133,8 @@ public class LevelController implements Controller {
       setHeight(selectedLevel.getHeight());
       setElevationIndex(selectedLevel.getElevationIndex(), false);
     }
-  }  
-  
+  }
+
   private Level [] duplicate(Level[] levels) {
     for (int i = 0; i < levels.length; i++) {
       levels [i] = levels [i].clone();
@@ -147,12 +146,12 @@ public class LevelController implements Controller {
    * Returns <code>true</code> if the given <code>property</code> is editable.
    * Depending on whether a property is editable or not, the view associated to this controller
    * may render it differently.
-   * The implementation of this method always returns <code>true</code>. 
+   * The implementation of this method always returns <code>true</code>.
    */
   public boolean isPropertyEditable(Property property) {
     return true;
   }
-  
+
   /**
    * Sets the edited name.
    */
@@ -174,7 +173,7 @@ public class LevelController implements Controller {
   public String getName() {
     return this.name;
   }
-  
+
   /**
    * Sets the edited viewable attribute.
    * @since 5.0
@@ -190,7 +189,7 @@ public class LevelController implements Controller {
       }
     }
   }
-  
+
   /**
    * Returns the edited viewable attribute.
    * @since 5.0
@@ -198,7 +197,7 @@ public class LevelController implements Controller {
   public Boolean getViewable() {
     return this.viewable;
   }
-  
+
   /**
    * Sets the edited elevation.
    */
@@ -211,11 +210,11 @@ public class LevelController implements Controller {
       Float oldElevation = this.elevation;
       this.elevation = elevation;
       this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
-      
-      if (updateLevels 
-          && elevation != null 
+
+      if (updateLevels
+          && elevation != null
           && this.selectedLevelIndex != null) {
-        int elevationIndex = updateLevelElevation(this.levels [this.selectedLevelIndex], 
+        int elevationIndex = updateLevelElevation(this.levels [this.selectedLevelIndex],
             elevation, Arrays.asList(this.levels));
         setElevationIndex(elevationIndex, false);
         updateLevels();
@@ -224,11 +223,11 @@ public class LevelController implements Controller {
   }
 
   /**
-   * Updates the elevation of the given <code>level</code> and modifies the 
+   * Updates the elevation of the given <code>level</code> and modifies the
    * elevation index of other levels if necessary.
    */
   private static int updateLevelElevation(Level level, float elevation, List<Level> levels) {
-    // Search biggest elevation index at the given elevation 
+    // Search biggest elevation index at the given elevation
     // and update elevation index of other levels at the current elevation of the modified level
     int levelIndex = levels.size();
     int elevationIndex = 0;
@@ -249,14 +248,14 @@ public class LevelController implements Controller {
     level.setElevationIndex(elevationIndex);
     return elevationIndex;
   }
-  
+
   /**
    * Returns the edited elevation.
    */
   public Float getElevation() {
     return this.elevation;
   }
-  
+
   /**
    * Sets the edited elevation index.
    * @since 5.0
@@ -270,8 +269,8 @@ public class LevelController implements Controller {
       Integer oldElevationIndex = this.elevationIndex;
       this.elevationIndex = elevationIndex;
       this.propertyChangeSupport.firePropertyChange(Property.ELEVATION_INDEX.name(), oldElevationIndex, elevationIndex);
-      
-      if (updateLevels 
+
+      if (updateLevels
           && elevationIndex != null
           && this.selectedLevelIndex != null) {
         updateLevelElevationIndex(this.levels [this.selectedLevelIndex], elevationIndex, Arrays.asList(this.levels));
@@ -281,11 +280,11 @@ public class LevelController implements Controller {
   }
 
   /**
-   * Updates the elevation index of the given <code>level</code> and modifies the 
+   * Updates the elevation index of the given <code>level</code> and modifies the
    * elevation index of other levels at same elevation if necessary.
    */
   private static void updateLevelElevationIndex(Level level, int elevationIndex, List<Level> levels) {
-    // Update elevation index of levels with a value between selected level index and new index   
+    // Update elevation index of levels with a value between selected level index and new index
     float elevationIndexSignum = Math.signum(elevationIndex - level.getElevationIndex());
     for (Level homeLevel : levels) {
       if (homeLevel != level
@@ -319,7 +318,7 @@ public class LevelController implements Controller {
   public Integer getElevationIndex() {
     return this.elevationIndex;
   }
-  
+
   /**
    * Sets the edited floor thickness.
    */
@@ -341,7 +340,7 @@ public class LevelController implements Controller {
   public Float getFloorThickness() {
     return this.floorThickness;
   }
-  
+
   /**
    * Sets the edited height.
    */
@@ -363,7 +362,7 @@ public class LevelController implements Controller {
   public Float getHeight() {
     return this.height;
   }
-  
+
   /**
    * Sets home levels.
    */
@@ -381,7 +380,7 @@ public class LevelController implements Controller {
   public Level [] getLevels() {
     return this.levels.clone();
   }
-  
+
   /**
    * Sets the selected level index.
    */
@@ -399,28 +398,28 @@ public class LevelController implements Controller {
   public Integer getSelectedLevelIndex() {
     return this.selectedLevelIndex;
   }
-  
+
   /**
    * Controls the modification of selected level in the edited home.
    */
   public void modifyLevels() {
     Level selectedLevel = this.home.getSelectedLevel();
     if (selectedLevel != null) {
-      List<Selectable> oldSelection = this.home.getSelectedItems(); 
+      List<Selectable> oldSelection = this.home.getSelectedItems();
       String name = getName();
       Boolean viewable = getViewable();
       Float elevation = getElevation();
       Float floorThickness = getFloorThickness();
       Float height = getHeight();
       Integer elevationIndex = getElevationIndex();
-      
+
       ModifiedLevel modifiedLevel = new ModifiedLevel(selectedLevel);
       // Apply modification
       doModifyLevel(home, modifiedLevel, name, viewable, elevation, floorThickness, height, elevationIndex);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LevelModificationUndoableEdit(
-            this.home, this.preferences, oldSelection, modifiedLevel, 
-            name, viewable,  elevation, floorThickness, height, elevationIndex);
+            this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
+            modifiedLevel, name, viewable,  elevation, floorThickness, height, elevationIndex);
         this.undoSupport.postEdit(undoableEdit);
       }
       if (name != null) {
@@ -428,35 +427,34 @@ public class LevelController implements Controller {
       }
     }
   }
-  
+
   /**
    * Undoable edit for level modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class LevelModificationUndoableEdit extends AbstractUndoableEdit {
-    private final Home             home;
-    private final UserPreferences  preferences;
-    private final List<Selectable> oldSelection;
-    private final ModifiedLevel    modifiedLevel;
-    private final String           name;
-    private final Boolean          viewable;
-    private final Float            elevation;
-    private final Float            floorThickness;
-    private final Float            height;
-    private final Integer          elevationIndex;
+  private static class LevelModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final Home          home;
+    private final Selectable [] oldSelection;
+    private final ModifiedLevel modifiedLevel;
+    private final String        name;
+    private final Boolean       viewable;
+    private final Float         elevation;
+    private final Float         floorThickness;
+    private final Float         height;
+    private final Integer       elevationIndex;
 
     private LevelModificationUndoableEdit(Home home,
-                                          UserPreferences preferences, 
-                                          List<Selectable> oldSelection,
-                                          ModifiedLevel modifiedLevel, 
+                                          UserPreferences preferences,
+                                          Selectable [] oldSelection,
+                                          ModifiedLevel modifiedLevel,
                                           String name,
                                           Boolean viewable,
                                           Float elevation,
                                           Float floorThickness,
                                           Float height,
                                           Integer elevationIndex) {
+      super(preferences, LevelController.class, "undoModifyLevelName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedLevel = modifiedLevel;
       this.name = name;
@@ -471,29 +469,24 @@ public class LevelController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyLevel(this.home, this.modifiedLevel);
-      this.home.setSelectedLevel(this.modifiedLevel.getLevel()); 
-      this.home.setSelectedItems(this.oldSelection); 
+      this.home.setSelectedLevel(this.modifiedLevel.getLevel());
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      this.home.setSelectedLevel(this.modifiedLevel.getLevel()); 
-      doModifyLevel(this.home, this.modifiedLevel, this.name, this.viewable, 
-          this.elevation, this.floorThickness, this.height, this.elevationIndex); 
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(LevelController.class, "undoModifyLevelName");
+      this.home.setSelectedLevel(this.modifiedLevel.getLevel());
+      doModifyLevel(this.home, this.modifiedLevel, this.name, this.viewable,
+          this.elevation, this.floorThickness, this.height, this.elevationIndex);
     }
   }
 
   /**
    * Modifies level properties with the values in parameter.
    */
-  private static void doModifyLevel(Home home, ModifiedLevel modifiedLevel, 
-                                    String name, Boolean viewable, Float elevation, 
+  private static void doModifyLevel(Home home, ModifiedLevel modifiedLevel,
+                                    String name, Boolean viewable, Float elevation,
                                     Float floorThickness, Float height,
                                     Integer elevationIndex) {
     Level level = modifiedLevel.getLevel();
@@ -505,7 +498,7 @@ public class LevelController implements Controller {
       level.setViewable(viewable);
       home.setSelectedItems(getViewableSublist(selectedItems));
     }
-    if (elevation != null 
+    if (elevation != null
         && elevation != level.getElevation()) {
       updateLevelElevation(level, elevation, home.getLevels());
     }
@@ -588,11 +581,11 @@ public class LevelController implements Controller {
     public float getElevation() {
       return this.elevation;
     }
-    
+
     public int getElevationIndex() {
       return this.elevationIndex;
     }
-    
+
     public void reset() {
       this.level.setName(this.name);
       this.level.setViewable(this.viewable);

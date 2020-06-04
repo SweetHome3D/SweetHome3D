@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
@@ -38,18 +37,18 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class CompassController implements Controller {
   /**
-   * The properties that may be edited by the view associated to this controller. 
+   * The properties that may be edited by the view associated to this controller.
    */
-  public enum Property {X, Y, DIAMETER, VISIBLE, NORTH_DIRECTION_IN_DEGREES, 
+  public enum Property {X, Y, DIAMETER, VISIBLE, NORTH_DIRECTION_IN_DEGREES,
       LATITUDE_IN_DEGREES, LONGITUDE_IN_DEGREES, TIME_ZONE}
-  
+
   private final Home                  home;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
   private final UndoableEditSupport   undoSupport;
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  compassView;
-  
+
   private float   x;
   private float   y;
   private float   diameter;
@@ -59,8 +58,8 @@ public class CompassController implements Controller {
   private float   longitudeInDegrees;
   private String  timeZone;
 
-  public CompassController(Home home, 
-                           UserPreferences preferences, 
+  public CompassController(Home home,
+                           UserPreferences preferences,
                            ViewFactory viewFactory,
                            UndoableEditSupport undoSupport) {
     this.home = home;
@@ -68,7 +67,7 @@ public class CompassController implements Controller {
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    
+
     updateProperties();
   }
 
@@ -79,7 +78,7 @@ public class CompassController implements Controller {
     // Create view lazily only once it's needed
     if (this.compassView == null) {
       this.compassView = this.viewFactory.createCompassView(
-          this.preferences, this); 
+          this.preferences, this);
     }
     return this.compassView;
   }
@@ -118,7 +117,7 @@ public class CompassController implements Controller {
     setLatitudeInDegrees((float)Math.toDegrees(compass.getLatitude()));
     setLongitudeInDegrees((float)Math.toDegrees(compass.getLongitude()));
     setTimeZone(compass.getTimeZone());
-  }  
+  }
 
   /**
    * Returns the edited abscissa of the center.
@@ -126,7 +125,7 @@ public class CompassController implements Controller {
   public float getX() {
     return this.x;
   }
-  
+
   /**
    * Sets the edited abscissa of the center.
    */
@@ -137,16 +136,16 @@ public class CompassController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
-  
+
   /**
    * Returns the edited ordinate of the center.
    */
   public float getY() {
     return this.y;
   }
-  
+
   /**
-   * Sets the edited ordinate of the center. 
+   * Sets the edited ordinate of the center.
    */
   public void setY(float y) {
     if (y != this.y) {
@@ -162,7 +161,7 @@ public class CompassController implements Controller {
   public float getDiameter() {
     return this.diameter;
   }
-  
+
   /**
    * Sets the edited diameter.
    */
@@ -180,7 +179,7 @@ public class CompassController implements Controller {
   public boolean isVisible() {
     return this.visible;
   }
-  
+
   /**
    * Sets whether this compass is visible or not.
    */
@@ -197,7 +196,7 @@ public class CompassController implements Controller {
   public float getNorthDirectionInDegrees() {
     return this.northDirectionInDegrees;
   }
-  
+
   /**
    * Sets the edited North direction angle.
    */
@@ -205,18 +204,18 @@ public class CompassController implements Controller {
     if (northDirectionInDegrees != this.northDirectionInDegrees) {
       float oldNorthDirectionInDegrees = this.northDirectionInDegrees;
       this.northDirectionInDegrees = northDirectionInDegrees;
-      this.propertyChangeSupport.firePropertyChange(Property.NORTH_DIRECTION_IN_DEGREES.name(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NORTH_DIRECTION_IN_DEGREES.name(),
           oldNorthDirectionInDegrees, northDirectionInDegrees);
     }
   }
-  
+
   /**
    * Returns the edited latitude in degrees.
    */
   public final float getLatitudeInDegrees() {
     return this.latitudeInDegrees;
   }
-  
+
   /**
    * Sets the edited latitude in degrees.
    */
@@ -227,14 +226,14 @@ public class CompassController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.LATITUDE_IN_DEGREES.name(), oldLatitudeInDegrees, latitudeInDegrees);
     }
   }
-  
+
   /**
    * Returns the edited longitude in degrees.
    */
   public final float getLongitudeInDegrees() {
     return this.longitudeInDegrees;
   }
-  
+
   /**
    * Sets the edited longitude of the center.
    */
@@ -245,16 +244,16 @@ public class CompassController implements Controller {
       this.propertyChangeSupport.firePropertyChange(Property.LONGITUDE_IN_DEGREES.name(), oldLongitudeInDegrees, longitudeInDegrees);
     }
   }
-  
+
   /**
    * Returns the edited time zone identifier.
    */
   public String getTimeZone() {
     return this.timeZone;
   }
-  
+
   /**
-   * Sets the edited time zone identifier. 
+   * Sets the edited time zone identifier.
    */
   public void setTimeZone(String timeZone) {
     if (!timeZone.equals(this.timeZone)) {
@@ -265,7 +264,7 @@ public class CompassController implements Controller {
   }
 
   /**
-   * Modifies home compass from the values stored in this controller. 
+   * Modifies home compass from the values stored in this controller.
    */
   public void modifyCompass() {
     float x = getX();
@@ -276,20 +275,19 @@ public class CompassController implements Controller {
     float latitude = (float)Math.toRadians(getLatitudeInDegrees());
     float longitude = (float)Math.toRadians(getLongitudeInDegrees());
     String timeZone = getTimeZone();
-    UndoableEdit undoableEdit = 
-        new CompassUndoableEdit(this.home.getCompass(), this.preferences, 
+    UndoableEdit undoableEdit =
+        new CompassUndoableEdit(this.home.getCompass(), this.preferences,
             x, y, diameter, visible, northDirection, latitude, longitude, timeZone);
     doModifyCompass(this.home.getCompass(), x, y, diameter, visible, northDirection, latitude, longitude, timeZone);
     this.undoSupport.postEdit(undoableEdit);
   }
-  
+
   /**
    * Undoable edit for compass. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class CompassUndoableEdit extends AbstractUndoableEdit {
+  private static class CompassUndoableEdit extends LocalizedUndoableEdit {
     private final Compass compass;
-    private final UserPreferences preferences;
     private final float oldX;
     private final float oldY;
     private final float oldDiameter;
@@ -306,12 +304,12 @@ public class CompassController implements Controller {
     private final float newLongitude;
     private final String newTimeZone;
     private final boolean newVisible;
-  
+
     public CompassUndoableEdit(Compass compass, UserPreferences preferences, float newX, float newY,
-                               float newDiameter, boolean newVisible, float newNorthDirection, 
+                               float newDiameter, boolean newVisible, float newNorthDirection,
                                float newLatitude, float newLongitude, String newTimeZone) {
+      super(preferences, CompassController.class, "undoModifyCompassName");
       this.compass = compass;
-      this.preferences = preferences;
       this.oldX = compass.getX();
       this.oldY = compass.getY();
       this.oldDiameter = compass.getDiameter();
@@ -333,24 +331,19 @@ public class CompassController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doModifyCompass(this.compass, this.oldX, this.oldY, this.oldDiameter, this.oldVisible, 
+      doModifyCompass(this.compass, this.oldX, this.oldY, this.oldDiameter, this.oldVisible,
           this.oldNorthDirection, this.oldLatitude, this.oldLongitude, this.oldTimeZone);
     }
-  
+
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doModifyCompass(this.compass, this.newX, this.newY, this.newDiameter, this.newVisible, 
+      doModifyCompass(this.compass, this.newX, this.newY, this.newDiameter, this.newVisible,
           this.newNorthDirection, this.newLatitude, this.newLongitude, this.newTimeZone);
     }
-  
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(CompassController.class, "undoModifyCompassName");
-    }
   }
-  
-  private static void doModifyCompass(Compass compass, float x, float y, float diameter, boolean visible, 
+
+  private static void doModifyCompass(Compass compass, float x, float y, float diameter, boolean visible,
                                       float northDirection, float latitude, float longitude, String timeZone) {
     compass.setX(x);
     compass.setY(y);

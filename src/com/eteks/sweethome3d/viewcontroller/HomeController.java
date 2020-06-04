@@ -48,7 +48,6 @@ import java.util.concurrent.Callable;
 
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
@@ -1467,12 +1466,7 @@ public class HomeController implements Controller {
     undoSupport.beginUpdate();
     getPlanController().deleteItems(items);
     // Add a undoable edit to change presentation name
-    undoSupport.postEdit(new AbstractUndoableEdit() {
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoCutName");
-        }
-      });
+    undoSupport.postEdit(new LocalizedUndoableEdit(preferences, HomeController.class, "undoCutName"));
     // End compound edit
     undoSupport.endUpdate();
   }
@@ -1569,12 +1563,7 @@ public class HomeController implements Controller {
           getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
         }
       }
-      undoSupport.postEdit(new AbstractUndoableEdit() {
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(HomeController.class, presentationNameKey);
-          }
-        });
+      undoSupport.postEdit(new LocalizedUndoableEdit(preferences, HomeController.class, presentationNameKey));
 
       // End compound edit
       undoSupport.endUpdate();
@@ -1635,22 +1624,33 @@ public class HomeController implements Controller {
       this.home.setSelectedItems(importedFurniture);
 
       // Add a undoable edit that will select the imported furniture at redo
-      undoSupport.postEdit(new AbstractUndoableEdit() {
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.setSelectedItems(importedFurniture);
-          }
-
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(HomeController.class, "undoDropName");
-          }
-        });
+      undoSupport.postEdit(new DroppingEndUndoableEdit(this.home, this.preferences,
+          importedFurniture.toArray(new HomePieceOfFurniture [importedFurniture.size()])));
     }
 
     // End compound edit
     undoSupport.endUpdate();
+  }
+
+  /**
+   * Undoable edit for dropping end.
+   */
+  private static class DroppingEndUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final HomePieceOfFurniture [] importedFurniture;
+
+    public DroppingEndUndoableEdit(Home home, UserPreferences preferences,
+                                   HomePieceOfFurniture [] importedFurniture) {
+      super(preferences, HomeController.class, "undoDropName");
+      this.home = home;
+      this.importedFurniture = importedFurniture;
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      home.setSelectedItems(Arrays.asList(this.importedFurniture));
+    }
   }
 
   /**
@@ -1665,13 +1665,7 @@ public class HomeController implements Controller {
     getFurnitureController().addFurnitureToGroup(addedFurniture,
         (HomeFurnitureGroup)this.home.getSelectedItems().get(0));
     adjustFurnitureSizeAndElevation(addedFurniture, true);
-    undoSupport.postEdit(new AbstractUndoableEdit() {
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoPasteToGroupName");
-        }
-      });
-
+    undoSupport.postEdit(new LocalizedUndoableEdit(preferences, HomeController.class, "undoPasteToGroupName"));
     // End compound edit
     undoSupport.endUpdate();
   }
@@ -1797,20 +1791,30 @@ public class HomeController implements Controller {
     }
 
     // Add a undoable edit to change presentation name
-    undoSupport.postEdit(new AbstractUndoableEdit() {
-        @Override
-        public void redo() throws CannotRedoException {
-          home.setSelectedItems(selectedItems);
-          super.redo();
-        }
-
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoPasteStyleName");
-        }
-      });
+    undoSupport.postEdit(new PastingStyleEndUndoableEdit(this.home, this.preferences,
+        selectedItems.toArray(new Selectable [selectedItems.size()])));
     // End compound edit
     undoSupport.endUpdate();
+  }
+
+  /**
+   * Undoable edit for pasting style end.
+   */
+  private static class PastingStyleEndUndoableEdit extends LocalizedUndoableEdit {
+    private final Home home;
+    private final Selectable [] selectedItems;
+
+    public PastingStyleEndUndoableEdit(Home home, UserPreferences preferences, Selectable [] selectedItems) {
+      super(preferences, HomeController.class, "undoPasteStyleName");
+      this.home = home;
+      this.selectedItems = selectedItems;
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedItems(Arrays.asList(this.selectedItems));
+    }
   }
 
   /**
@@ -2863,46 +2867,56 @@ public class HomeController implements Controller {
    */
   private void toggleBackgroundImageVisibility(final String presentationName) {
     final Level selectedLevel = this.home.getSelectedLevel();
-    doToggleBackgroundImageVisibility();
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          home.setSelectedLevel(selectedLevel);
-          doToggleBackgroundImageVisibility();
-        }
+    doToggleBackgroundImageVisibility(this.home);
+    getUndoableEditSupport().postEdit(new BackgroundImageVisibilityTogglingUndoableEdit(
+        this.home, this.preferences, presentationName, selectedLevel));
+  }
 
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          home.setSelectedLevel(selectedLevel);
-          doToggleBackgroundImageVisibility();
-        }
+  /**
+   * Undoable edit for toggling background image visibility.
+   */
+  private static class BackgroundImageVisibilityTogglingUndoableEdit extends LocalizedUndoableEdit {
+    private final Home  home;
+    private final Level selectedLevel;
 
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, presentationName);
-        }
-      };
-    getUndoableEditSupport().postEdit(undoableEdit);
+    private BackgroundImageVisibilityTogglingUndoableEdit(Home home, UserPreferences preferences, String presentationName,
+                                                          Level selectedLevel) {
+      super(preferences, HomeController.class, presentationName);
+      this.home = home;
+      this.selectedLevel = selectedLevel;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      doToggleBackgroundImageVisibility(this.home);
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      doToggleBackgroundImageVisibility(this.home);
+    }
   }
 
   /**
    * Toggles visibility of the background image.
    */
-  private void doToggleBackgroundImageVisibility() {
-    BackgroundImage backgroundImage = this.home.getSelectedLevel() != null
-        ? this.home.getSelectedLevel().getBackgroundImage()
-        : this.home.getBackgroundImage();
+  private static void doToggleBackgroundImageVisibility(Home home) {
+    BackgroundImage backgroundImage = home.getSelectedLevel() != null
+        ? home.getSelectedLevel().getBackgroundImage()
+        : home.getBackgroundImage();
     backgroundImage = new BackgroundImage(backgroundImage.getImage(),
         backgroundImage.getScaleDistance(),
         backgroundImage.getScaleDistanceXStart(), backgroundImage.getScaleDistanceYStart(),
         backgroundImage.getScaleDistanceXEnd(), backgroundImage.getScaleDistanceYEnd(),
         backgroundImage.getXOrigin(), backgroundImage.getYOrigin(), !backgroundImage.isVisible());
-    if (this.home.getSelectedLevel() != null) {
-      this.home.getSelectedLevel().setBackgroundImage(backgroundImage);
+    if (home.getSelectedLevel() != null) {
+      home.getSelectedLevel().setBackgroundImage(backgroundImage);
     } else {
-      this.home.setBackgroundImage(backgroundImage);
+      home.setBackgroundImage(backgroundImage);
     }
   }
 
@@ -2919,35 +2933,47 @@ public class HomeController implements Controller {
       oldImage = this.home.getBackgroundImage();
       this.home.setBackgroundImage(null);
     }
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        home.setSelectedLevel(selectedLevel);
-        if (selectedLevel != null) {
-          selectedLevel.setBackgroundImage(oldImage);
-        } else {
-          home.setBackgroundImage(oldImage);
-        }
-      }
+    getUndoableEditSupport().postEdit(new BackgroundImageDeletionUndoableEdit(this.home, this.preferences,
+        selectedLevel, oldImage));
+  }
 
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        home.setSelectedLevel(selectedLevel);
-        if (selectedLevel != null) {
-          selectedLevel.setBackgroundImage(null);
-        } else {
-          home.setBackgroundImage(null);
-        }
-      }
+  /**
+   * Undoable edit for background image deletion.
+   */
+  private static class BackgroundImageDeletionUndoableEdit extends LocalizedUndoableEdit {
+    private final Home            home;
+    private final Level           selectedLevel;
+    private final BackgroundImage oldImage;
 
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(HomeController.class, "undoDeleteBackgroundImageName");
+    private BackgroundImageDeletionUndoableEdit(Home home, UserPreferences preferences,
+                                                Level selectedLevel, BackgroundImage oldImage) {
+      super(preferences, HomeController.class, "undoDeleteBackgroundImageName");
+      this.home = home;
+      this.oldImage = oldImage;
+      this.selectedLevel = selectedLevel;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      if (this.selectedLevel != null) {
+        this.selectedLevel.setBackgroundImage(this.oldImage);
+      } else {
+        this.home.setBackgroundImage(this.oldImage);
       }
-    };
-    getUndoableEditSupport().postEdit(undoableEdit);
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      if (this.selectedLevel != null) {
+        this.selectedLevel.setBackgroundImage(null);
+      } else {
+        this.home.setBackgroundImage(null);
+      }
+    }
   }
 
   /**
