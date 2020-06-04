@@ -52,6 +52,7 @@ public abstract class HomeObject implements Serializable, Cloneable {
 
   /**
    * Returns a new ID prefixed by the given string.
+   * @since 6.4
    */
   protected static String createID(String prefix) {
     return prefix + "-" + UUID.randomUUID();
@@ -163,7 +164,29 @@ public abstract class HomeObject implements Serializable, Cloneable {
   }
 
   /**
+   * Returns a clone of this object with a new id.
+   * @since 6.4
+   */
+  public HomeObject duplicate() {
+    HomeObject clone = clone();
+    // Generate a new ID with the same prefix
+    int index = 0;
+    char c;
+    while (index < this.id.length()
+        && (c = Character.toLowerCase(this.id.charAt(index))) >= 'a'
+        && c <= 'z') {
+      index++;
+    }
+    String prefix = index >= 0
+        ? this.id.substring(0, index)
+        : ID_DEFAULT_PREFIX;
+    clone.id = createID(prefix);
+    return clone;
+  }
+
+  /**
    * Returns a clone of this object.
+   * The returned object has the same id as this object.
    */
   @Override
   public HomeObject clone() {
@@ -174,20 +197,7 @@ public abstract class HomeObject implements Serializable, Cloneable {
             ? Collections.singletonMap(this.properties.keySet().iterator().next(), this.properties.values().iterator().next())
             : new HashMap<String, String>(this.properties);
       }
-
-      // Generate a new ID with the same prefix
-      int index = 0;
-      char c;
-      while (index < this.id.length()
-          && (c = Character.toLowerCase(this.id.charAt(index))) >= 'a'
-          && c <= 'z') {
-        index++;
-      }
-      String prefix = index >= 0
-          ? this.id.substring(0, index)
-          : ID_DEFAULT_PREFIX;
-      clone.id = createID(prefix);
-      return clone;
+    return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable");
     }

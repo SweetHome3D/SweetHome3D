@@ -1834,17 +1834,19 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Returns a deep copy of home selectable <code>items</code>.
-   * Cloned items are at the same index as their original.
+   * Duplicated items are at the same index as their original and use different ids.
    * @param items  the items to duplicate
    */
   public static List<Selectable> duplicate(List<? extends Selectable> items) {
     List<Selectable> list = new ArrayList<Selectable>();
     // Clone first walls list with their walls at start and end point set
-    List<Wall> clonedWalls = Wall.clone(getWallsSubList(items));
+    List<Wall> clonedWalls = Wall.duplicate(getWallsSubList(items));
     int wallIndex = 0;
     for (Selectable item : items) {
       if (item instanceof Wall) {
         list.add(clonedWalls.get(wallIndex++));
+      } else if (item instanceof HomeObject) {
+        list.add((Selectable)((HomeObject)item).duplicate());
       } else {
         list.add(item.clone());
       }

@@ -1229,7 +1229,12 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     for (Wall wall : walls) {
       wallsCopy.add(wall.clone());
     }
-    // Update walls at start and end point
+    updateBoundWalls(wallsCopy, walls);
+    return wallsCopy;
+  }
+
+  private static void updateBoundWalls(ArrayList<Wall> wallsCopy, List<Wall> walls) {
+    // Update walls at start and end point in wallsCopy
     for (int i = 0; i < walls.size(); i++) {
       Wall wall = walls.get(i);
       int wallAtStartIndex = walls.indexOf(wall.getWallAtStart());
@@ -1241,6 +1246,22 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         wallsCopy.get(i).setWallAtEnd(wallsCopy.get(wallAtEndIndex));
       }
     }
+  }
+
+  /**
+   * Returns a duplicate of the <code>walls</code> list. All existing walls
+   * are copied and their wall at start and end point are set with copied
+   * walls only if they belong to the returned list.
+   * The id of duplicated walls are regenerated.
+   * @since 6.4
+   */
+  public static List<Wall> duplicate(List<Wall> walls) {
+    ArrayList<Wall> wallsCopy = new ArrayList<Wall>(walls.size());
+    // Duplicate walls
+    for (Wall wall : walls) {
+      wallsCopy.add((Wall)wall.duplicate());
+    }
+    updateBoundWalls(wallsCopy, walls);
     return wallsCopy;
   }
 
