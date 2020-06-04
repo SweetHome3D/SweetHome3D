@@ -154,7 +154,8 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       visible (false | true) "true">
  *
  * &lt;!ENTITY % cameraCommonAttributes
- *      'name CDATA #IMPLIED
+ *      'id ID #IMPLIED
+ *       name CDATA #IMPLIED
  *       lens (PINHOLE | NORMAL | FISHEYE | SPHERICAL) "PINHOLE"
  *       x CDATA #REQUIRED
  *       y CDATA #REQUIRED
@@ -187,7 +188,8 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *       viewable (false | true) "true">
  *
  * &lt;!ENTITY % furnitureCommonAttributes
- *      'name CDATA #REQUIRED
+ *      'id ID #IMPLIED
+ *       name CDATA #REQUIRED
  *       angle CDATA "0"
  *       visible (false | true) "true"
  *       movable (false | true) "true"
@@ -358,6 +360,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *
  * &lt;!ELEMENT room (property*, textStyle?, textStyle?, texture?, texture?, point+)>
  * &lt;!ATTLIST room
+ *       id ID #IMPLIED
  *       level IDREF #IMPLIED
  *       name CDATA #IMPLIED
  *       nameAngle CDATA "0"
@@ -381,6 +384,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *
  * &lt;!ELEMENT polyline (property*, point+)>
  * &lt;!ATTLIST polyline
+ *       id ID #IMPLIED
  *       level IDREF #IMPLIED
  *       thickness CDATA "1"
  *       capStyle (BUTT | SQUARE | ROUND) "BUTT"
@@ -396,6 +400,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *
  * &lt;!ELEMENT dimensionLine (property*, textStyle?)>
  * &lt;!ATTLIST dimensionLine
+ *       id ID #IMPLIED
  *       level IDREF #IMPLIED
  *       xStart CDATA #REQUIRED
  *       yStart CDATA #REQUIRED
@@ -405,6 +410,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  *
  * &lt;!ELEMENT label (property*, textStyle?, text)>
  * &lt;!ATTLIST label
+ *       id ID #IMPLIED
  *       level IDREF #IMPLIED
  *       x CDATA #REQUIRED
  *       y CDATA #REQUIRED
