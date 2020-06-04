@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +37,9 @@ import java.util.UUID;
 public abstract class HomeObject implements Serializable, Cloneable {
   private static final long serialVersionUID = 1L;
 
-  private final String id;
+  private static final String ID_DEFAULT_PREFIX = "object";
+
+  private String id; // Should be final but readObject needs to create a default one
   private Map<String, String> properties;
 
   /**
@@ -42,7 +47,7 @@ public abstract class HomeObject implements Serializable, Cloneable {
    * @since 6.4
    */
   public HomeObject() {
-    this(createID("object"));
+    this(createID(ID_DEFAULT_PREFIX));
   }
 
   /**
@@ -61,6 +66,35 @@ public abstract class HomeObject implements Serializable, Cloneable {
       throw new IllegalArgumentException("ID must exist");
     }
     this.id = id;
+  }
+
+  /**
+   * Initializes id field to ensure it exists.
+   * Useful to deserialize files older than version 5.3 where super class HomeObject didn't exist yet.
+   */
+  private void readObjectNoData() throws ObjectStreamException {
+    // Generate a default id in case it didn't exist
+    String prefix = getClass().getSimpleName();
+    if (prefix.length() == 0) {
+      // Anonymous class
+      prefix = ID_DEFAULT_PREFIX;
+    } else {
+      if (prefix.startsWith("Home") && !prefix.equals("Home")) {
+        // Remove "Home" prefix
+        prefix = prefix.substring(4);
+      }
+      prefix = Character.toLowerCase(prefix.charAt(0)) + prefix.substring(1);
+    }
+    this.id = createID(prefix);
+  }
+
+  /**
+   * Initializes id field to ensure it exists
+   * and reads object from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    readObjectNoData();
+    in.defaultReadObject();
   }
 
   /**
@@ -140,6 +174,19 @@ public abstract class HomeObject implements Serializable, Cloneable {
             ? Collections.singletonMap(this.properties.keySet().iterator().next(), this.properties.values().iterator().next())
             : new HashMap<String, String>(this.properties);
       }
+
+      // Generate a new ID with the same prefix
+      int index = 0;
+      char c;
+      while (index < this.id.length()
+          && (c = Character.toLowerCase(this.id.charAt(index))) >= 'a'
+          && c <= 'z') {
+        index++;
+      }
+      String prefix = index >= 0
+          ? this.id.substring(0, index)
+          : ID_DEFAULT_PREFIX;
+      clone.id = createID(prefix);
       return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable");
