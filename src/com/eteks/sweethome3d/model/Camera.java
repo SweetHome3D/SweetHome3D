@@ -83,7 +83,7 @@ public class Camera extends HomeObject {
    */
   public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView,
                 long time, Lens lens) {
-    this(createID("camera"), x, y, z, yaw, pitch, fieldOfView, time, lens);
+    this(createId("camera"), x, y, z, yaw, pitch, fieldOfView, time, lens);
   }
 
 

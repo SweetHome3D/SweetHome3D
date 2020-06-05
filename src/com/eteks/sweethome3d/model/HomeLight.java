@@ -48,7 +48,7 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
    * @param light the light from which data are copied
    */
   public HomeLight(Light light) {
-    this(createID("light"), light);
+    this(createId("light"), light);
   }
 
   /**

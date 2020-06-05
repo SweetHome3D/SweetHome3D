@@ -79,7 +79,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
    * Creates a room from its name and the given coordinates.
    */
   public Room(float [][] points) {
-    this(createID("room"), points);
+    this(createId("room"), points);
   }
 
   /**

@@ -339,7 +339,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * @param piece the piece from which data are copied
    */
   public HomePieceOfFurniture(PieceOfFurniture piece) {
-    this(createID("pieceOfFurniture"), piece);
+    this(createId("pieceOfFurniture"), piece);
   }
 
   /**

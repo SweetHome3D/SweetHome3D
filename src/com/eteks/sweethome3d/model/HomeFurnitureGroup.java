@@ -91,7 +91,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             float angle, boolean modelMirrored,
                             String name) {
-    this(createID("furnitureGroup"), furniture, angle, modelMirrored, name);
+    this(createId("furnitureGroup"), furniture, angle, modelMirrored, name);
   }
 
   /**

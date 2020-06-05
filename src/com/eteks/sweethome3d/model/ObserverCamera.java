@@ -55,7 +55,7 @@ public class ObserverCamera extends Camera implements Selectable {
    * Creates a camera at given location and angle.
    */
   public ObserverCamera(float x, float y, float z, float yaw, float pitch, float fieldOfView) {
-    this(createID("observerCamera"), x, y, z, yaw, pitch, fieldOfView);
+    this(createId("observerCamera"), x, y, z, yaw, pitch, fieldOfView);
   }
 
   /**

@@ -58,7 +58,7 @@ public class Level extends HomeObject {
    * @param height the height of the level
    */
   public Level(String name, float elevation, float floorThickness, float height) {
-    this(createID("level"), name, elevation, floorThickness, height);
+    this(createId("level"), name, elevation, floorThickness, height);
   }
 
   /**

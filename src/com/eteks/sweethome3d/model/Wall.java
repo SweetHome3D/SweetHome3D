@@ -115,7 +115,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    * @since 4.0
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height, TextureImage pattern) {
-    this(createID("wall"), xStart, yStart, xEnd, yEnd, thickness, height, pattern);
+    this(createId("wall"), xStart, yStart, xEnd, yEnd, thickness, height, pattern);
   }
 
   /**

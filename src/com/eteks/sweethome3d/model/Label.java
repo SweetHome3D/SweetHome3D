@@ -57,7 +57,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
    * Creates a label with the given <code>text</code>.
    */
   public Label(String text, float x, float y) {
-    this(createID("label"), text, x, y);
+    this(createId("label"), text, x, y);
   }
 
   /**

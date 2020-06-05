@@ -47,14 +47,14 @@ public abstract class HomeObject implements Serializable, Cloneable {
    * @since 6.4
    */
   public HomeObject() {
-    this(createID(ID_DEFAULT_PREFIX));
+    this(createId(ID_DEFAULT_PREFIX));
   }
 
   /**
    * Returns a new ID prefixed by the given string.
    * @since 6.4
    */
-  protected static String createID(String prefix) {
+  protected static String createId(String prefix) {
     return prefix + "-" + UUID.randomUUID();
   }
 
@@ -86,7 +86,7 @@ public abstract class HomeObject implements Serializable, Cloneable {
       }
       prefix = Character.toLowerCase(prefix.charAt(0)) + prefix.substring(1);
     }
-    this.id = createID(prefix);
+    this.id = createId(prefix);
   }
 
   /**
@@ -180,7 +180,7 @@ public abstract class HomeObject implements Serializable, Cloneable {
     String prefix = index >= 0
         ? this.id.substring(0, index)
         : ID_DEFAULT_PREFIX;
-    clone.id = createID(prefix);
+    clone.id = createId(prefix);
     return clone;
   }
 

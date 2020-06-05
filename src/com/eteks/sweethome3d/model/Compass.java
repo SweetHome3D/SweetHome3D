@@ -74,7 +74,7 @@ public class Compass extends HomeObject implements Selectable {
    * to the geographic point matching the default time zone.
    */
   public Compass(float x, float y, float diameter) {
-    this(createID("compass"), x, y, diameter);
+    this(createId("compass"), x, y, diameter);
   }
 
   /**

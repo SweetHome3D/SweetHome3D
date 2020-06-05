@@ -126,7 +126,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
                   CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
                   float dashOffset, ArrowStyle startArrowStyle,
                   ArrowStyle endArrowStyle, boolean closedPath, int color) {
-    this(createID("polyline"), points, thickness, capStyle, joinStyle, dashStyle, dashOffset,
+    this(createId("polyline"), points, thickness, capStyle, joinStyle, dashStyle, dashOffset,
         startArrowStyle, endArrowStyle, closedPath, color);
   }
 
