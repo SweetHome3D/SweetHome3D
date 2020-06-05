@@ -8600,7 +8600,9 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       if (getView() != null) {
-        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+        if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
+          moveMouse(getXLastMouseMove(), getYLastMouseMove());
+        }
         home.addSelectionListener(this.selectionListener);
         this.selectionListener.selectionChanged(null);
       }
