@@ -92,7 +92,7 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * &lt;!ELEMENT furnitureVisibleProperty EMPTY>
  * &lt;!ATTLIST furnitureVisibleProperty name CDATA #REQUIRED>
  *
- * &lt;!ELEMENT environment ((camera | observerCamera)*, texture?, texture?) >
+ * &lt;!ELEMENT environment (property*, (camera | observerCamera)*, texture?, texture?) >
  * &lt;!ATTLIST environment
  *       groundColor CDATA #IMPLIED
  *       backgroundImageVisibleOnGround3D (false | true) "false"
@@ -864,6 +864,7 @@ public class HomeXMLHandler extends DefaultHandler {
   private void setEnvironmentAttributes(HomeEnvironment environment,
                                         String elementName,
                                         Map<String, String> attributes) throws SAXException {
+    setProperties(environment);
     Integer groundColor = parseOptionalColor(attributes, "groundColor");
     if (groundColor != null) {
       environment.setGroundColor(groundColor);

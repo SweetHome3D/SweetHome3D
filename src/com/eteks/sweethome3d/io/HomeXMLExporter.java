@@ -203,6 +203,7 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
 
         @Override
         protected void writeChildren(XMLWriter writer, HomeEnvironment environment) throws IOException {
+          writeProperties(writer, environment);
           if (!environment.getVideoCameraPath().isEmpty()) {
             for (Camera camera : environment.getVideoCameraPath()) {
               writeCamera(writer, camera, "cameraPath");

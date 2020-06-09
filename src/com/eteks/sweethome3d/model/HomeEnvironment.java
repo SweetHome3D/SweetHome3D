@@ -32,7 +32,7 @@ import java.util.List;
  * The environment attributes of a home.
  * @author Emmanuel Puybaret
  */
-public class HomeEnvironment implements Serializable, Cloneable {
+public class HomeEnvironment extends HomeObject implements Serializable, Cloneable {
   private static final long serialVersionUID = 1L;
 
   /**
@@ -84,9 +84,19 @@ public class HomeEnvironment implements Serializable, Cloneable {
    * Creates default environment.
    */
   public HomeEnvironment() {
-    this(0xA8A8A8, // Ground color
+    this(HomeObject.createId("environment"));
+  }
+
+  /**
+   * Creates default environment.
+   * @since 6.4
+   */
+  public HomeEnvironment(String id) {
+    this(id,
+         0xA8A8A8, // Ground color
          null,     // Ground texture
          0xCCE4FC, // Sky color
+         null,     // Sky texture
          0xD0D0D0, // Light color
          0);       // Walls alpha
   }
@@ -108,6 +118,19 @@ public class HomeEnvironment implements Serializable, Cloneable {
   public HomeEnvironment(int groundColor, HomeTexture groundTexture,
                          int skyColor, HomeTexture skyTexture,
                          int lightColor, float wallsAlpha) {
+    this(HomeObject.createId("environment"), groundColor, groundTexture,
+        skyColor, skyTexture, lightColor, wallsAlpha);
+  }
+
+  /**
+   * Creates home environment from parameters.
+   * @since 6.4
+   */
+  public HomeEnvironment(String id,
+                         int groundColor, HomeTexture groundTexture,
+                         int skyColor, HomeTexture skyTexture,
+                         int lightColor, float wallsAlpha) {
+    super(id);
     this.observerCameraElevationAdjusted = true;
     this.groundColor = groundColor;
     this.groundTexture = groundTexture;
@@ -658,16 +681,12 @@ public class HomeEnvironment implements Serializable, Cloneable {
    */
   @Override
   public HomeEnvironment clone() {
-    try {
-      HomeEnvironment clone = (HomeEnvironment)super.clone();
-      clone.cameraPath = new ArrayList<Camera>(this.cameraPath.size());
-      for (Camera camera : this.cameraPath) {
-        clone.cameraPath.add(camera.clone());
-      }
-      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-      return clone;
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Super class isn't cloneable");
+    HomeEnvironment clone = (HomeEnvironment)super.clone();
+    clone.cameraPath = new ArrayList<Camera>(this.cameraPath.size());
+    for (Camera camera : this.cameraPath) {
+      clone.cameraPath.add(camera.clone());
     }
+    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+    return clone;
   }
 }
