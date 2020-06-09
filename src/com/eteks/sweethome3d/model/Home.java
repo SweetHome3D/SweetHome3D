@@ -48,6 +48,11 @@ public class Home implements Serializable, Cloneable {
    */
   public static final long CURRENT_VERSION = 6400;
 
+  private static final String  HOME_TOP_CAMERA_ID         = "camera-homeTopCamera";
+  private static final String  HOME_OBSERVER_CAMERA_ID    = "observerCamera-homeObserverCamera";
+  private static final String  HOME_ENVIRONMENT_ID        = "environment-homeEnvironment";
+  private static final String  HOME_COMPASS_ID            = "compass-homeCompass";
+
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
 
   private static final Comparator<Level> LEVEL_ELEVATION_COMPARATOR = new Comparator<Level>() {
@@ -295,6 +300,68 @@ public class Home implements Serializable, Cloneable {
       moveVisualProperty("com.eteks.sweethome3d.SweetHome3D.ScreenHeight");
     }
 
+    if (this.version < 6400) {
+      // Ensure environment, compass, topCamera and observerCamera have their ID set to the default IDs
+      // Create a copy of environment with the expected ID
+      HomeEnvironment environment = new HomeEnvironment(HOME_ENVIRONMENT_ID,
+          this.environment.getGroundColor(), this.environment.getGroundTexture(),
+          this.environment.getSkyColor(), this.environment.getSkyTexture(),
+          this.environment.getLightColor(), this.environment.getWallsAlpha());
+      for (String name : this.environment.getPropertyNames()) {
+        environment.setProperty(name, this.environment.getProperty(name));
+      }
+      environment.setBackgroundImageVisibleOnGround3D(this.environment.isBackgroundImageVisibleOnGround3D());
+      environment.setAllLevelsVisible(this.environment.isAllLevelsVisible());
+      environment.setObserverCameraElevationAdjusted(this.environment.isObserverCameraElevationAdjusted());
+      environment.setCeillingLightColor(this.environment.getCeillingLightColor());
+      environment.setDrawingMode(this.environment.getDrawingMode());
+      environment.setSubpartSizeUnderLight(this.environment.getSubpartSizeUnderLight());
+      environment.setPhotoWidth(this.environment.getPhotoWidth());
+      environment.setPhotoHeight(this.environment.getPhotoHeight());
+      environment.setPhotoAspectRatio(this.environment.getPhotoAspectRatio());
+      environment.setPhotoQuality(this.environment.getPhotoQuality());
+      environment.setVideoWidth(this.environment.getVideoWidth());
+      environment.setVideoAspectRatio(this.environment.getVideoAspectRatio());
+      environment.setVideoQuality(this.environment.getVideoQuality());
+      environment.setVideoSpeed(this.environment.getVideoSpeed());
+      environment.setVideoFrameRate(this.environment.getVideoFrameRate());
+      environment.setVideoCameraPath(this.environment.getVideoCameraPath());
+      this.environment = environment;
+
+      // Create a copy of compass with the expected ID
+      Compass compass = new Compass(HOME_COMPASS_ID, this.compass.getX(), this.compass.getY(), this.compass.getDiameter());
+      for (String name : this.compass.getPropertyNames()) {
+        compass.setProperty(name, this.compass.getProperty(name));
+      }
+      compass.setNorthDirection(this.compass.getNorthDirection());
+      compass.setLongitude(this.compass.getLongitude());
+      compass.setLatitude(this.compass.getLatitude());
+      compass.setTimeZone(this.compass.getTimeZone());
+      compass.setVisible(this.compass.isVisible());
+      this.compass = compass;
+
+      // Create copies of cameras with expected IDs
+      Camera topCamera = new Camera(HOME_TOP_CAMERA_ID, this.topCamera.getX(), this.topCamera.getY(), this.topCamera.getZ(),
+          this.topCamera.getYaw(), this.topCamera.getPitch(), this.topCamera.getFieldOfView());
+      for (String name : this.topCamera.getPropertyNames()) {
+        topCamera.setProperty(name, this.topCamera.getProperty(name));
+      }
+      topCamera.setLens(this.topCamera.getLens());
+      topCamera.setTime(this.topCamera.getTime());
+      this.topCamera = topCamera;
+
+      ObserverCamera observerCamera = new ObserverCamera(HOME_OBSERVER_CAMERA_ID,
+          this.observerCamera.getX(), this.observerCamera.getY(), this.observerCamera.getZ(),
+          this.observerCamera.getYaw(), this.observerCamera.getPitch(), this.observerCamera.getFieldOfView());
+      for (String name : this.observerCamera.getPropertyNames()) {
+        observerCamera.setProperty(name, this.observerCamera.getProperty(name));
+      }
+      observerCamera.setFixedSize(this.observerCamera.isFixedSize());
+      observerCamera.setLens(this.observerCamera.getLens());
+      observerCamera.setTime(this.observerCamera.getTime());
+      this.observerCamera = observerCamera;
+    }
+
     addModelListeners();
   }
 
@@ -324,19 +391,19 @@ public class Home implements Serializable, Cloneable {
           HomePieceOfFurniture.SortableProperty.VISIBLE});
     }
     // Create a default top camera that matches default point of view
-    this.topCamera = new Camera(50, 1050, 1010,
+    this.topCamera = new Camera(HOME_TOP_CAMERA_ID, 50, 1050, 1010,
         (float)Math.PI, (float)Math.PI / 4, (float)Math.PI * 63 / 180);
     // Create a default observer camera (use a 63° field of view equivalent to a 35mm lens for a 24x36 film)
-    this.observerCamera = new ObserverCamera(50, 50, 170,
+    this.observerCamera = new ObserverCamera(HOME_OBSERVER_CAMERA_ID, 50, 50, 170,
         7 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     this.storedCameras = Collections.emptyList();
     // Initialize new fields
-    this.environment = new HomeEnvironment();
+    this.environment = new HomeEnvironment(HOME_ENVIRONMENT_ID);
     this.rooms = new ArrayList<Room>();
     this.polylines = new ArrayList<Polyline>();
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.labels = new ArrayList<Label>();
-    this.compass = new Compass(-100, 50, 100);
+    this.compass = new Compass(HOME_COMPASS_ID, -100, 50, 100);
     this.levels = new ArrayList<Level>();
     // Let compass be visible only on new homes
     this.compass.setVisible(newHome);
@@ -1196,27 +1263,27 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Returns all the selectable and viewable items in this home, except the observer camera.
-   * @return a list containing viewable walls, furniture, dimension lines, labels and compass.
+   * @return a list containing viewable walls, rooms, furniture, dimension lines, polylines, labels and compass.
    * @since 5.0
    */
   public List<Selectable> getSelectableViewableItems() {
-    List<Selectable> homeItems = new ArrayList<Selectable>();
-    addViewableItems(this.walls, homeItems);
-    addViewableItems(this.rooms, homeItems);
-    addViewableItems(this.dimensionLines, homeItems);
-    addViewableItems(this.polylines, homeItems);
-    addViewableItems(this.labels, homeItems);
+    List<Selectable> items = new ArrayList<Selectable>();
+    addViewableItems(this.walls, items);
+    addViewableItems(this.rooms, items);
+    addViewableItems(this.dimensionLines, items);
+    addViewableItems(this.polylines, items);
+    addViewableItems(this.labels, items);
     for (HomePieceOfFurniture piece : getFurniture()) {
       if (piece.isVisible()
           && (piece.getLevel() == null
               || piece.getLevel().isViewable())) {
-        homeItems.add(piece);
+        items.add(piece);
       }
     }
-    if (getCompass().isVisible()) {
-      homeItems.add(getCompass());
+    if (this.compass.isVisible()) {
+      items.add(this.compass);
     }
-    return homeItems;
+    return items;
   }
 
   /**
@@ -1233,6 +1300,35 @@ public class Home implements Serializable, Cloneable {
         }
       }
     }
+  }
+
+  /**
+   * Returns all the mutable objects handled by this home.
+   * @return a list containing environment, compass, levels, walls, rooms, furniture and their possible children,
+   * polylines, dimension lines, labels and cameras.
+   * @since 6.4
+   */
+  public List<HomeObject> getHomeObjects() {
+    List<HomeObject> homeItems = new ArrayList<HomeObject>();
+    homeItems.add(this.environment);
+    homeItems.add(this.compass);
+    homeItems.addAll(this.levels);
+    homeItems.addAll(this.walls);
+    homeItems.addAll(this.rooms);
+    homeItems.addAll(this.dimensionLines);
+    homeItems.addAll(this.polylines);
+    homeItems.addAll(this.labels);
+    for (HomePieceOfFurniture piece : getFurniture()) {
+      homeItems.add(piece);
+      if (piece instanceof HomeFurnitureGroup) {
+        homeItems.addAll(((HomeFurnitureGroup)piece).getAllFurniture());
+      }
+    }
+    homeItems.add(this.topCamera);
+    homeItems.add(this.observerCamera);
+    homeItems.addAll(this.storedCameras);
+    homeItems.addAll(this.environment.getVideoCameraPath());
+    return homeItems;
   }
 
   /**

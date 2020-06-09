@@ -308,7 +308,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
-   * Returns the furniture of this group and of all its subgroups.
+   * Returns the furniture of this group and of all its subgroups, including the possible child furniture groups.
    * @since 5.0
    */
   public List<HomePieceOfFurniture> getAllFurniture() {
