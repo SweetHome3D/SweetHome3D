@@ -5120,7 +5120,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private static class ItemsDeletionEndUndoableEdit extends AbstractUndoableEdit {
     private PlanController controller;
-    private Home home;
+    private Home           home;
 
     public ItemsDeletionEndUndoableEdit(PlanController controller, Home home) {
       this.controller = controller;
@@ -6461,7 +6461,8 @@ public class PlanController extends FurnitureController implements Controller {
     // Post duplicated items in a compound edit
     this.undoSupport.beginUpdate();
     // Add a undoable edit that will select previous items at undo
-    this.undoSupport.postEdit(new DuplicationStartUndoableEdit(this, oldSelection, allLevelsSelection));
+    this.undoSupport.postEdit(new DuplicationStartUndoableEdit(this,
+        oldSelection.toArray(new Selectable [oldSelection.size()]), allLevelsSelection));
 
     addFurniture(furniture);
     List<Selectable> emptyList = Collections.emptyList();
@@ -6472,7 +6473,7 @@ public class PlanController extends FurnitureController implements Controller {
     postCreateLabels(Home.getLabelsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
 
     // Add a undoable edit that will select all the items at redo
-    this.undoSupport.postEdit(new DuplicationEndUndoableEdit(this, this.preferences, items));
+    this.undoSupport.postEdit(new DuplicationEndUndoableEdit(this, this.preferences, items.toArray(new Selectable [items.size()])));
 
     // End compound edit
     this.undoSupport.endUpdate();
@@ -6484,11 +6485,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Undoable edit for duplication start.
    */
   private static class DuplicationStartUndoableEdit extends AbstractUndoableEdit {
-    private final PlanController   controller;
-    private final List<Selectable> oldSelection;
-    private final boolean          allLevelsSelection;
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        allLevelsSelection;
 
-    public DuplicationStartUndoableEdit(PlanController controller, List<Selectable> oldSelection, boolean allLevelsSelection) {
+    public DuplicationStartUndoableEdit(PlanController controller, Selectable [] oldSelection, boolean allLevelsSelection) {
       this.controller = controller;
       this.oldSelection = oldSelection;
       this.allLevelsSelection = allLevelsSelection;
@@ -6497,7 +6498,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void undo() throws CannotRedoException {
       super.undo();
-      this.controller.selectAndShowItems(this.oldSelection, this.allLevelsSelection);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
     }
   }
 
@@ -6505,10 +6506,10 @@ public class PlanController extends FurnitureController implements Controller {
    * Undoable edit for duplication end.
    */
   private static class DuplicationEndUndoableEdit extends LocalizedUndoableEdit {
-    private final PlanController   controller;
-    private final List<Selectable> items;
+    private final PlanController controller;
+    private final Selectable []  items;
 
-    public DuplicationEndUndoableEdit(PlanController controller, UserPreferences preferences, List<Selectable> items) {
+    public DuplicationEndUndoableEdit(PlanController controller, UserPreferences preferences, Selectable [] items) {
       super(preferences, PlanController.class, "undoDuplicateSelectionName");
       this.controller = controller;
       this.items = items;
@@ -6517,7 +6518,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      this.controller.selectAndShowItems(this.items);
+      this.controller.selectAndShowItems(Arrays.asList(this.items));
     }
   }
 
