@@ -315,12 +315,13 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   }
 
   /**
-   * Returns a clone of this door or window.
+   * Returns a copy of this door or window.
+   * @since 6.4
    */
   @Override
-  public HomeDoorOrWindow clone() {
-    HomeDoorOrWindow clone = (HomeDoorOrWindow)super.clone();
-    clone.boundToWall = false;
-    return clone;
+  public HomeObject duplicate() {
+    HomeDoorOrWindow copy = (HomeDoorOrWindow)super.duplicate();
+    copy.boundToWall = false;
+    return copy;
   }
 }

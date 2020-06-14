@@ -1106,6 +1106,22 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * Returns a copy of this object and its children with new ids.
+   * @since 6.4
+   */
+  @Override
+  public HomeObject duplicate() {
+    HomeFurnitureGroup copy = (HomeFurnitureGroup)super.duplicate();
+    // Replace cloned furniture by duplicated furniture
+    copy.furniture = new ArrayList<HomePieceOfFurniture>(copy.furniture.size());
+    for (HomePieceOfFurniture piece : this.furniture) {
+      copy.furniture.add((HomePieceOfFurniture)piece.duplicate());
+    }
+    copy.furniture = Collections.unmodifiableList(copy.furniture);
+    return copy;
+  }
+
+  /**
    * Returns a clone of this group with cloned furniture.
    */
   @Override
@@ -1114,12 +1130,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     // Deep clone furniture managed by this group
     clone.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
     for (HomePieceOfFurniture piece : this.furniture) {
-      HomePieceOfFurniture pieceClone = piece.clone();
-      clone.furniture.add(pieceClone);
-      if (piece instanceof HomeDoorOrWindow
-          && ((HomeDoorOrWindow)piece).isBoundToWall()) {
-        ((HomeDoorOrWindow)pieceClone).setBoundToWall(true);
-      }
+      clone.furniture.add(piece.clone());
     }
     clone.furniture = Collections.unmodifiableList(clone.furniture);
     clone.addFurnitureListener();

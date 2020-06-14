@@ -164,11 +164,11 @@ public abstract class HomeObject implements Serializable, Cloneable {
   }
 
   /**
-   * Returns a clone of this object with a new id.
+   * Returns a copy of this object with a new id.
    * @since 6.4
    */
   public HomeObject duplicate() {
-    HomeObject clone = clone();
+    HomeObject copy = clone();
     // Generate a new ID with the same prefix
     int index = 0;
     char c;
@@ -180,8 +180,8 @@ public abstract class HomeObject implements Serializable, Cloneable {
     String prefix = index >= 0
         ? this.id.substring(0, index)
         : ID_DEFAULT_PREFIX;
-    clone.id = createId(prefix);
-    return clone;
+    copy.id = createId(prefix);
+    return copy;
   }
 
   /**

@@ -1219,6 +1219,33 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
+   * Moves this wall of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public void move(float dx, float dy) {
+    setXStart(getXStart() + dx);
+    setYStart(getYStart() + dy);
+    setXEnd(getXEnd() + dx);
+    setYEnd(getYEnd() + dy);
+  }
+
+  /**
+   * Returns a duplicate of the <code>walls</code> list. All existing walls
+   * are copied and their wall at start and end point are set with copied
+   * walls only if they belong to the returned list.
+   * The id of duplicated walls are regenerated.
+   * @since 6.4
+   */
+  public static List<Wall> duplicate(List<Wall> walls) {
+    ArrayList<Wall> wallsCopy = new ArrayList<Wall>(walls.size());
+    // Duplicate walls
+    for (Wall wall : walls) {
+      wallsCopy.add((Wall)wall.duplicate());
+    }
+    updateBoundWalls(wallsCopy, walls);
+    return wallsCopy;
+  }
+
+  /**
    * Returns a clone of the <code>walls</code> list. All existing walls
    * are copied and their wall at start and end point are set with copied
    * walls only if they belong to the returned list.
@@ -1246,33 +1273,6 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         wallsCopy.get(i).setWallAtEnd(wallsCopy.get(wallAtEndIndex));
       }
     }
-  }
-
-  /**
-   * Returns a duplicate of the <code>walls</code> list. All existing walls
-   * are copied and their wall at start and end point are set with copied
-   * walls only if they belong to the returned list.
-   * The id of duplicated walls are regenerated.
-   * @since 6.4
-   */
-  public static List<Wall> duplicate(List<Wall> walls) {
-    ArrayList<Wall> wallsCopy = new ArrayList<Wall>(walls.size());
-    // Duplicate walls
-    for (Wall wall : walls) {
-      wallsCopy.add((Wall)wall.duplicate());
-    }
-    updateBoundWalls(wallsCopy, walls);
-    return wallsCopy;
-  }
-
-  /**
-   * Moves this wall of (<code>dx</code>, <code>dy</code>) units.
-   */
-  public void move(float dx, float dy) {
-    setXStart(getXStart() + dx);
-    setYStart(getYStart() + dy);
-    setXEnd(getXEnd() + dx);
-    setYEnd(getYEnd() + dy);
   }
 
   /**

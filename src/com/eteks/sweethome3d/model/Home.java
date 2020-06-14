@@ -1801,13 +1801,6 @@ public class Home implements Serializable, Cloneable {
     destination.selectedItems = new ArrayList<Selectable>(source.selectedItems.size());
     destination.furniture = cloneSelectableItems(
         source.furniture, source.selectedItems, destination.selectedItems);
-    for (int i = 0; i < source.furniture.size(); i++) {
-      HomePieceOfFurniture piece = source.furniture.get(i);
-      if (piece instanceof HomeDoorOrWindow
-          && ((HomeDoorOrWindow)piece).isBoundToWall()) {
-        ((HomeDoorOrWindow)destination.furniture.get(i)).setBoundToWall(true);
-      }
-    }
     destination.rooms = cloneSelectableItems(source.rooms, source.selectedItems, destination.selectedItems);
     destination.dimensionLines = cloneSelectableItems(
         source.dimensionLines, source.selectedItems, destination.selectedItems);
