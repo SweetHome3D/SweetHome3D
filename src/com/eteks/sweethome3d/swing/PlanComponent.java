@@ -5493,12 +5493,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       if (parent instanceof JViewport) {
         Dimension viewSize = parent.getViewSize();
-        float viewWidth = convertXPixelToModel(viewRectangle.x + viewRectangle.width)
-            - convertXPixelToModel(viewRectangle.x);
+        float viewWidth = convertPixelToLength(viewRectangle.width);
         int xViewLocation = Math.max(0, Math.min(convertXModelToPixel(xViewCenterPosition - viewWidth / 2),
             viewSize.width - viewRectangle.x));
-        float viewHeight = convertYPixelToModel(viewRectangle.y + viewRectangle.height)
-            - convertYPixelToModel(viewRectangle.y);
+        float viewHeight = convertPixelToLength(viewRectangle.height);
         int yViewLocation = Math.max(0, Math.min(convertYModelToPixel(yViewCenterPosition - viewHeight / 2),
             viewSize.height - viewRectangle.y));
         parent.setViewPosition(new Point(xViewLocation, yViewLocation));
