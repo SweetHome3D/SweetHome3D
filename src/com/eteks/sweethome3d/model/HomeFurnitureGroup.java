@@ -886,9 +886,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (y != getY()) {
       float dy = y - getY();
       for (HomePieceOfFurniture piece : this.furniture) {
-        piece.addPropertyChangeListener(this.furnitureListener);
-        piece.setY(piece.getY() + dy);
         piece.removePropertyChangeListener(this.furnitureListener);
+        piece.setY(piece.getY() + dy);
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
       super.setY(y);
     }
