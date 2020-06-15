@@ -1113,11 +1113,14 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public HomeObject duplicate() {
     HomeFurnitureGroup copy = (HomeFurnitureGroup)super.duplicate();
     // Replace cloned furniture by duplicated furniture
-    copy.furniture = new ArrayList<HomePieceOfFurniture>(copy.furniture.size());
-    for (HomePieceOfFurniture piece : this.furniture) {
-      copy.furniture.add((HomePieceOfFurniture)piece.duplicate());
+     ArrayList<HomePieceOfFurniture> duplicatedFurniture = new ArrayList<HomePieceOfFurniture>(copy.furniture.size());
+    for (HomePieceOfFurniture piece : copy.furniture) {
+      piece.removePropertyChangeListener(copy.furnitureListener);
+      HomePieceOfFurniture duplicatedPiece = (HomePieceOfFurniture)piece.duplicate();
+      duplicatedFurniture.add(duplicatedPiece);
+      duplicatedPiece.addPropertyChangeListener(copy.furnitureListener);
     }
-    copy.furniture = Collections.unmodifiableList(copy.furniture);
+    copy.furniture = Collections.unmodifiableList(duplicatedFurniture);
     return copy;
   }
 
