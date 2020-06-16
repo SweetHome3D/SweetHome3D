@@ -1036,10 +1036,33 @@ public class PlanController extends FurnitureController implements Controller {
   private void flipSelectedItems(boolean horizontally) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (!selectedItems.isEmpty()) {
-      doFlipItems(selectedItems, horizontally);
+      Selectable [] flippedItems = selectedItems.toArray(new Selectable [selectedItems.size()]);
+      // Compute text base offsets to avoid using plan view during undo / redo
+      float [][] itemTextBaseOffsets = new float [flippedItems.length][];
+      for (int i = 0; i < itemTextBaseOffsets.length; i++) {
+        if (flippedItems [i] instanceof HomeFurnitureGroup) {
+          HomeFurnitureGroup group = (HomeFurnitureGroup)flippedItems [i];
+          List<HomePieceOfFurniture> furniture = group.getAllFurniture();
+          itemTextBaseOffsets [i] = new float [furniture.size() + 1];
+          itemTextBaseOffsets [i][0] = getTextBaseOffset(group.getName(), group.getNameStyle(), group.getClass());
+          for (int j = 0; j < furniture.size(); j++) {
+            HomePieceOfFurniture piece = furniture.get(j);
+            itemTextBaseOffsets [i][j + 1] = getTextBaseOffset(piece.getName(), piece.getNameStyle(), piece.getClass());
+          }
+        } else if (flippedItems [i] instanceof HomePieceOfFurniture) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)flippedItems [i];
+          itemTextBaseOffsets [i] = new float [] {getTextBaseOffset(piece.getName(), piece.getNameStyle(), piece.getClass())};
+        } else if (flippedItems [i] instanceof Room) {
+          Room room = (Room)flippedItems [i];
+          itemTextBaseOffsets [i] = new float [] {
+              getTextBaseOffset(room.getName(), room.getNameStyle(), room.getClass()),
+              getTextBaseOffset(this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea()), room.getAreaStyle(), room.getClass())};
+        }
+      }
+      doFlipItems(flippedItems, itemTextBaseOffsets, horizontally);
       selectAndShowItems(selectedItems, this.home.isAllLevelsSelection());
       this.undoSupport.postEdit(new FlippingUndoableEdit(this, this.preferences, this.home.isAllLevelsSelection(),
-          selectedItems.toArray(new Selectable [selectedItems.size()]), horizontally));
+          selectedItems.toArray(new Selectable [selectedItems.size()]), itemTextBaseOffsets, horizontally));
     }
   }
 
@@ -1050,28 +1073,31 @@ public class PlanController extends FurnitureController implements Controller {
     private final PlanController controller;
     private final boolean        allLevelsSelection;
     private final Selectable []  items;
+    private final float [][]     itemTextBaseOffsets;
     private final boolean        horizontalFlip;
 
     public FlippingUndoableEdit(PlanController controller, UserPreferences preferences,
-                                boolean allLevelsSelection, Selectable [] items, boolean horizontalFlip) {
+                                boolean allLevelsSelection, Selectable [] items,
+                                float [][] itemTextBaseOffsets, boolean horizontalFlip) {
       super(preferences, PlanController.class, "undoFlipName");
       this.controller = controller;
       this.allLevelsSelection = allLevelsSelection;
       this.items = items;
+      this.itemTextBaseOffsets = itemTextBaseOffsets;
       this.horizontalFlip = horizontalFlip;
     }
 
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      this.controller.doFlipItems(Arrays.asList(this.items), this.horizontalFlip);
+      this.controller.doFlipItems(this.items, this.itemTextBaseOffsets, this.horizontalFlip);
       this.controller.selectAndShowItems(Arrays.asList(this.items), this.allLevelsSelection);
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      this.controller.doFlipItems(Arrays.asList(this.items), this.horizontalFlip);
+      this.controller.doFlipItems(this.items, this.itemTextBaseOffsets, this.horizontalFlip);
       this.controller.selectAndShowItems(Arrays.asList(this.items), this.allLevelsSelection);
     }
   }
@@ -1079,7 +1105,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Flips the <code>items</code>.
    */
-  private void doFlipItems(List<Selectable> items, boolean horizontalFlip) {
+  private void doFlipItems(Selectable [] items, float [][] itemTextBaseOffsets, boolean horizontalFlip) {
     float minX = Float.MAX_VALUE;
     float minY = Float.MAX_VALUE;
     float maxX = -Float.MAX_VALUE;
@@ -1096,49 +1122,35 @@ public class PlanController extends FurnitureController implements Controller {
     }
     float symmetryX = (minX + maxX) / 2;
     float symmetryY = (minY + maxY) / 2;
-    for (Selectable item : items) {
-      flipItem(item, horizontalFlip ? symmetryX : symmetryY, horizontalFlip, items);
+    List<Selectable> flippedItems = Arrays.asList(items);
+    for (int i = 0; i < items.length; i++) {
+      flipItem(items [i], itemTextBaseOffsets [i], 0,
+          horizontalFlip ? symmetryX : symmetryY, horizontalFlip, flippedItems);
     }
   }
 
   /**
    * Flips the given <code>item</code> with the given axis coordinate.
    * @param item the item to flip
+   * @param itemTextBaseOffsets base offset for the texts of the item
+   * @param offsetIndex  index to get the first text base offset of item
    * @param axisCoordinate the coordinate of the symmetry axis
    * @param horizontalFlip if <code>true</code> the item should be flipped horizontally otherwise vertically
    * @param flippedItems list of all the items that must be flipped
    * @since 6.0
    */
-  protected void flipItem(Selectable item, float axisCoordinate, boolean horizontalFlip,
-                          List<Selectable> flippedItems) {
-    if (item instanceof HomeFurnitureGroup) {
-      for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getFurniture()) {
-        flipItem(piece, axisCoordinate, horizontalFlip, flippedItems);
-      }
-    } else if (item instanceof HomePieceOfFurniture) {
+  protected void flipItem(Selectable item, float [] itemTextBaseOffsets, int offsetIndex,
+                          float axisCoordinate, boolean horizontalFlip, List<Selectable> flippedItems) {
+    if (item instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-      TextStyle nameStyle = piece.getNameStyle();
       if (horizontalFlip) {
         piece.setX(axisCoordinate * 2 - piece.getX());
         piece.setAngle(-piece.getAngle());
-        piece.setNameXOffset(-piece.getNameXOffset());
-        if (nameStyle != null) {
-          if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
-            piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
-          } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
-            piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
-          }
-        }
+        flipPieceOfFurnitureName(piece, itemTextBaseOffsets [0], horizontalFlip);
       } else {
         piece.setY(axisCoordinate * 2 - piece.getY());
         piece.setAngle((float)Math.PI - piece.getAngle());
-        piece.setNameYOffset(-piece.getNameYOffset());
-        if (piece.getNameXOffset() != 0 || piece.getNameYOffset() != 0) {
-          // Take into account font size
-          float baseOffset = getTextBaseOffset(piece.getName(), nameStyle, piece.getClass());
-          piece.setNameXOffset(piece.getNameXOffset() - baseOffset * (float)Math.sin(piece.getNameAngle()));
-          piece.setNameYOffset(piece.getNameYOffset() - baseOffset * (float)Math.cos(piece.getNameAngle()));
-        }
+        flipPieceOfFurnitureName(piece, itemTextBaseOffsets [0], horizontalFlip);
       }
       if (piece.isHorizontallyRotatable()) {
         piece.setRoll(-piece.getRoll());
@@ -1146,7 +1158,13 @@ public class PlanController extends FurnitureController implements Controller {
       if (piece.isResizable()) {
         piece.setModelMirrored(!piece.isModelMirrored());
       }
-      piece.setNameAngle(-piece.getNameAngle());
+
+      if (item instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> furniture = ((HomeFurnitureGroup)item).getAllFurniture();
+        for (int i = 0; i < furniture.size(); i++) {
+          flipPieceOfFurnitureName(furniture.get(i), itemTextBaseOffsets [i + 1], horizontalFlip);
+        }
+      }
     } else if (item instanceof Wall) {
       Wall wall = (Wall)item;
       if (horizontalFlip) {
@@ -1226,13 +1244,12 @@ public class PlanController extends FurnitureController implements Controller {
       } else {
         room.setNameYOffset(-room.getNameYOffset());
         // Take into account font size
-        float baseOffset = getTextBaseOffset(room.getName(), nameStyle, room.getClass());
+        float baseOffset = itemTextBaseOffsets [0];
         room.setNameXOffset(room.getNameXOffset() - baseOffset * (float)Math.sin(room.getNameAngle()));
         room.setNameYOffset(room.getNameYOffset() - baseOffset * (float)Math.cos(room.getNameAngle()));
 
         room.setAreaYOffset(-room.getAreaYOffset());
-        baseOffset = getTextBaseOffset(this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea()),
-            areaStyle, room.getClass());
+        baseOffset = itemTextBaseOffsets [1];
         room.setAreaXOffset(room.getAreaXOffset() - baseOffset * (float)Math.sin(room.getAreaAngle()));
         room.setAreaYOffset(room.getAreaYOffset() - baseOffset * (float)Math.cos(room.getAreaAngle()));
       }
@@ -1294,6 +1311,31 @@ public class PlanController extends FurnitureController implements Controller {
         compass.setY(axisCoordinate * 2 - compass.getY());
         compass.setNorthDirection((float)Math.PI - compass.getNorthDirection());
       }
+    }
+  }
+
+  /**
+   * Flips the name of the given <code>piece</code>.
+   */
+  private static void flipPieceOfFurnitureName(HomePieceOfFurniture piece, float nameBaseOffset, boolean horizontalFlip) {
+    if (horizontalFlip) {
+      piece.setNameXOffset(-piece.getNameXOffset());
+      TextStyle nameStyle = piece.getNameStyle();
+      if (nameStyle != null) {
+        if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+        } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        }
+      }
+    } else {
+      piece.setNameYOffset(-piece.getNameYOffset());
+      if (piece.getNameXOffset() != 0 || piece.getNameYOffset() != 0) {
+        // Take into account font size
+        piece.setNameXOffset(piece.getNameXOffset() - nameBaseOffset * (float)Math.sin(piece.getNameAngle()));
+        piece.setNameYOffset(piece.getNameYOffset() - nameBaseOffset * (float)Math.cos(piece.getNameAngle()));
+      }
+      piece.setNameAngle(-piece.getNameAngle());
     }
   }
 
@@ -1619,7 +1661,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Exchanges the style of wall sides.
    */
-  private void reverseWallSidesStyle(Wall wall) {
+  private static void reverseWallSidesStyle(Wall wall) {
     Integer rightSideColor = wall.getRightSideColor();
     HomeTexture rightSideTexture = wall.getRightSideTexture();
     float leftSideShininess = wall.getLeftSideShininess();
