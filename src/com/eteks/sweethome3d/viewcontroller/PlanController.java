@@ -6973,12 +6973,13 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Post to undo support a pitch change on <code>piece</code>.
    */
-  private void postPieceOfFurniturePitchRotation(final HomePieceOfFurniture piece,
-                                                 final float oldPitch) {
+  private void postPieceOfFurniturePitchRotation(final HomePieceOfFurniture piece, float oldPitch,
+                                                 float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan) {
     final float newPitch = piece.getPitch();
     if (newPitch != oldPitch) {
       this.undoSupport.postEdit(new PieceOfFurniturePitchRotationUndoableEdit(this, this.preferences,
-          oldPitch, piece, newPitch));
+          oldPitch, oldWidthInPlan, oldDepthInPlan, oldHeightInPlan, piece,
+          newPitch, piece.getWidthInPlan(), piece.getDepthInPlan(), piece.getHeightInPlan()));
     }
   }
 
@@ -6988,76 +6989,129 @@ public class PlanController extends FurnitureController implements Controller {
   private static class PieceOfFurniturePitchRotationUndoableEdit extends LocalizedUndoableEdit {
     private final PlanController       controller;
     private final float                oldPitch;
+    private final float                oldWidthInPlan;
+    private final float                oldDepthInPlan;
+    private final float                oldHeightInPlan;
     private final HomePieceOfFurniture piece;
     private final float                newPitch;
+    private final float                newWidthInPlan;
+    private final float                newDepthInPlan;
+    private final float                newHeightInPlan;
 
     public PieceOfFurniturePitchRotationUndoableEdit(PlanController controller, UserPreferences preferences,
-                                                     float oldPitch, HomePieceOfFurniture piece, float newPitch) {
+                                                     float oldPitch, float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan,
+                                                     HomePieceOfFurniture piece, float newPitch, float newWidthInPlan, float newDepthInPlan, float newHeightInPlan) {
       super(preferences, PlanController.class, "undoPieceOfFurnitureRotationName");
       this.controller = controller;
       this.oldPitch = oldPitch;
+      this.oldWidthInPlan = oldWidthInPlan;
+      this.oldDepthInPlan = oldDepthInPlan;
+      this.oldHeightInPlan = oldHeightInPlan;
       this.piece = piece;
       this.newPitch = newPitch;
+      this.newWidthInPlan = newWidthInPlan;
+      this.newDepthInPlan = newDepthInPlan;
+      this.newHeightInPlan = newHeightInPlan;
     }
 
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      this.piece.setPitch(this.oldPitch);
+      this.controller.setPieceOfFurniturePitch(this.piece, this.oldPitch, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
       this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      this.piece.setPitch(this.newPitch);
+      this.controller.setPieceOfFurniturePitch(this.piece, this.newPitch, this.newWidthInPlan, this.newDepthInPlan, this.newHeightInPlan);
       this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
+  }
+
+  /**
+   * Sets the pitch angle on the given piece without computing new size in plan.
+   */
+  private void setPieceOfFurniturePitch(HomePieceOfFurniture piece, float pitch,
+                                        float widthInPlan, float depthInPlan, float heightInPlan) {
+    piece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+    piece.setPitch(pitch);
+    piece.setWidthInPlan(widthInPlan);
+    piece.setDepthInPlan(depthInPlan);
+    piece.setHeightInPlan(heightInPlan);
+    piece.addPropertyChangeListener(this.furnitureSizeChangeListener);
   }
 
   /**
    * Post to undo support a roll change on <code>piece</code>.
    */
-  private void postPieceOfFurnitureRollRotation(final HomePieceOfFurniture piece,
-                                                final float oldRoll) {
+  private void postPieceOfFurnitureRollRotation(final HomePieceOfFurniture piece, float oldRoll,
+                                                float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan) {
     final float newRoll = piece.getRoll();
     if (newRoll != oldRoll) {
       this.undoSupport.postEdit(new PieceOfFurnitureRollRotationUndoableEdit(this, this.preferences,
-          oldRoll, piece, newRoll));
+          oldRoll, oldWidthInPlan, oldDepthInPlan, oldHeightInPlan, piece,
+          newRoll, piece.getWidthInPlan(), piece.getDepthInPlan(), piece.getHeightInPlan()));
     }
   }
 
-  /**
+ /**
    * Undoable edit for the roll rotation of a piece of furniture.
    */
   private static class PieceOfFurnitureRollRotationUndoableEdit extends LocalizedUndoableEdit {
     private final PlanController       controller;
     private final float                oldRoll;
+    private final float                oldWidthInPlan;
+    private final float                oldDepthInPlan;
+    private final float                oldHeightInPlan;
     private final HomePieceOfFurniture piece;
     private final float                newRoll;
+    private final float                newWidthInPlan;
+    private final float                newDepthInPlan;
+    private final float                newHeightInPlan;
 
     public PieceOfFurnitureRollRotationUndoableEdit(PlanController controller, UserPreferences preferences,
-                                                    float oldRoll, HomePieceOfFurniture piece, float newRoll) {
+                                                    float oldRoll, float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan,
+                                                    HomePieceOfFurniture piece, float newRoll, float newWidthInPlan, float newDepthInPlan, float newHeightInPlan) {
       super(preferences, PlanController.class, "undoPieceOfFurnitureRotationName");
       this.controller = controller;
       this.oldRoll = oldRoll;
+      this.oldWidthInPlan = oldWidthInPlan;
+      this.oldDepthInPlan = oldDepthInPlan;
+      this.oldHeightInPlan = oldHeightInPlan;
       this.piece = piece;
       this.newRoll = newRoll;
+      this.newWidthInPlan = newWidthInPlan;
+      this.newDepthInPlan = newDepthInPlan;
+      this.newHeightInPlan = newHeightInPlan;
     }
 
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      this.piece.setRoll(this.oldRoll);
+      this.controller.setPieceOfFurnitureRoll(this.piece, this.oldRoll, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
       this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      this.piece.setRoll(this.newRoll);
+      this.controller.setPieceOfFurnitureRoll(this.piece, this.newRoll, this.newWidthInPlan, this.newDepthInPlan, this.newHeightInPlan);
       this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
+  }
+
+  /**
+   * Sets the roll angle on the given piece without computing new size in plan.
+   */
+  private void setPieceOfFurnitureRoll(HomePieceOfFurniture piece, float roll,
+                                       float widthInPlan, float depthInPlan, float heightInPlan) {
+    piece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+    piece.setRoll(roll);
+    piece.setWidthInPlan(widthInPlan);
+    piece.setDepthInPlan(depthInPlan);
+    piece.setHeightInPlan(heightInPlan);
+    piece.addPropertyChangeListener(this.furnitureSizeChangeListener);
   }
 
   /**
@@ -10711,6 +10765,9 @@ public class PlanController extends FurnitureController implements Controller {
   private class PieceOfFurniturePitchRotationState extends ControllerState {
     private HomePieceOfFurniture selectedPiece;
     private float                oldPitch;
+    private float                oldWidthInPlan;
+    private float                oldDepthInPlan;
+    private float                oldHeightInPlan;
     private String               pitchRotationToolTipFeedback;
 
     @Override
@@ -10735,6 +10792,9 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "pitchRotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.oldPitch = this.selectedPiece.getPitch();
+      this.oldWidthInPlan = this.selectedPiece.getWidthInPlan();
+      this.oldDepthInPlan = this.selectedPiece.getDepthInPlan();
+      this.oldHeightInPlan = this.selectedPiece.getHeightInPlan();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldPitch),
@@ -10757,7 +10817,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurniturePitchRotation(this.selectedPiece, this.oldPitch);
+      postPieceOfFurniturePitchRotation(this.selectedPiece, this.oldPitch, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
       setState(getSelectionState());
     }
 
@@ -10787,6 +10847,9 @@ public class PlanController extends FurnitureController implements Controller {
   private class PieceOfFurnitureRollRotationState extends ControllerState {
     private HomePieceOfFurniture selectedPiece;
     private float                oldRoll;
+    private float                oldWidthInPlan;
+    private float                oldDepthInPlan;
+    private float                oldHeightInPlan;
     private String               rollRotationToolTipFeedback;
 
     @Override
@@ -10811,6 +10874,9 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "rollRotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.oldRoll = this.selectedPiece.getRoll();
+      this.oldWidthInPlan = this.selectedPiece.getWidthInPlan();
+      this.oldDepthInPlan = this.selectedPiece.getDepthInPlan();
+      this.oldHeightInPlan = this.selectedPiece.getHeightInPlan();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldRoll),
@@ -10833,7 +10899,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureRollRotation(this.selectedPiece, this.oldRoll);
+      postPieceOfFurnitureRollRotation(this.selectedPiece, this.oldRoll, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
       setState(getSelectionState());
     }
 

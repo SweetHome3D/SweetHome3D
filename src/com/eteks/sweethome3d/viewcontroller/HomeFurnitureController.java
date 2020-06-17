@@ -1707,6 +1707,9 @@ public class HomeFurnitureController implements Controller {
     private final float                       wallHeight;
     private final float                       wallTop;
     private final Sash []                     sashes;
+    private final float []                    widthsInPlan;
+    private final float []                    depthsInPlan;
+    private final float []                    heightsInPlan;
 
     private FurnitureModificationUndoableEdit(Home home,
                                               UserPreferences preferences,
@@ -1767,6 +1770,16 @@ public class HomeFurnitureController implements Controller {
       this.visible = visible;
       this.modelMirrored = modelMirrored;
       this.lightPower = lightPower;
+      this.widthsInPlan = new float [modifiedFurniture.length];
+      this.depthsInPlan = new float [modifiedFurniture.length];
+      this.heightsInPlan = new float [modifiedFurniture.length];
+
+      for (int i = 0; i < modifiedFurniture.length; i++) {
+        HomePieceOfFurniture piece = modifiedFurniture[i].getPieceOfFurniture();
+        this.widthsInPlan [i] = piece.getWidthInPlan();
+        this.depthsInPlan [i] = piece.getDepthInPlan();
+        this.heightsInPlan [i] = piece.getHeightInPlan();
+      }
     }
 
     @Override
@@ -1788,6 +1801,13 @@ public class HomeFurnitureController implements Controller {
           this.paint, this.color, this.texture, this.modelMaterials,
           this.defaultShininess, this.shininess,
           this.visible, this.modelMirrored, this.lightPower);
+      // Force size in plan in case internal size update performed in PlanController can't be done again
+      for (int i = 0; i < this.modifiedFurniture.length; i++) {
+        HomePieceOfFurniture piece = this.modifiedFurniture[i].getPieceOfFurniture();
+        piece.setWidthInPlan(this.widthsInPlan [i]);
+        piece.setDepthInPlan(this.depthsInPlan [i]);
+        piece.setHeightInPlan(this.heightsInPlan [i]);
+      }
       this.home.setSelectedItems(Arrays.asList(this.newSelection));
     }
   }
@@ -1992,6 +2012,9 @@ public class HomeFurnitureController implements Controller {
     private final float                width;
     private final float                depth;
     private final float                height;
+    private final float                widthInPlan;
+    private final float                depthInPlan;
+    private final float                heightInPlan;
     private final Transformation []    modelTransformations;
     private final Integer              color;
     private final HomeTexture          texture;
@@ -2018,6 +2041,9 @@ public class HomeFurnitureController implements Controller {
       this.width = piece.getWidth();
       this.depth = piece.getDepth();
       this.height = piece.getHeight();
+      this.widthInPlan = piece.getWidthInPlan();
+      this.depthInPlan = piece.getDepthInPlan();
+      this.heightInPlan = piece.getHeightInPlan();
       this.modelTransformations = piece.getModelTransformations();
       this.color = piece.getColor();
       this.texture = piece.getTexture();
@@ -2055,6 +2081,9 @@ public class HomeFurnitureController implements Controller {
         this.piece.setHeight(this.height);
         this.piece.setModelMirrored(this.modelMirrored);
       }
+      this.piece.setWidthInPlan(this.widthInPlan);
+      this.piece.setDepthInPlan(this.depthInPlan);
+      this.piece.setHeightInPlan(this.heightInPlan);
       this.piece.setModelTransformations(this.modelTransformations);
       if (this.piece.isTexturable()) {
         this.piece.setColor(this.color);
@@ -2142,6 +2171,8 @@ public class HomeFurnitureController implements Controller {
       this.groupFurnitureY = new float [groupFurniture.size()];
       this.groupFurnitureWidth = new float [groupFurniture.size()];
       this.groupFurnitureDepth = new float [groupFurniture.size()];
+      // Storing widthInPlan, depthInPlan and heightInPlan is useless
+      // because the size of a group containing horizontally rotated furniture can be only proportionally changed
       this.groupFurnitureColor = new Integer [groupFurniture.size()];
       this.groupFurnitureTexture = new HomeTexture [groupFurniture.size()];
       this.groupFurnitureShininess = new Float [groupFurniture.size()];
