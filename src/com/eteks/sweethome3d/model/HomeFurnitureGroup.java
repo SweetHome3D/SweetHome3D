@@ -118,11 +118,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
 
     setName(name);
+    setDescription(null);
     setNameVisible(false);
     setNameXOffset(0);
     setNameYOffset(0);
+    setNameAngle(0);
     setNameStyle(null);
-    setDescription(null);
     super.setMovable(movable);
     super.setAngle(angle);
     super.setModelMirrored(modelMirrored);
