@@ -135,13 +135,6 @@ public class Camera extends HomeObject {
     }
   }
 
-  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write lens as a string to be able to read lens later
-    // even if enum changed in later versions
-    this.lensName = this.lens.name();
-    out.defaultWriteObject();
-  }
-
   /**
    * Adds the property change <code>listener</code> in parameter to this camera.
    */
@@ -344,6 +337,7 @@ public class Camera extends HomeObject {
     if (lens != this.lens) {
       Lens oldLens = this.lens;
       this.lens = lens;
+      this.lensName = this.lens.name();
       this.propertyChangeSupport.firePropertyChange(Property.LENS.name(), oldLens, lens);
     }
   }

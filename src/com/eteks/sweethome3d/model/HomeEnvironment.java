@@ -184,14 +184,6 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     }
   }
 
-  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write aspect ratios as strings to be able to read aspect ratio later
-    // even if enum changed in later versions
-    this.photoAspectRatioName = this.photoAspectRatio.name();
-    this.videoAspectRatioName = this.videoAspectRatio.name();
-    out.defaultWriteObject();
-  }
-
   /**
    * Adds the property change <code>listener</code> in parameter to this environment.
    */
@@ -503,6 +495,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.photoAspectRatio != photoAspectRatio) {
       AspectRatio oldPhotoAspectRatio = this.photoAspectRatio;
       this.photoAspectRatio = photoAspectRatio;
+      this.photoAspectRatioName = this.photoAspectRatio.name();
       this.propertyChangeSupport.firePropertyChange(Property.PHOTO_ASPECT_RATIO.name(),
           oldPhotoAspectRatio, photoAspectRatio);
     }
@@ -580,6 +573,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
       }
       AspectRatio oldVideoAspectRatio = this.videoAspectRatio;
       this.videoAspectRatio = videoAspectRatio;
+      this.videoAspectRatioName = this.videoAspectRatio.name();
       this.propertyChangeSupport.firePropertyChange(Property.VIDEO_ASPECT_RATIO.name(),
           oldVideoAspectRatio, videoAspectRatio);
     }

@@ -156,12 +156,16 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.capStyle = CapStyle.BUTT;
+    this.joinStyle = JoinStyle.MITER;
+    this.dashStyle = DashStyle.SOLID;
+    this.startArrowStyle = ArrowStyle.NONE;
+    this.endArrowStyle = ArrowStyle.NONE;
     in.defaultReadObject();
     // Read styles from strings
     try {
       if (this.capStyleName != null) {
         this.capStyle = CapStyle.valueOf(this.capStyleName);
-        this.capStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant
@@ -169,7 +173,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.joinStyleName != null) {
         this.joinStyle = JoinStyle.valueOf(this.joinStyleName);
-        this.joinStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant
@@ -177,7 +180,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.dashStyleName != null) {
         this.dashStyle = DashStyle.valueOf(this.dashStyleName);
-        this.dashStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant
@@ -185,7 +187,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.startArrowStyleName != null) {
         this.startArrowStyle = ArrowStyle.valueOf(this.startArrowStyleName);
-        this.startArrowStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant
@@ -193,22 +194,10 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.endArrowStyleName != null) {
         this.endArrowStyle = ArrowStyle.valueOf(this.endArrowStyleName);
-        this.endArrowStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant
     }
-  }
-
-  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write enums as strings to be able to read enums later
-    // even if they change in later versions
-    this.capStyleName = this.capStyle.name();
-    this.joinStyleName = this.joinStyle.name();
-    this.dashStyleName = this.dashStyle.name();
-    this.startArrowStyleName = this.startArrowStyle.name();
-    this.endArrowStyleName = this.endArrowStyle.name();
-    out.defaultWriteObject();
   }
 
   /**
@@ -371,6 +360,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (capStyle != this.capStyle) {
       CapStyle oldStyle = this.capStyle;
       this.capStyle = capStyle;
+      this.capStyleName = this.capStyle.name();
       this.propertyChangeSupport.firePropertyChange(Property.CAP_STYLE.name(), oldStyle, capStyle);
     }
   }
@@ -390,6 +380,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (joinStyle != this.joinStyle) {
       JoinStyle oldJoinStyle = this.joinStyle;
       this.joinStyle = joinStyle;
+      this.joinStyleName = this.joinStyle.name();
       this.polylinePathCache = null;
       this.shapeCache = null;
       this.propertyChangeSupport.firePropertyChange(Property.JOIN_STYLE.name(), oldJoinStyle, joinStyle);
@@ -413,6 +404,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       float [] oldDashPattern = getDashPattern();
       DashStyle oldDashStyle = this.dashStyle;
       this.dashStyle = dashStyle;
+      this.dashStyleName = this.dashStyle.name();
       if (dashStyle != DashStyle.CUSTOMIZED) {
         this.dashPattern = null;
       }
@@ -457,6 +449,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       // Always emit a DASH_STYLE change to let existing listeners know that the pattern change
       DashStyle oldDashStyle = this.dashStyle;
       this.dashStyle = DashStyle.CUSTOMIZED;
+      this.dashStyleName = this.dashStyle.name();
       this.propertyChangeSupport.firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, DashStyle.CUSTOMIZED);
     }
   }
@@ -499,6 +492,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (startArrowStyle != this.startArrowStyle) {
       ArrowStyle oldStartArrowStyle = this.startArrowStyle;
       this.startArrowStyle = startArrowStyle;
+      this.startArrowStyleName = this.startArrowStyle.name();
       this.propertyChangeSupport.firePropertyChange(Property.START_ARROW_STYLE.name(), oldStartArrowStyle, startArrowStyle);
     }
   }
@@ -518,6 +512,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (endArrowStyle != this.endArrowStyle) {
       ArrowStyle oldEndArrowStyle = this.endArrowStyle;
       this.endArrowStyle = endArrowStyle;
+      this.endArrowStyleName = this.endArrowStyle.name();
       this.propertyChangeSupport.firePropertyChange(Property.END_ARROW_STYLE.name(), oldEndArrowStyle, endArrowStyle);
     }
   }
