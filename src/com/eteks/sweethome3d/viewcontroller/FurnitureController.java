@@ -291,14 +291,15 @@ public class FurnitureController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doDeleteFurniture(home, this.newFurniture, this.oldBasePlanLocked, this.allLevelsSelection);
-      home.setSelectedItems(Arrays.asList(this.oldSelection));
+      doDeleteFurniture(this.home, this.newFurniture, this.oldBasePlanLocked, this.allLevelsSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doAddFurniture(home, this.newFurniture, this.newFurnitureGroups, this.newFurnitureIndex, this.furnitureLevel, this.newFurnitureLevels, this.newBasePlanLocked, false);
+      doAddFurniture(this.home, this.newFurniture, this.newFurnitureGroups, this.newFurnitureIndex, this.furnitureLevel,
+          this.newFurnitureLevels, this.newBasePlanLocked, false);
     }
   }
 
@@ -433,7 +434,8 @@ public class FurnitureController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doAddFurniture(this.home, this.furniture, this.furnitureGroups, this.furnitureIndex, null, this.furnitureLevels, this.basePlanLocked, this.allLevelsSelection);
+      doAddFurniture(this.home, this.furniture, this.furnitureGroups, this.furnitureIndex, null,
+          this.furnitureLevels, this.basePlanLocked, this.allLevelsSelection);
       this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
@@ -441,7 +443,7 @@ public class FurnitureController implements Controller {
     public void redo() throws CannotRedoException {
       super.redo();
       this.home.setSelectedItems(Arrays.asList(this.furniture));
-      doDeleteFurniture(home, this.furniture, this.basePlanLocked, false);
+      doDeleteFurniture(this.home, this.furniture, this.basePlanLocked, false);
     }
   }
 
@@ -1024,7 +1026,8 @@ public class FurnitureController implements Controller {
       }
       final boolean newBasePlanLocked = basePlanLocked;
 
-      doUngroupFurniture(this.home, groups, ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
+      doUngroupFurniture(this.home, groups, ungroupedPieces, ungroupedPiecesGroups,
+          ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
       if (this.undoSupport != null) {
         this.undoSupport.postEdit(new FurnitureUngroupingUndoableEdit(this.home, this.preferences,
             oldSelection.toArray(new Selectable [oldSelection.size()]), oldBasePlanLocked, allLevelsSelection,
@@ -1078,14 +1081,16 @@ public class FurnitureController implements Controller {
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doGroupFurniture(home, this.ungroupedPieces, this.groups, this.groupsGroups, this.groupsIndex, this.groupsLevels, this.oldBasePlanLocked, this.allLevelsSelection);
-      home.setSelectedItems(Arrays.asList(this.oldSelection));
+      doGroupFurniture(this.home, this.ungroupedPieces, this.groups, this.groupsGroups, this.groupsIndex, this.groupsLevels,
+          this.oldBasePlanLocked, this.allLevelsSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doUngroupFurniture(home, this.groups, this.ungroupedPieces, this.ungroupedPiecesGroups, this.ungroupedPiecesIndex, this.ungroupedPiecesLevels, this.newBasePlanLocked, false);
+      doUngroupFurniture(this.home, this.groups, this.ungroupedPieces, this.ungroupedPiecesGroups, this.ungroupedPiecesIndex,
+          this.ungroupedPiecesLevels, this.newBasePlanLocked, false);
     }
   }
 
@@ -1651,13 +1656,13 @@ public class FurnitureController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoAlignFurniture(this.alignedFurniture, this.oldX, this.oldY);
-      home.setSelectedItems(Arrays.asList(this.oldSelection));
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      home.setSelectedItems(Arrays.asList(this.alignedFurniture));
+      this.home.setSelectedItems(Arrays.asList(this.alignedFurniture));
       doDistributeFurnitureAlongAxis(this.alignedFurniture, this.horizontal);
     }
   }
@@ -1671,8 +1676,11 @@ public class FurnitureController implements Controller {
     double firstPieceBoundingRectangleHalfWidth = getPieceBoundingRectangleWidth(firstPiece, axisAngle) / 2;
     HomePieceOfFurniture lastPiece = furnitureHorizontallySorted.get(furnitureHorizontallySorted.size() - 1);
     double lastPieceBoundingRectangleHalfWidth = getPieceBoundingRectangleWidth(lastPiece, axisAngle) / 2;
-    double gap = Math.abs(orthogonalAxis.ptLineDist(lastPiece.getX(), lastPiece.getY()) * orthogonalAxis.relativeCCW(lastPiece.getX(), lastPiece.getY())
-          - orthogonalAxis.ptLineDist(firstPiece.getX(), firstPiece.getY()) * orthogonalAxis.relativeCCW(firstPiece.getX(), firstPiece.getY()))
+    double gap = Math.abs(
+          orthogonalAxis.ptLineDist(lastPiece.getX(), lastPiece.getY())
+          * orthogonalAxis.relativeCCW(lastPiece.getX(), lastPiece.getY())
+        - orthogonalAxis.ptLineDist(firstPiece.getX(), firstPiece.getY())
+          * orthogonalAxis.relativeCCW(firstPiece.getX(), firstPiece.getY()))
         - lastPieceBoundingRectangleHalfWidth
         - firstPieceBoundingRectangleHalfWidth;
     double [] furnitureWidthsAlongAxis = new double [furnitureHorizontallySorted.size() - 2];
