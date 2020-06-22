@@ -109,6 +109,10 @@ public class DefaultUserPreferences extends UserPreferences {
     setNewWallHeight(Float.parseFloat(localizedPreferences.getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
     setNewWallBaseboardThickness(Float.parseFloat(getOptionalLocalizedString(localizedPreferences, "newWallBaseboardThickness", "1")));
     setNewWallBaseboardHeight(Float.parseFloat(getOptionalLocalizedString(localizedPreferences, "newWallBaseboardlHeight", "7")));
+    String newRoomFloorColor = getOptionalLocalizedString(localizedPreferences, "newRoomFloorColor", null);
+    if (newRoomFloorColor != null) {
+      setNewRoomFloorColor(Integer.decode(newRoomFloorColor) | 0xFF000000);
+    }
     setNewFloorThickness(Float.parseFloat(getOptionalLocalizedString(localizedPreferences, "newFloorThickness", "12")));
     setCheckUpdatesEnabled(Boolean.parseBoolean(getOptionalLocalizedString(localizedPreferences, "checkUpdatesEnabled", "false")));
     setAutoSaveDelayForRecovery(Integer.parseInt(getOptionalLocalizedString(localizedPreferences, "autoSaveDelayForRecovery", "0")));

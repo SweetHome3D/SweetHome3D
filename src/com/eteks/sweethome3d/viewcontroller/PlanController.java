@@ -3989,6 +3989,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected Room createRoom(float [][] roomPoints) {
     Room newRoom = new Room(roomPoints);
+    newRoom.setFloorColor(this.preferences.getNewRoomFloorColor());
     this.home.addRoom(newRoom);
     return newRoom;
   }
