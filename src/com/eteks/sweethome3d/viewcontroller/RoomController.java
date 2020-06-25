@@ -1694,7 +1694,7 @@ public class RoomController implements Controller {
   /**
    * A wall side.
    */
-  private class WallSide {
+  private static class WallSide {
     public static final int LEFT_SIDE = 0;
     public static final int RIGHT_SIDE = 1;
 
@@ -1746,7 +1746,7 @@ public class RoomController implements Controller {
   /**
    * A modified wall.
    */
-  private class ModifiedWall {
+  private static class ModifiedWall {
     private Wall          wall;
     private final Level   level;
     private final Wall    wallAtStart;
