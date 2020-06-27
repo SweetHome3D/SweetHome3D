@@ -354,6 +354,15 @@ public class DefaultHomeInputStream extends FilterInputStream {
   }
 
   /**
+   * Returns <code>obj</code> or a substitute of it during Home entry deserialization.
+   * This method does nothing and returns the <code>obj</code> in parameter.
+   * It can be overridden by sub classes if needed.
+   */
+  protected Object resolveObjectInputStreamObject(Object obj) throws IOException {
+    return obj;
+  }
+
+  /**
    * Returns the home read from the given XML input stream.
    */
   private Home readHomeXML(InputStream in, HomeContentContext contentContext) throws IOException {
@@ -596,6 +605,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
 
     @Override
     protected Object resolveObject(Object obj) throws IOException {
+      obj = resolveObjectInputStreamObject(obj);
       if (obj instanceof URLContent) {
         String url = ((URLContent)obj).getURL().toString();
         if (url.startsWith("jar:file:temp!/")) {
