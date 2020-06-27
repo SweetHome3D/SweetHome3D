@@ -1121,7 +1121,7 @@ public class HomeController implements Controller {
     this.home.addLabelsListener((CollectionListener<Label>)homeItemsListener);
     this.home.getCompass().addPropertyChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Compass.Property.VISIBLE.equals(ev.getPropertyName())) {
+          if (Compass.Property.VISIBLE.name().equals(ev.getPropertyName())) {
             enableSelectAllAction();
           }
         }
@@ -1563,7 +1563,7 @@ public class HomeController implements Controller {
           getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
         }
       }
-      undoSupport.postEdit(new LocalizedUndoableEdit(preferences, HomeController.class, presentationNameKey));
+      undoSupport.postEdit(new LocalizedUndoableEdit(this.preferences, HomeController.class, presentationNameKey));
 
       // End compound edit
       undoSupport.endUpdate();
