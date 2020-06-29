@@ -46,8 +46,8 @@ import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
- * An <code>OutputStream</code> filter that writes a home in a stream 
- * at .sh3d file format. 
+ * An <code>OutputStream</code> filter that writes a home in a stream
+ * at .sh3d file format.
  * @see DefaultHomeInputStream
  * @author Emmanuel Puybaret
  */
@@ -56,7 +56,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   private ContentRecording contentRecording;
   private boolean          serializedHome;
   private HomeXMLExporter  homeXmlExporter;
-  
+
   /**
    * Creates a stream that will save a home and all the contents it references
    * in an uncompressed zip stream. Home data will be serialized in an entry named
@@ -67,49 +67,49 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   }
 
   /**
-   * Creates a stream that will save a home in a zip stream. Home data will be serialized 
+   * Creates a stream that will save a home in a zip stream. Home data will be serialized
    * in an entry named <code>Home</code>.
    * @param compressionLevel 0-9
-   * @param includeTemporaryContent if <code>true</code>, content instances of 
-   *            <code>TemporaryURLContent</code> class referenced by the saved home 
-   *            as well as the content previously saved with it will be written. 
-   *            If <code>false</code>, all the content instances 
-   *            referenced by the saved home will be written in the zip stream.  
+   * @param includeTemporaryContent if <code>true</code>, content instances of
+   *            <code>TemporaryURLContent</code> class referenced by the saved home
+   *            as well as the content previously saved with it will be written.
+   *            If <code>false</code>, all the content instances
+   *            referenced by the saved home will be written in the zip stream.
    */
   public DefaultHomeOutputStream(OutputStream out,
-                                 int          compressionLevel, 
+                                 int          compressionLevel,
                                  boolean      includeTemporaryContent) throws IOException {
-    this(out, compressionLevel, 
-        includeTemporaryContent 
+    this(out, compressionLevel,
+        includeTemporaryContent
             ? ContentRecording.INCLUDE_TEMPORARY_CONTENT
             : ContentRecording.INCLUDE_ALL_CONTENT);
   }
 
   /**
-   * Creates a stream that will save a home in a zip stream. Home data will be serialized 
+   * Creates a stream that will save a home in a zip stream. Home data will be serialized
    * in an entry named <code>Home</code>.
    * @param compressionLevel 0-9
-   * @param contentRecording how content should be recorded with home.  
+   * @param contentRecording how content should be recorded with home.
    */
   public DefaultHomeOutputStream(OutputStream out,
-                                 int          compressionLevel, 
+                                 int          compressionLevel,
                                  ContentRecording contentRecording) throws IOException {
     this(out, compressionLevel, contentRecording, true, null);
   }
 
   /**
-   * Creates a stream that will serialize a home in a zip stream. Home data will be serialized 
-   * in an entry named <code>Home</code> if <code>serializedHome</code> is <code>true</code>, 
+   * Creates a stream that will serialize a home in a zip stream. Home data will be serialized
+   * in an entry named <code>Home</code> if <code>serializedHome</code> is <code>true</code>,
    * and saved in <code>Home.xml</code> entry at XML format if <code>homeXmlExporter</code> is not <code>null</code>.
    * @param compressionLevel 0-9
-   * @param contentRecording specifies how content should be recorded with home  
-   * @param serializedHome if <code>true</code>, zip stream will include a <code>Home</code> 
+   * @param contentRecording specifies how content should be recorded with home
+   * @param serializedHome if <code>true</code>, zip stream will include a <code>Home</code>
    *            entry containing the serialized home
    * @param homeXmlExporter  if not <code>null</code>, sets how a home will be saved
    *            in an additional <code>Home.xml</code> entry
    */
   public DefaultHomeOutputStream(OutputStream out,
-                                 int          compressionLevel, 
+                                 int          compressionLevel,
                                  ContentRecording contentRecording,
                                  boolean          serializedHome,
                                  HomeXMLExporter  homeXmlExporter) throws IOException {
@@ -124,8 +124,8 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   }
 
   /**
-   * Throws an <code>InterruptedRecorderException</code> exception 
-   * if current thread is interrupted. The interrupted status of the current thread 
+   * Throws an <code>InterruptedRecorderException</code> exception
+   * if current thread is interrupted. The interrupted status of the current thread
    * is cleared when an exception is thrown.
    */
   private static void checkCurrentThreadIsntInterrupted() throws InterruptedIOException {
@@ -133,17 +133,17 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       throw new InterruptedIOException();
     }
   }
-  
+
   /**
-   * Writes home in a zipped stream followed by <code>Content</code> objects 
+   * Writes home in a zipped stream followed by <code>Content</code> objects
    * it points to.
    */
   public void writeHome(Home home) throws IOException {
-    // Create a zip output on out stream 
+    // Create a zip output on out stream
     ZipOutputStream zipOut = new ZipOutputStream(this.out);
     zipOut.setLevel(this.compressionLevel);
     checkCurrentThreadIsntInterrupted();
-    // Track content that must be saved in the zip stream with a dummy output stream 
+    // Track content that must be saved in the zip stream with a dummy output stream
     HomeContentObjectsTracker contentTracker = new HomeContentObjectsTracker(new OutputStream() {
         @Override
         public void write(int b) throws IOException {
@@ -173,10 +173,10 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       xmlWriter.flush();
       zipOut.closeEntry();
     }
-    
+
     if (savedContentNames.size() > 0) {
-      Set<String> contentEntryNames = new HashSet<String>(); 
-      // In the next entry named "ContentDigests", write content digests to help repair damaged files     
+      Set<String> contentEntryNames = new HashSet<String>();
+      // In the next entry named "ContentDigests", write content digests to help repair damaged files
       zipOut.putNextEntry(new ZipEntry("ContentDigests"));
       OutputStreamWriter writer = new OutputStreamWriter(zipOut, "UTF-8");
       ContentDigestManager digestManager = ContentDigestManager.getInstance();
@@ -191,9 +191,9 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       }
       writer.flush();
       zipOut.closeEntry();
-    
+
       // Write Content objects in additional zip entries
-      contentEntryNames.clear(); 
+      contentEntryNames.clear();
       for (Map.Entry<Content, String> savedContent : savedContentNames.entrySet()) {
         String contentEntryName = savedContent.getValue();
         if (!contentEntryNames.contains(contentEntryName)) {
@@ -211,7 +211,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             URLContent urlContent = (URLContent)content;
             // If content comes from a home stream
             if (urlContent instanceof HomeURLContent) {
-              writeHomeZipEntries(zipOut, contentEntryName, (HomeURLContent)urlContent);            
+              writeHomeZipEntries(zipOut, contentEntryName, (HomeURLContent)urlContent);
             } else {
               writeZipEntries(zipOut, contentEntryName, urlContent);
             }
@@ -219,7 +219,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             writeZipEntry(zipOut, contentEntryName, content);
           }
         }
-      }  
+      }
     }
     // Finish zip writing
     zipOut.finish();
@@ -240,11 +240,11 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
         if (lastSlashIndex != -1) {
           // Consider content is a multi part resource only if it's in a subdirectory
           String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
-          // Write in home stream each zipped stream entry that is stored in the same directory  
+          // Write in home stream each zipped stream entry that is stored in the same directory
           for (ContentDigestManager.ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
             String zipEntryName = zipEntry.getName();
             if (zipEntryName.startsWith(entryDirectory)) {
-              Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
+              Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/"
                   + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
               writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
             }
@@ -259,10 +259,10 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
           File contentFile = new File(urlContent.getURL().toURI());
           File parentFile = new File(contentFile.getParent());
           File [] siblingFiles = parentFile.listFiles();
-          // Write in home stream each file that is stored in the same directory  
+          // Write in home stream each file that is stored in the same directory
           for (File siblingFile : siblingFiles) {
             if (!siblingFile.isDirectory()) {
-              writeZipEntry(zipOut, entryNameOrDirectory + "/" + siblingFile.getName(), 
+              writeZipEntry(zipOut, entryNameOrDirectory + "/" + siblingFile.getName(),
                   new URLContent(siblingFile.toURI().toURL()));
             }
           }
@@ -290,11 +290,11 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
     if (slashIndex > 0) {
       URL zipUrl = urlContent.getJAREntryURL();
       String entryDirectory = entryName.substring(0, slashIndex + 1);
-      // Write in home stream each zipped stream entry that is stored in the same directory  
+      // Write in home stream each zipped stream entry that is stored in the same directory
       for (ContentDigestManager.ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
         String zipEntryName = zipEntry.getName();
         if (zipEntryName.startsWith(entryDirectory)) {
-          Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
+          Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/"
               + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
           writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(slashIndex), siblingContent);
         }
@@ -305,23 +305,23 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
   }
 
   /**
-   * Writes in <code>zipOut</code> stream all the sibling files of the zipped 
+   * Writes in <code>zipOut</code> stream all the sibling files of the zipped
    * <code>urlContent</code>.
    */
-  private void writeZipEntries(ZipOutputStream zipOut, 
+  private void writeZipEntries(ZipOutputStream zipOut,
                                String directory,
                                URLContent urlContent) throws IOException {
     // Write in alphabetic order each zipped stream entry in home stream
     for (ContentDigestManager.ZipEntryData zipEntry : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
       String zipEntryName = zipEntry.getName();
-      Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
+      Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/"
           + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
       writeZipEntry(zipOut, directory + "/" + zipEntryName, siblingContent);
     }
   }
 
   /**
-   * Writes in <code>zipOut</code> stream a new entry named <code>entryName</code> that 
+   * Writes in <code>zipOut</code> stream a new entry named <code>entryName</code> that
    * contains a given <code>content</code>.
    */
   private void writeZipEntry(ZipOutputStream zipOut, String entryName, Content content) throws IOException {
@@ -330,21 +330,21 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
     InputStream contentIn = null;
     try {
       zipOut.putNextEntry(new ZipEntry(entryName));
-      contentIn = content.openStream();          
-      int size; 
+      contentIn = content.openStream();
+      int size;
       while ((size = contentIn.read(buffer)) != -1) {
         zipOut.write(buffer, 0, size);
       }
-      zipOut.closeEntry();  
+      zipOut.closeEntry();
     } finally {
-      if (contentIn != null) {          
+      if (contentIn != null) {
         contentIn.close();
       }
     }
   }
 
   /**
-   * A dummy <code>ObjectOutputStream</code> that keeps track of the <code>Content</code> 
+   * A dummy <code>ObjectOutputStream</code> that keeps track of the <code>Content</code>
    * objects of a home that should be saved.
    */
   private class HomeContentObjectsTracker extends ObjectOutputStream {
@@ -360,13 +360,14 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
 
     @Override
     protected Object replaceObject(Object obj) throws IOException {
-      if (obj instanceof TemporaryURLContent 
+      if (obj instanceof TemporaryURLContent
           || obj instanceof HomeURLContent
+          || obj instanceof SimpleURLContent
           || (contentRecording == ContentRecording.INCLUDE_ALL_CONTENT && obj instanceof Content)) {
         String subEntryName = "";
         if (obj instanceof URLContent) {
           URLContent urlContent = (URLContent)obj;
-          // Check if duplicated content can be avoided 
+          // Check if duplicated content can be avoided
           ContentDigestManager contentDigestManager = ContentDigestManager.getInstance();
           for (Map.Entry<Content, String> contentEntry : this.savedContentNames.entrySet()) {
             if (contentDigestManager.equals(urlContent, contentEntry.getKey())) {
@@ -375,7 +376,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             }
           }
           checkCurrentThreadIsntInterrupted();
-          // If content comes from a zipped content  
+          // If content comes from a zipped content
           if (urlContent.isJAREntry()) {
             String entryName = urlContent.getJAREntryName();
             if (urlContent instanceof HomeURLContent) {
@@ -398,10 +399,10 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             } else if (!(urlContent instanceof SimpleURLContent)) {
               // Retrieve entry name in zipped stream
               subEntryName = "/" + entryName;
-            }            
+            }
           } else if (urlContent instanceof ResourceURLContent) {
             ResourceURLContent resourceUrlContent = (ResourceURLContent)urlContent;
-            // If content is a resource coming from a directory (this should be the case 
+            // If content is a resource coming from a directory (this should be the case
             // only when resource isn't in a JAR file during development), retrieve its file name
             if (resourceUrlContent.isMultiPartResource()) {
               try {
@@ -413,15 +414,15 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
               }
             }
           }
-        } 
+        }
 
-        // Build a relative URL that points to content object 
+        // Build a relative URL that points to content object
         String homeContentPath = this.savedContentIndex++ + subEntryName;
         this.savedContentNames.put((Content)obj, homeContentPath);
-      } 
+      }
       return obj;
     }
-    
+
     /**
      * Returns the names of the home contents to be saved.
      */
@@ -429,7 +430,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
       return this.savedContentNames;
     }
   }
-  
+
   /**
    * <code>ObjectOutputStream</code> that replaces <code>Content</code> objects
    * by temporary <code>URLContent</code> objects and stores them in a list.
@@ -459,7 +460,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             replacedContent = new URLContent(new URL("jar:file:temp!/" + savedContentName));
             this.replacedContents.put(savedContentName, replacedContent);
           }
-          return replacedContent;          
+          return replacedContent;
         }
       }
       return obj;
