@@ -144,12 +144,12 @@ public class ExtensionsClassLoader extends ClassLoader {
         String extensionJarOrDllFile;
         if (extensionJarOrDllUrl.getProtocol().equals("jar")) {
           // Don't instantiate connection to a file accessed by jar protocol otherwise it might download again its jar container
-          URL jarEntryUrl = new URL(extensionJarOrDllUrlFile.substring(0, extensionJarOrDllUrlFile.indexOf('!')));
+          URL jarEntryUrl = new URL(extensionJarOrDllUrlFile.substring(0, extensionJarOrDllUrlFile.indexOf("!/")));
           URLConnection jarEntryUrlConnection = jarEntryUrl.openConnection();
           // connection.getLastModified() on an entry returns get modification date of the jar file itself
           extensionJarOrDllFileDate = jarEntryUrlConnection.getLastModified();
           extensionJarOrDllFileLength = jarEntryUrlConnection.getContentLength();
-          extensionJarOrDllFile = extensionJarOrDllUrlFile.substring(extensionJarOrDllUrlFile.indexOf('!') + 2);
+          extensionJarOrDllFile = extensionJarOrDllUrlFile.substring(extensionJarOrDllUrlFile.indexOf("!/") + 2);
         } else {
           connection = extensionJarOrDllUrl.openConnection();
           extensionJarOrDllFileDate = connection.getLastModified();
