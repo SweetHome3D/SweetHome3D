@@ -348,6 +348,9 @@ public class Home implements Serializable, Cloneable {
       }
       topCamera.setLens(this.topCamera.getLens());
       topCamera.setTime(this.topCamera.getTime());
+      if (this.camera == this.topCamera) {
+        this.camera = topCamera;
+      }
       this.topCamera = topCamera;
 
       ObserverCamera observerCamera = new ObserverCamera(HOME_OBSERVER_CAMERA_ID,
@@ -359,6 +362,9 @@ public class Home implements Serializable, Cloneable {
       observerCamera.setFixedSize(this.observerCamera.isFixedSize());
       observerCamera.setLens(this.observerCamera.getLens());
       observerCamera.setTime(this.observerCamera.getTime());
+      if (this.camera == this.observerCamera) {
+        this.camera = observerCamera;
+      }
       this.observerCamera = observerCamera;
     }
 
