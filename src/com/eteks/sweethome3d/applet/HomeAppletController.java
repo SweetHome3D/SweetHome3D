@@ -258,7 +258,7 @@ public class HomeAppletController extends HomePluginController {
         ContentManager.ContentType.SWEET_HOME_3D, home.getName());    
     if (sh3dName != null) {
       // Export home in a threaded task
-      Callable<Void> exportToObjTask = new Callable<Void>() {
+      Callable<Void> exportHome = new Callable<Void>() {
           public Void call() throws RecorderException {
             new HomeFileRecorder(9).writeHome(home, sh3dName);
             return null;
@@ -278,7 +278,7 @@ public class HomeAppletController extends HomePluginController {
               }
             }
           };
-      new ThreadedTaskController(exportToObjTask, 
+      new ThreadedTaskController(exportHome, 
           this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "exportToSH3DMessage"), exceptionHandler, 
           this.application.getUserPreferences(), viewFactory).executeTask(getView());
     }
@@ -295,7 +295,7 @@ public class HomeAppletController extends HomePluginController {
             ContentManager.ContentType.SWEET_HOME_3D);    
         if (sh3dName != null) {
           // Import home in a threaded task
-          Callable<Void> exportToObjTask = new Callable<Void>() {
+          Callable<Void> importHomeTask = new Callable<Void>() {
               public Void call() throws RecorderException {
                 final Home openedHome = new HomeFileRecorder(9, true, application.getUserPreferences(), true).readHome(sh3dName);
                 String name = new File(sh3dName).getName();
@@ -332,7 +332,7 @@ public class HomeAppletController extends HomePluginController {
                   }
                 }
               };
-          new ThreadedTaskController(exportToObjTask, 
+          new ThreadedTaskController(importHomeTask, 
               application.getUserPreferences().getLocalizedString(HomeAppletController.class, "importFromSH3DMessage"), exceptionHandler, 
               application.getUserPreferences(), viewFactory).executeTask(getView());
         }
