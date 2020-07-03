@@ -44,7 +44,6 @@ public abstract class HomeObject implements Serializable, Cloneable {
 
   /**
    * Creates a new object with a unique ID prefixed by <code>object-</code>.
-   * @since 6.4
    */
   public HomeObject() {
     this(createId(ID_DEFAULT_PREFIX));
