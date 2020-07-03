@@ -850,7 +850,14 @@ public class HomeXMLExporter extends ObjectXMLExporter<Home> {
       if (contentName != null) {
         return contentName;
       } else if (content instanceof URLContent) {
-        return ((URLContent)content).getURL().toString();
+        URLContent urlContent = (URLContent)content;
+        if (urlContent.isJAREntry()) {
+          // Build URL manually to avoid possible values starting by jar://:0 which includes :0 authority
+          // misinterpreted when URL is decoded out of applets environment
+          return urlContent.getURL().getProtocol() + ":" + urlContent.getURL().getFile();
+        } else {
+          return urlContent.getURL().toString();
+        }
       } else {
         return content.toString();
       }

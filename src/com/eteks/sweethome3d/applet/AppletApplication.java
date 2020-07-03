@@ -63,6 +63,8 @@ import javax.swing.UIManager;
 import javax.swing.table.TableCellRenderer;
 
 import com.eteks.sweethome3d.io.ContentRecording;
+import com.eteks.sweethome3d.io.HomeXMLExporter;
+import com.eteks.sweethome3d.io.HomeXMLHandler;
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
@@ -118,6 +120,7 @@ public class AppletApplication extends HomeApplication {
   private static final String ENABLE_PRINT_TO_PDF                    = "enablePrintToPDF";
   private static final String ENABLE_CREATE_PHOTO                    = "enableCreatePhoto";
   private static final String ENABLE_CREATE_VIDEO                    = "enableCreateVideo";
+  private static final String HOME_XML_ENTRY_PREFERRED               = "homeXMLEntryPreferred";
   private static final String SHOW_MEMORY_STATUS_PARAMETER           = "showMemoryStatus";
   private static final String USER_LANGUAGE                          = "userLanguage";
 
@@ -612,11 +615,14 @@ public class AppletApplication extends HomeApplication {
       final String readHomeURL = getAppletParameter(this.applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
       final String listHomesURL = getAppletParameter(this.applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
       final String deleteHomeURL = getAppletParameter(this.applet, DELETE_HOME_URL_PARAMETER, "");
+      final boolean homeXmlEntryPreferred = getAppletBooleanParameter(this.applet, HOME_XML_ENTRY_PREFERRED);
       this.homeRecorder =  new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL),
           getURLStringWithCodeBase(codeBase, readHomeURL),
           getURLStringWithCodeBase(codeBase, listHomesURL),
           getURLStringWithCodeBase(codeBase, deleteHomeURL),
-          ContentRecording.INCLUDE_TEMPORARY_CONTENT);
+          ContentRecording.INCLUDE_TEMPORARY_CONTENT,
+          homeXmlEntryPreferred ? new HomeXMLHandler() : null,
+          homeXmlEntryPreferred ? new HomeXMLExporter() : null);
     }
     return this.homeRecorder;
   }

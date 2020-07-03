@@ -34,6 +34,8 @@ import java.net.URLEncoder;
 import com.eteks.sweethome3d.io.ContentRecording;
 import com.eteks.sweethome3d.io.DefaultHomeInputStream;
 import com.eteks.sweethome3d.io.DefaultHomeOutputStream;
+import com.eteks.sweethome3d.io.HomeXMLExporter;
+import com.eteks.sweethome3d.io.HomeXMLHandler;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
@@ -51,58 +53,79 @@ public class HomeAppletRecorder implements HomeRecorder {
   private final ContentRecording contentRecording;
   private long                   availableHomesCacheTime;
   private String []              availableHomesCache;
+  private HomeXMLHandler         xmlHandler;
+  private HomeXMLExporter        xmlExporter;
+
+  /**
+   * Creates a recorder that will use the URLs in parameter to write, read and list homes.
+   * Homes will be saved with Home Java serialized entry.
+   * @see SweetHome3DApplet
+   */
+  public HomeAppletRecorder(String writeHomeURL,
+                            String readHomeURL,
+                            String listHomesURL) {
+    this(writeHomeURL, readHomeURL, listHomesURL, true);
+  }
 
   /**
    * Creates a recorder that will use the URLs in parameter to write, read and list homes.
    * @see SweetHome3DApplet
    */
-  public HomeAppletRecorder(String writeHomeURL, 
-                            String readHomeURL,
-                            String listHomesURL) {
-    this(writeHomeURL, readHomeURL, listHomesURL, true);
-  }
-  
-  /**
-   * Creates a recorder that will use the URLs in parameter to write, read and list homes.
-   * @see SweetHome3DApplet
-   */
-  public HomeAppletRecorder(String writeHomeURL, 
+  public HomeAppletRecorder(String writeHomeURL,
                             String readHomeURL,
                             String listHomesURL,
                             boolean includeTemporaryContent) {
-    this(writeHomeURL, readHomeURL, listHomesURL, 
-        includeTemporaryContent 
+    this(writeHomeURL, readHomeURL, listHomesURL,
+        includeTemporaryContent
             ? ContentRecording.INCLUDE_TEMPORARY_CONTENT
             : ContentRecording.INCLUDE_ALL_CONTENT);
   }
-  
+
   /**
    * Creates a recorder that will use the URLs in parameter to write, read and list homes.
    * @see SweetHome3DApplet
    */
-  public HomeAppletRecorder(String writeHomeURL, 
+  public HomeAppletRecorder(String writeHomeURL,
                             String readHomeURL,
                             String listHomesURL,
                             ContentRecording contentRecording) {
     this(writeHomeURL, readHomeURL, listHomesURL, null, contentRecording);
   }
-  
+
   /**
    * Creates a recorder that will use the URLs in parameter to write, read, list and delete homes.
    * @see SweetHome3DApplet
    */
-  public HomeAppletRecorder(String writeHomeURL, 
+  public HomeAppletRecorder(String writeHomeURL,
                             String readHomeURL,
                             String listHomesURL,
                             String deleteHomeURL,
                             ContentRecording contentRecording) {
+    this(writeHomeURL, readHomeURL, listHomesURL, deleteHomeURL, contentRecording, null, null);
+  }
+
+  /**
+   * Creates a recorder that will use the URLs in parameter to write, read, list and delete homes.
+   * If <code>xmlHandler</code> and <code>xmlExporter</code> are not null, this recorder
+   * will write a Home.xml entry rather than a Home Java serialized entry in saveed files.
+   * @see SweetHome3DApplet
+   */
+  public HomeAppletRecorder(String writeHomeURL,
+                            String readHomeURL,
+                            String listHomesURL,
+                            String deleteHomeURL,
+                            ContentRecording contentRecording,
+                            HomeXMLHandler  xmlHandler,
+                            HomeXMLExporter xmlExporter) {
     this.writeHomeURL = writeHomeURL;
     this.readHomeURL = readHomeURL;
     this.listHomesURL = listHomesURL;
     this.deleteHomeURL = deleteHomeURL;
     this.contentRecording = contentRecording;
+    this.xmlHandler = xmlHandler;
+    this.xmlExporter = xmlExporter;
   }
-  
+
   /**
    * Posts home data to the server URL returned by <code>getHomeSaveURL</code>.
    * @throws RecorderException if a problem occurred while writing home.
@@ -110,7 +133,7 @@ public class HomeAppletRecorder implements HomeRecorder {
   public void writeHome(Home home, String name) throws RecorderException {
     HttpURLConnection connection = null;
     try {
-      // Open a stream to server 
+      // Open a stream to server
       connection = (HttpURLConnection)new URL(this.writeHomeURL).openConnection();
       connection.setRequestMethod("POST");
       String multiPartBoundary = "---------#@&$!d3emohteews!$&@#---------";
@@ -118,11 +141,11 @@ public class HomeAppletRecorder implements HomeRecorder {
       connection.setDoOutput(true);
       connection.setDoInput(true);
       connection.setUseCaches(false);
-      
+
       // Post home part
       OutputStream out = connection.getOutputStream();
       out.write(("--" + multiPartBoundary + "\r\n").getBytes("UTF-8"));
-      out.write(("Content-Disposition: form-data; name=\"home\"; filename=\"" 
+      out.write(("Content-Disposition: form-data; name=\"home\"; filename=\""
           + name.replace('\"', '\'') + "\"\r\n").getBytes("UTF-8"));
       out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes("UTF-8"));
       out.flush();
@@ -130,11 +153,11 @@ public class HomeAppletRecorder implements HomeRecorder {
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
       homeOut.flush();
-      
+
       // Post last boundary
       out.write(("\r\n--" + multiPartBoundary + "--\r\n").getBytes("UTF-8"));
       out.close();
-      
+
       // Read response
       InputStream in = connection.getInputStream();
       int read = in.read();
@@ -143,7 +166,7 @@ public class HomeAppletRecorder implements HomeRecorder {
         throw new RecorderException("Saving home " + name + " failed");
       }
       // Reset availableHomes to force a new request at next getAvailableHomes or exists call
-      this.availableHomesCache = null; 
+      this.availableHomesCache = null;
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Save " + name + " interrupted");
     } catch (IOException ex) {
@@ -159,20 +182,20 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns the filter output stream used to write a home in the output stream in parameter.
    */
   private DefaultHomeOutputStream createHomeOutputStream(OutputStream out) throws IOException {
-    return new DefaultHomeOutputStream(out, 9, this.contentRecording, true, null);
+    return new DefaultHomeOutputStream(out, 9, this.contentRecording, this.xmlHandler == null, this.xmlExporter);
   }
 
   /**
    * Returns a home instance read from its file <code>name</code>.
-   * @throws RecorderException if a problem occurred while reading home, 
+   * @throws RecorderException if a problem occurred while reading home,
    *   or if file <code>name</code> doesn't exist.
    */
   public Home readHome(String name) throws RecorderException {
     URLConnection connection = null;
     DefaultHomeInputStream in = null;
     try {
-      // Replace % sequence by %% except %s before formating readHomeURL with home name 
-      String readHomeURL = String.format(this.readHomeURL.replaceAll("(%[^s])", "%$1"), 
+      // Replace % sequence by %% except %s before formating readHomeURL with home name
+      String readHomeURL = String.format(this.readHomeURL.replaceAll("(%[^s])", "%$1"),
           URLEncoder.encode(name, "UTF-8"));
       // Open a home input stream to server
       connection = new URL(readHomeURL).openConnection();
@@ -203,17 +226,17 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns the filter input stream used to read a home from the input stream in parameter.
    */
   private DefaultHomeInputStream createHomeInputStream(InputStream in) throws IOException {
-    return new DefaultHomeInputStream(in, this.contentRecording, null, null, false);
+    return new DefaultHomeInputStream(in, this.contentRecording, this.xmlHandler, null, false);
   }
 
   /**
    * Returns <code>true</code> if the home <code>name</code> exists.
    */
   public boolean exists(String name) throws RecorderException {
-    String [] availableHomes;    
-    if (this.availableHomesCache != null 
+    String [] availableHomes;
+    if (this.availableHomesCache != null
         && this.availableHomesCacheTime + 100 > System.currentTimeMillis()) {
-      // Return available homes list in cache if the cache is less than 100 ms old  
+      // Return available homes list in cache if the cache is less than 100 ms old
       availableHomes = this.availableHomesCache;
     } else {
       availableHomes = getAvailableHomes();
@@ -233,7 +256,7 @@ public class HomeAppletRecorder implements HomeRecorder {
     URLConnection connection = null;
     InputStream in = null;
     try {
-      // Open a stream to server 
+      // Open a stream to server
       connection = new URL(this.listHomesURL).openConnection();
       connection.setUseCaches(false);
       in = connection.getInputStream();
@@ -266,10 +289,10 @@ public class HomeAppletRecorder implements HomeRecorder {
       }
     }
   }
-  
+
   /**
    * Returns a home instance read from its file <code>name</code>.
-   * @throws RecorderException if a problem occurred while reading home, 
+   * @throws RecorderException if a problem occurred while reading home,
    *   or if file <code>name</code> doesn't exist.
    */
   public void deleteHome(String name) throws RecorderException {
@@ -278,8 +301,8 @@ public class HomeAppletRecorder implements HomeRecorder {
     }
     HttpURLConnection connection = null;
     try {
-      // Replace % sequence by %% except %s before formating readHomeURL with home name 
-      String deletedHomeURL = String.format(this.deleteHomeURL.replaceAll("(%[^s])", "%$1"), 
+      // Replace % sequence by %% except %s before formating readHomeURL with home name
+      String deletedHomeURL = String.format(this.deleteHomeURL.replaceAll("(%[^s])", "%$1"),
           URLEncoder.encode(name, "UTF-8"));
       // Send request to server
       connection = (HttpURLConnection)new URL(deletedHomeURL).openConnection();
@@ -293,7 +316,7 @@ public class HomeAppletRecorder implements HomeRecorder {
         throw new RecorderException("Deleting home " + name + " failed");
       }
       // Reset availableHomes to force a new request at next getAvailableHomes or exists call
-      this.availableHomesCache = null; 
+      this.availableHomesCache = null;
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Delete " + name + " interrupted");
     } catch (IOException ex) {
@@ -304,7 +327,7 @@ public class HomeAppletRecorder implements HomeRecorder {
       }
     }
   }
-  
+
   /**
    * Returns <code>true</code> if this recorder provides a service able to delete homes.
    */
@@ -328,18 +351,18 @@ public class HomeAppletRecorder implements HomeRecorder {
       throw new RecorderException("Can't compute home length", ex);
     }
   }
-  
+
   /**
    * An output stream used to evaluate the length of written data.
    */
   private class LengthOutputStream extends OutputStream {
     private long length;
-    
+
     @Override
     public void write(int b) throws IOException {
       this.length++;
     }
-    
+
     public long getLength() {
       return this.length;
     }
