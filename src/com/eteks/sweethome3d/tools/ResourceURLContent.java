@@ -24,21 +24,21 @@ import java.net.URL;
 
 
 /**
- * URL content read from a class resource.
+ * URL content read from a class resource or a SH3F file.
  * @author Emmanuel Puybaret
  */
 public class ResourceURLContent extends URLContent {
   private static final long serialVersionUID = 1L;
 
   private boolean multiPartResource;
-  
+
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
    * @param resourceClass the class relative to the resource name to load
    * @param resourceName  the name of the resource
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
-  public ResourceURLContent(Class<?> resourceClass, 
+  public ResourceURLContent(Class<?> resourceClass,
                             String resourceName) {
     this(resourceClass, resourceName, false);
   }
@@ -47,12 +47,12 @@ public class ResourceURLContent extends URLContent {
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
    * @param resourceClass the class relative to the resource name to load
    * @param resourceName  the name of the resource
-   * @param multiPartResource  if <code>true</code> then the resource is a multi part resource 
+   * @param multiPartResource  if <code>true</code> then the resource is a multi part resource
    *           stored in a folder with other required resources
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
   public ResourceURLContent(Class<?> resourceClass,
-                            String resourceName, 
+                            String resourceName,
                             boolean multiPartResource) {
     super(getClassResource(resourceClass, resourceName));
     if (getURL() == null) {
@@ -60,7 +60,7 @@ public class ResourceURLContent extends URLContent {
     }
     this.multiPartResource = multiPartResource;
   }
-  
+
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClassLoader</code>.
    * <code>resourceName</code> is absolute and shouldn't start with a slash.
@@ -68,7 +68,7 @@ public class ResourceURLContent extends URLContent {
    * @param resourceName  the name of the resource
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
-  public ResourceURLContent(ClassLoader resourceClassLoader, 
+  public ResourceURLContent(ClassLoader resourceClassLoader,
                             String resourceName) {
     super(resourceClassLoader.getResource(resourceName));
     if (getURL() == null) {
@@ -76,9 +76,9 @@ public class ResourceURLContent extends URLContent {
     }
   }
 
-  private static final boolean isJava1dot5dot0_16 = 
-      System.getProperty("java.version").startsWith("1.5.0_16"); 
-  
+  private static final boolean isJava1dot5dot0_16 =
+      System.getProperty("java.version").startsWith("1.5.0_16");
+
   /**
    * Returns the URL of the given resource relative to <code>resourceClass</code>.
    */
@@ -92,16 +92,16 @@ public class ResourceURLContent extends URLContent {
         && "jar".equalsIgnoreCase(defaultUrl.getProtocol())) {
       String defaultUrlExternalForm = defaultUrl.toExternalForm();
       if (defaultUrl.toExternalForm().indexOf("!/") == -1) {
-        String fixedUrl = "jar:" 
-          + resourceClass.getProtectionDomain().getCodeSource().getLocation().toExternalForm() 
+        String fixedUrl = "jar:"
+          + resourceClass.getProtectionDomain().getCodeSource().getLocation().toExternalForm()
           + "!/" + defaultUrl.getPath();
-        
+
         if (!fixedUrl.equals(defaultUrlExternalForm)) {
           try {
             return new URL(fixedUrl);
           } catch (MalformedURLException ex) {
             // Too bad: keep defaultUrl
-          } 
+          }
         }
       }
     }
@@ -109,7 +109,7 @@ public class ResourceURLContent extends URLContent {
   }
 
   /**
-   * Creates a content for <code>resourceUrl</code>. 
+   * Creates a content for <code>resourceUrl</code>.
    * @param url  the URL of the resource
    */
   public ResourceURLContent(URL url, boolean multiPartResource) {
@@ -118,7 +118,7 @@ public class ResourceURLContent extends URLContent {
   }
 
   /**
-   * Returns <code>true</code> if the resource is a multi part resource stored 
+   * Returns <code>true</code> if the resource is a multi part resource stored
    * in a folder with other required resources.
    */
   public boolean isMultiPartResource() {

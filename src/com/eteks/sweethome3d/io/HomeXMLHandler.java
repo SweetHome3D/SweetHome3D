@@ -69,6 +69,7 @@ import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * SAX handler for Sweet Home 3D XML stream. Read home should respect the following DTD:<pre>
@@ -1787,7 +1788,7 @@ public class HomeXMLHandler extends DefaultHandler {
   private Content parseContent(String contentFile, String catalogId, boolean textureId) throws SAXException {
     if (contentFile != null) {
       try {
-        return new ResourceURLContent(new URL(contentFile), contentFile.startsWith("jar:"));
+        return new URLContent(new URL(contentFile));
       } catch (MalformedURLException ex1) {
         if (this.contentContext != null) {
           try {

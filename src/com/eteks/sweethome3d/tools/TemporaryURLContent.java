@@ -29,7 +29,7 @@ import java.net.URL;
 import com.eteks.sweethome3d.model.Content;
 
 /**
- * URL content for files, images...
+ * URL content for files, images stored in temporary files.
  * @author Emmanuel Puybaret
  */
 public class TemporaryURLContent extends URLContent {
@@ -40,14 +40,14 @@ public class TemporaryURLContent extends URLContent {
   }
 
   /**
-   * Returns a {@link URLContent URL content} object that references a temporary copy of 
+   * Returns a {@link URLContent URL content} object that references a temporary copy of
    * a given <code>content</code>.
    */
   public static TemporaryURLContent copyToTemporaryURLContent(Content content) throws IOException {
     String extension = ".tmp";
     if (content instanceof URLContent) {
       URLContent urlContent = (URLContent)content;
-      String file = urlContent.isJAREntry() 
+      String file = urlContent.isJAREntry()
           ? urlContent.getJAREntryName()
           : urlContent.getURL().getFile();
       int lastIndex = file.lastIndexOf('.');
@@ -62,7 +62,7 @@ public class TemporaryURLContent extends URLContent {
       tempIn = content.openStream();
       tempOut = new FileOutputStream(tempFile);
       byte [] buffer = new byte [8192];
-      int size; 
+      int size;
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);
       }
