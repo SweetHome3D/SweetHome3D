@@ -362,6 +362,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   private static final float       WALL_STROKE_WIDTH = 1.5f;
   private static final float       BORDER_STROKE_WIDTH = 1f;
+  private static final float       ALIGNMENT_LINE_OFFSET = 25f;
 
   private static final BufferedImage ERROR_TEXTURE_IMAGE;
   private static final BufferedImage WAIT_TEXTURE_IMAGE;
@@ -4923,21 +4924,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestWall != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestWall > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / planScale, y,
-              x - deltaXToClosestWall - 25 / planScale, y));
+          g2D.draw(new Line2D.Float(x + ALIGNMENT_LINE_OFFSET / planScale, y,
+              x - deltaXToClosestWall - ALIGNMENT_LINE_OFFSET / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / planScale, y,
-              x - deltaXToClosestWall + 25 / planScale, y));
+          g2D.draw(new Line2D.Float(x - ALIGNMENT_LINE_OFFSET / planScale, y,
+              x - deltaXToClosestWall + ALIGNMENT_LINE_OFFSET / planScale, y));
         }
       }
 
       if (deltaYToClosestWall != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestWall > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / planScale,
-              x, y - deltaYToClosestWall - 25 / planScale));
+          g2D.draw(new Line2D.Float(x, y + ALIGNMENT_LINE_OFFSET / planScale,
+              x, y - deltaYToClosestWall - ALIGNMENT_LINE_OFFSET / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / planScale,
-              x, y - deltaYToClosestWall + 25 / planScale));
+          g2D.draw(new Line2D.Float(x, y - ALIGNMENT_LINE_OFFSET / planScale,
+              x, y - deltaYToClosestWall + ALIGNMENT_LINE_OFFSET / planScale));
         }
       }
 
@@ -5063,21 +5064,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / planScale, y,
-              x - deltaXToClosestObject - 25 / planScale, y));
+          g2D.draw(new Line2D.Float(x + ALIGNMENT_LINE_OFFSET / planScale, y,
+              x - deltaXToClosestObject - ALIGNMENT_LINE_OFFSET / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / planScale, y,
-              x - deltaXToClosestObject + 25 / planScale, y));
+          g2D.draw(new Line2D.Float(x - ALIGNMENT_LINE_OFFSET / planScale, y,
+              x - deltaXToClosestObject + ALIGNMENT_LINE_OFFSET / planScale, y));
         }
       }
 
       if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / planScale,
-              x, y - deltaYToClosestObject - 25 / planScale));
+          g2D.draw(new Line2D.Float(x, y + ALIGNMENT_LINE_OFFSET / planScale,
+              x, y - deltaYToClosestObject - ALIGNMENT_LINE_OFFSET / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / planScale,
-              x, y - deltaYToClosestObject + 25 / planScale));
+          g2D.draw(new Line2D.Float(x, y - ALIGNMENT_LINE_OFFSET / planScale,
+              x, y - deltaYToClosestObject + ALIGNMENT_LINE_OFFSET / planScale));
         }
       }
 
@@ -5195,21 +5196,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / planScale, y,
-              x - deltaXToClosestObject - 25 / planScale, y));
+          g2D.draw(new Line2D.Float(x + ALIGNMENT_LINE_OFFSET / planScale, y,
+              x - deltaXToClosestObject - ALIGNMENT_LINE_OFFSET / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / planScale, y,
-              x - deltaXToClosestObject + 25 / planScale, y));
+          g2D.draw(new Line2D.Float(x - ALIGNMENT_LINE_OFFSET / planScale, y,
+              x - deltaXToClosestObject + ALIGNMENT_LINE_OFFSET / planScale, y));
         }
       }
 
       if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / planScale,
-              x, y - deltaYToClosestObject - 25 / planScale));
+          g2D.draw(new Line2D.Float(x, y + ALIGNMENT_LINE_OFFSET / planScale,
+              x, y - deltaYToClosestObject - ALIGNMENT_LINE_OFFSET / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / planScale,
-              x, y - deltaYToClosestObject + 25 / planScale));
+          g2D.draw(new Line2D.Float(x, y - ALIGNMENT_LINE_OFFSET / planScale,
+              x, y - deltaYToClosestObject + ALIGNMENT_LINE_OFFSET / planScale));
         }
       }
 
