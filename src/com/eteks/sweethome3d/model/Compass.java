@@ -105,7 +105,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldX = this.x;
       this.x = x;
       this.pointsCache = null;
-      firePropertyChange(Property.X, oldX, x);
+      firePropertyChange(Property.X.name(), oldX, x);
     }
   }
 
@@ -125,7 +125,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldY = this.y;
       this.y = y;
       this.pointsCache = null;
-      firePropertyChange(Property.Y, oldY, y);
+      firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
 
@@ -145,7 +145,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldDiameter = this.diameter;
       this.diameter = diameter;
       this.pointsCache = null;
-      firePropertyChange(Property.DIAMETER, oldDiameter, diameter);
+      firePropertyChange(Property.DIAMETER.name(), oldDiameter, diameter);
     }
   }
 
@@ -163,7 +163,7 @@ public class Compass extends HomeObject implements Selectable {
   public void setVisible(boolean visible) {
     if (visible != this.visible) {
       this.visible = visible;
-      firePropertyChange(Property.VISIBLE, !visible, visible);
+      firePropertyChange(Property.VISIBLE.name(), !visible, visible);
     }
   }
 
@@ -183,7 +183,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldNorthDirection = this.northDirection;
       this.northDirection = northDirection;
       this.pointsCache = null;
-      firePropertyChange(Property.NORTH_DIRECTION, oldNorthDirection, northDirection);
+      firePropertyChange(Property.NORTH_DIRECTION.name(), oldNorthDirection, northDirection);
     }
   }
 
@@ -203,7 +203,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldLatitude = this.latitude;
       this.latitude = latitude;
       this.dateCache = null;
-      firePropertyChange(Property.LATITUDE, oldLatitude, latitude);
+      firePropertyChange(Property.LATITUDE.name(), oldLatitude, latitude);
     }
   }
 
@@ -223,7 +223,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldLongitude = this.longitude;
       this.longitude = longitude;
       this.dateCache = null;
-      firePropertyChange(Property.LONGITUDE, oldLongitude, longitude);
+      firePropertyChange(Property.LONGITUDE.name(), oldLongitude, longitude);
     }
   }
 
@@ -249,7 +249,7 @@ public class Compass extends HomeObject implements Selectable {
       String oldTimeZone = this.timeZone.getID();
       this.timeZone = TimeZone.getTimeZone(timeZone);
       this.dateCache = null;
-      firePropertyChange(Property.TIME_ZONE, oldTimeZone, timeZone);
+      firePropertyChange(Property.TIME_ZONE.name(), oldTimeZone, timeZone);
     }
   }
 

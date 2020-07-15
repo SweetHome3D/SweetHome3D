@@ -158,13 +158,12 @@ public abstract class HomeObject implements Serializable, Cloneable {
   }
 
   /**
-   * Fires a property change of {@link PropertyChangeEvent} class to listeners, with its property name
-   * equal to <code>property.name()</code>.
+   * Fires a property change of {@link PropertyChangeEvent} class to listeners.
    * @since 6.4
    */
-  protected void firePropertyChange(Enum<?> property, Object oldValue, Object newValue) {
+  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     if (this.propertyChangeSupport != null) {
-      this.propertyChangeSupport.firePropertyChange(property.name(), oldValue, newValue);
+      this.propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
@@ -213,9 +212,7 @@ public abstract class HomeObject implements Serializable, Cloneable {
           // Exception thrown by singleton map when an entry is removed
           this.properties = null;
         }
-        if (this.propertyChangeSupport != null) {
-          this.propertyChangeSupport.firePropertyChange(name, oldValue, null);
-        }
+        firePropertyChange(name, oldValue, null);
       }
     } else {
       if (this.properties == null
@@ -230,10 +227,8 @@ public abstract class HomeObject implements Serializable, Cloneable {
         }
         this.properties.put(name, value);
       }
-      if (this.propertyChangeSupport != null) {
-        // Event fired only if not null value changed
-        this.propertyChangeSupport.firePropertyChange(name, oldValue, value);
-      }
+      // Event fired only if not null value changed
+      firePropertyChange(name, oldValue, value);
     }
   }
 

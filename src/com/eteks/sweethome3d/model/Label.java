@@ -81,7 +81,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
         && (text == null || !text.equals(this.text))) {
       String oldText = this.text;
       this.text = text;
-      firePropertyChange(Property.TEXT, oldText, text);
+      firePropertyChange(Property.TEXT.name(), oldText, text);
     }
   }
 
@@ -100,7 +100,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (x != this.x) {
       float oldX = this.x;
       this.x = x;
-      firePropertyChange(Property.X, oldX, x);
+      firePropertyChange(Property.X.name(), oldX, x);
     }
   }
 
@@ -119,7 +119,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (y != this.y) {
       float oldY = this.y;
       this.y = y;
-      firePropertyChange(Property.Y, oldY, y);
+      firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
 
@@ -154,7 +154,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      firePropertyChange(Property.ELEVATION, oldElevation, elevation);
+      firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
 
@@ -173,7 +173,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (style != this.style) {
       TextStyle oldStyle = this.style;
       this.style = style;
-      firePropertyChange(Property.STYLE, oldStyle, style);
+      firePropertyChange(Property.STYLE.name(), oldStyle, style);
     }
   }
 
@@ -194,7 +194,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (color != this.color) {
       Integer oldColor = this.color;
       this.color = color;
-      firePropertyChange(Property.COLOR, oldColor, color);
+      firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
 
@@ -215,7 +215,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (outlineColor != this.outlineColor) {
       Integer oldOutlineColor = this.outlineColor;
       this.outlineColor = outlineColor;
-      firePropertyChange(Property.OUTLINE_COLOR, oldOutlineColor, outlineColor);
+      firePropertyChange(Property.OUTLINE_COLOR.name(), oldOutlineColor, outlineColor);
     }
   }
 
@@ -238,7 +238,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (angle != this.angle) {
       float oldAngle = this.angle;
       this.angle = angle;
-      firePropertyChange(Property.ANGLE, oldAngle, angle);
+      firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
     }
   }
 
@@ -267,7 +267,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
         && (pitch == null || !pitch.equals(this.pitch))) {
       Float oldPitch = this.pitch;
       this.pitch = pitch;
-      firePropertyChange(Property.PITCH, oldPitch, pitch);
+      firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
     }
   }
 
@@ -288,7 +288,7 @@ public class Label extends HomeObject implements Selectable, Elevatable {
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      firePropertyChange(Property.LEVEL, oldLevel, level);
+      firePropertyChange(Property.LEVEL.name(), oldLevel, level);
     }
   }
 

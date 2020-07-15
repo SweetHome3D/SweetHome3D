@@ -236,7 +236,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this.points = deepCopy(points);
     this.polylinePathCache = null;
     this.shapeCache = null;
-    firePropertyChange(Property.POINTS, oldPoints, points);
+    firePropertyChange(Property.POINTS.name(), oldPoints, points);
   }
 
   /**
@@ -264,7 +264,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this.points = newPoints;
     this.polylinePathCache = null;
     this.shapeCache = null;
-    firePropertyChange(Property.POINTS, oldPoints, deepCopy(this.points));
+    firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
 
   /**
@@ -283,7 +283,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.points [index][1] = y;
       this.polylinePathCache = null;
       this.shapeCache = null;
-      firePropertyChange(Property.POINTS, oldPoints, deepCopy(this.points));
+      firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
     }
   }
 
@@ -304,7 +304,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this.points = newPoints;
     this.polylinePathCache = null;
     this.shapeCache = null;
-    firePropertyChange(Property.POINTS, oldPoints, deepCopy(this.points));
+    firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
 
   /**
@@ -322,7 +322,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (thickness != this.thickness) {
       float oldThickness = this.thickness;
       this.thickness = thickness;
-      firePropertyChange(Property.THICKNESS, oldThickness, thickness);
+      firePropertyChange(Property.THICKNESS.name(), oldThickness, thickness);
     }
   }
 
@@ -342,7 +342,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       CapStyle oldStyle = this.capStyle;
       this.capStyle = capStyle;
       this.capStyleName = this.capStyle.name();
-      firePropertyChange(Property.CAP_STYLE, oldStyle, capStyle);
+      firePropertyChange(Property.CAP_STYLE.name(), oldStyle, capStyle);
     }
   }
 
@@ -364,7 +364,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.joinStyleName = this.joinStyle.name();
       this.polylinePathCache = null;
       this.shapeCache = null;
-      firePropertyChange(Property.JOIN_STYLE, oldJoinStyle, joinStyle);
+      firePropertyChange(Property.JOIN_STYLE.name(), oldJoinStyle, joinStyle);
     }
   }
 
@@ -389,8 +389,8 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       if (dashStyle != DashStyle.CUSTOMIZED) {
         this.dashPattern = null;
       }
-      firePropertyChange(Property.DASH_PATTERN, oldDashPattern, getDashPattern());
-      firePropertyChange(Property.DASH_STYLE, oldDashStyle, dashStyle);
+      firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, getDashPattern());
+      firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, dashStyle);
     }
   }
 
@@ -426,12 +426,12 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (!Arrays.equals(dashPattern, this.dashPattern)) {
       float [] oldDashPattern = getDashPattern();
       this.dashPattern = dashPattern.clone();
-      firePropertyChange(Property.DASH_PATTERN, oldDashPattern, dashPattern);
+      firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, dashPattern);
       // Always emit a DASH_STYLE change to let existing listeners know that the pattern change
       DashStyle oldDashStyle = this.dashStyle;
       this.dashStyle = DashStyle.CUSTOMIZED;
       this.dashStyleName = this.dashStyle.name();
-      firePropertyChange(Property.DASH_STYLE, oldDashStyle, DashStyle.CUSTOMIZED);
+      firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, DashStyle.CUSTOMIZED);
     }
   }
 
@@ -454,7 +454,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (dashOffset != this.dashOffset) {
       float oldDashOffset = this.dashOffset;
       this.dashOffset = dashOffset;
-      firePropertyChange(Property.DASH_OFFSET, oldDashOffset, dashOffset);
+      firePropertyChange(Property.DASH_OFFSET.name(), oldDashOffset, dashOffset);
     }
   }
 
@@ -474,7 +474,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       ArrowStyle oldStartArrowStyle = this.startArrowStyle;
       this.startArrowStyle = startArrowStyle;
       this.startArrowStyleName = this.startArrowStyle.name();
-      firePropertyChange(Property.START_ARROW_STYLE, oldStartArrowStyle, startArrowStyle);
+      firePropertyChange(Property.START_ARROW_STYLE.name(), oldStartArrowStyle, startArrowStyle);
     }
   }
 
@@ -494,7 +494,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       ArrowStyle oldEndArrowStyle = this.endArrowStyle;
       this.endArrowStyle = endArrowStyle;
       this.endArrowStyleName = this.endArrowStyle.name();
-      firePropertyChange(Property.END_ARROW_STYLE, oldEndArrowStyle, endArrowStyle);
+      firePropertyChange(Property.END_ARROW_STYLE.name(), oldEndArrowStyle, endArrowStyle);
     }
   }
 
@@ -512,7 +512,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   public void setClosedPath(boolean closedPath) {
     if (closedPath != this.closedPath) {
       this.closedPath = closedPath;
-      firePropertyChange(Property.CLOSED_PATH, !closedPath, closedPath);
+      firePropertyChange(Property.CLOSED_PATH.name(), !closedPath, closedPath);
     }
   }
 
@@ -531,7 +531,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (color != this.color) {
       int oldColor = this.color;
       this.color = color;
-      firePropertyChange(Property.COLOR, oldColor, color);
+      firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
 
@@ -567,7 +567,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (this.elevation != null && elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      firePropertyChange(Property.ELEVATION, oldElevation, elevation);
+      firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
 
@@ -586,7 +586,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   public void setVisibleIn3D(boolean visibleIn3D) {
     if (visibleIn3D ^ (this.elevation != null)) {
       this.elevation = visibleIn3D ? Float.valueOf(0) : null;
-      firePropertyChange(Property.VISIBLE_IN_3D, !visibleIn3D, visibleIn3D);
+      firePropertyChange(Property.VISIBLE_IN_3D.name(), !visibleIn3D, visibleIn3D);
     }
   }
 
@@ -605,7 +605,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      firePropertyChange(Property.LEVEL, oldLevel, level);
+      firePropertyChange(Property.LEVEL.name(), oldLevel, level);
     }
   }
 

@@ -103,7 +103,7 @@ public class Level extends HomeObject {
         && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      firePropertyChange(Property.NAME, oldName, name);
+      firePropertyChange(Property.NAME.name(), oldName, name);
     }
   }
 
@@ -122,7 +122,7 @@ public class Level extends HomeObject {
     if (elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      firePropertyChange(Property.ELEVATION, oldElevation, elevation);
+      firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
 
@@ -141,7 +141,7 @@ public class Level extends HomeObject {
     if (floorThickness != this.floorThickness) {
       float oldFloorThickness = this.floorThickness;
       this.floorThickness = floorThickness;
-      firePropertyChange(Property.FLOOR_THICKNESS, oldFloorThickness, floorThickness);
+      firePropertyChange(Property.FLOOR_THICKNESS.name(), oldFloorThickness, floorThickness);
     }
   }
 
@@ -160,7 +160,7 @@ public class Level extends HomeObject {
     if (height != this.height) {
       float oldHeight = this.height;
       this.height = height;
-      firePropertyChange(Property.HEIGHT, oldHeight, height);
+      firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
     }
   }
 
@@ -178,7 +178,7 @@ public class Level extends HomeObject {
     if (backgroundImage != this.backgroundImage) {
       BackgroundImage oldBackgroundImage = this.backgroundImage;
       this.backgroundImage = backgroundImage;
-      firePropertyChange(Property.BACKGROUND_IMAGE, oldBackgroundImage, backgroundImage);
+      firePropertyChange(Property.BACKGROUND_IMAGE.name(), oldBackgroundImage, backgroundImage);
     }
   }
 
@@ -196,7 +196,7 @@ public class Level extends HomeObject {
   public void setVisible(boolean visible) {
     if (visible != this.visible) {
       this.visible = visible;
-      firePropertyChange(Property.VISIBLE, !visible, visible);
+      firePropertyChange(Property.VISIBLE.name(), !visible, visible);
     }
   }
 
@@ -216,7 +216,7 @@ public class Level extends HomeObject {
   public void setViewable(boolean viewable) {
     if (viewable != this.viewable) {
       this.viewable = viewable;
-      firePropertyChange(Property.VIEWABLE, !viewable, viewable);
+      firePropertyChange(Property.VIEWABLE.name(), !viewable, viewable);
     }
   }
 
@@ -244,7 +244,7 @@ public class Level extends HomeObject {
     if (elevationIndex != this.elevationIndex) {
       int oldElevationIndex = this.elevationIndex;
       this.elevationIndex = elevationIndex;
-      firePropertyChange(Property.ELEVATION_INDEX, oldElevationIndex, elevationIndex);
+      firePropertyChange(Property.ELEVATION_INDEX.name(), oldElevationIndex, elevationIndex);
     }
   }
 

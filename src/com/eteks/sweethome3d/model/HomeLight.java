@@ -89,7 +89,7 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
     if (power != this.power) {
       float oldPower = this.power;
       this.power = power;
-      firePropertyChange(Property.POWER, oldPower, power);
+      firePropertyChange(Property.POWER.name(), oldPower, power);
     }
   }
 

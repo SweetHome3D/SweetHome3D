@@ -86,7 +86,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldXStart = this.xStart;
       this.xStart = xStart;
       this.shapeCache = null;
-      firePropertyChange(Property.X_START, oldXStart, xStart);
+      firePropertyChange(Property.X_START.name(), oldXStart, xStart);
     }
   }
 
@@ -106,7 +106,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldYStart = this.yStart;
       this.yStart = yStart;
       this.shapeCache = null;
-      firePropertyChange(Property.Y_START, oldYStart, yStart);
+      firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
     }
   }
 
@@ -126,7 +126,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
       this.shapeCache = null;
-      firePropertyChange(Property.X_END, oldXEnd, xEnd);
+      firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
     }
   }
 
@@ -146,7 +146,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
       this.shapeCache = null;
-      firePropertyChange(Property.Y_END, oldYEnd, yEnd);
+      firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
     }
   }
 
@@ -166,7 +166,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldOffset = this.offset;
       this.offset = offset;
       this.shapeCache = null;
-      firePropertyChange(Property.OFFSET, oldOffset, offset);
+      firePropertyChange(Property.OFFSET.name(), oldOffset, offset);
     }
   }
 
@@ -192,7 +192,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
     if (lengthStyle != this.lengthStyle) {
       TextStyle oldLengthStyle = this.lengthStyle;
       this.lengthStyle = lengthStyle;
-      firePropertyChange(Property.LENGTH_STYLE, oldLengthStyle, lengthStyle);
+      firePropertyChange(Property.LENGTH_STYLE.name(), oldLengthStyle, lengthStyle);
     }
   }
 
@@ -213,7 +213,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      firePropertyChange(Property.LEVEL, oldLevel, level);
+      firePropertyChange(Property.LEVEL.name(), oldLevel, level);
     }
   }
 

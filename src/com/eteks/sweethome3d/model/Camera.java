@@ -147,7 +147,7 @@ public class Camera extends HomeObject {
         && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      firePropertyChange(Property.NAME, oldName, name);
+      firePropertyChange(Property.NAME.name(), oldName, name);
     }
   }
 
@@ -166,7 +166,7 @@ public class Camera extends HomeObject {
     if (yaw != this.yaw) {
       float oldYaw = this.yaw;
       this.yaw = yaw;
-      firePropertyChange(Property.YAW, oldYaw, yaw);
+      firePropertyChange(Property.YAW.name(), oldYaw, yaw);
     }
   }
 
@@ -185,7 +185,7 @@ public class Camera extends HomeObject {
     if (pitch != this.pitch) {
       float oldPitch = this.pitch;
       this.pitch = pitch;
-      firePropertyChange(Property.PITCH, oldPitch, pitch);
+      firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
     }
   }
 
@@ -203,7 +203,7 @@ public class Camera extends HomeObject {
     if (fieldOfView != this.fieldOfView) {
       float oldFieldOfView = this.fieldOfView;
       this.fieldOfView = fieldOfView;
-      firePropertyChange(Property.FIELD_OF_VIEW, oldFieldOfView, fieldOfView);
+      firePropertyChange(Property.FIELD_OF_VIEW.name(), oldFieldOfView, fieldOfView);
     }
   }
 
@@ -221,7 +221,7 @@ public class Camera extends HomeObject {
     if (x != this.x) {
       float oldX = this.x;
       this.x = x;
-      firePropertyChange(Property.X, oldX, x);
+      firePropertyChange(Property.X.name(), oldX, x);
     }
   }
 
@@ -239,7 +239,7 @@ public class Camera extends HomeObject {
     if (y != this.y) {
       float oldY = this.y;
       this.y = y;
-      firePropertyChange(Property.Y, oldY, y);
+      firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
 
@@ -257,7 +257,7 @@ public class Camera extends HomeObject {
     if (z != this.z) {
       float oldZ = this.z;
       this.z = z;
-      firePropertyChange(Property.Z, oldZ, z);
+      firePropertyChange(Property.Z.name(), oldZ, z);
     }
   }
 
@@ -279,7 +279,7 @@ public class Camera extends HomeObject {
     if (this.time != time) {
       long oldTime = this.time;
       this.time = time;
-      firePropertyChange(Property.TIME, oldTime, time);
+      firePropertyChange(Property.TIME.name(), oldTime, time);
     }
   }
 
@@ -318,7 +318,7 @@ public class Camera extends HomeObject {
       Lens oldLens = this.lens;
       this.lens = lens;
       this.lensName = this.lens.name();
-      firePropertyChange(Property.LENS, oldLens, lens);
+      firePropertyChange(Property.LENS.name(), oldLens, lens);
     }
   }
 

@@ -73,9 +73,9 @@ public class ObserverCamera extends Camera implements Selectable {
       this.fixedSize = fixedSize;
       this.shapeCache = null;
       this.rectangleShapeCache = null;
-      firePropertyChange(Property.WIDTH, oldWidth, getWidth());
-      firePropertyChange(Property.DEPTH, oldDepth, getDepth());
-      firePropertyChange(Property.HEIGHT, oldHeight, getHeight());
+      firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
+      firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
+      firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
     }
   }
 
@@ -124,9 +124,9 @@ public class ObserverCamera extends Camera implements Selectable {
     super.setZ(z);
     this.shapeCache = null;
     this.rectangleShapeCache = null;
-    firePropertyChange(Property.WIDTH, oldWidth, getWidth());
-    firePropertyChange(Property.DEPTH, oldDepth, getDepth());
-    firePropertyChange(Property.HEIGHT, oldHeight, getHeight());
+    firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
+    firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
+    firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
   }
 
   /**
