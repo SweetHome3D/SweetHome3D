@@ -23,10 +23,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -58,7 +54,6 @@ public class Compass extends HomeObject implements Selectable {
   private float               longitude;
   private TimeZone            timeZone;
 
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
   private transient Calendar   dateCache;
   private transient float      sunElevationCache;
@@ -95,29 +90,6 @@ public class Compass extends HomeObject implements Selectable {
   }
 
   /**
-   * Initializes compass transient fields
-   * and reads compass from <code>in</code> stream with default reading method.
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
-    in.defaultReadObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this compass.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this compass.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  /**
    * Returns the abscissa of the center of this compass.
    */
   public float getX() {
@@ -133,7 +105,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldX = this.x;
       this.x = x;
       this.pointsCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
+      firePropertyChange(Property.X, oldX, x);
     }
   }
 
@@ -153,7 +125,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldY = this.y;
       this.y = y;
       this.pointsCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
+      firePropertyChange(Property.Y, oldY, y);
     }
   }
 
@@ -173,7 +145,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldDiameter = this.diameter;
       this.diameter = diameter;
       this.pointsCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.DIAMETER.name(), oldDiameter, diameter);
+      firePropertyChange(Property.DIAMETER, oldDiameter, diameter);
     }
   }
 
@@ -191,7 +163,7 @@ public class Compass extends HomeObject implements Selectable {
   public void setVisible(boolean visible) {
     if (visible != this.visible) {
       this.visible = visible;
-      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.name(), !visible, visible);
+      firePropertyChange(Property.VISIBLE, !visible, visible);
     }
   }
 
@@ -211,7 +183,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldNorthDirection = this.northDirection;
       this.northDirection = northDirection;
       this.pointsCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.NORTH_DIRECTION.name(), oldNorthDirection, northDirection);
+      firePropertyChange(Property.NORTH_DIRECTION, oldNorthDirection, northDirection);
     }
   }
 
@@ -231,7 +203,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldLatitude = this.latitude;
       this.latitude = latitude;
       this.dateCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.LATITUDE.name(), oldLatitude, latitude);
+      firePropertyChange(Property.LATITUDE, oldLatitude, latitude);
     }
   }
 
@@ -251,7 +223,7 @@ public class Compass extends HomeObject implements Selectable {
       float oldLongitude = this.longitude;
       this.longitude = longitude;
       this.dateCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.LONGITUDE.name(), oldLongitude, longitude);
+      firePropertyChange(Property.LONGITUDE, oldLongitude, longitude);
     }
   }
 
@@ -277,7 +249,7 @@ public class Compass extends HomeObject implements Selectable {
       String oldTimeZone = this.timeZone.getID();
       this.timeZone = TimeZone.getTimeZone(timeZone);
       this.dateCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.TIME_ZONE.name(), oldTimeZone, timeZone);
+      firePropertyChange(Property.TIME_ZONE, oldTimeZone, timeZone);
     }
   }
 
@@ -343,9 +315,7 @@ public class Compass extends HomeObject implements Selectable {
    */
   @Override
   public Compass clone() {
-    Compass clone = (Compass)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-    return clone;
+    return (Compass)super.clone();
   }
 
   /**

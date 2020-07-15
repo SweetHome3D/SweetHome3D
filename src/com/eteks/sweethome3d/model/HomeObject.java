@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
@@ -41,6 +44,8 @@ public abstract class HomeObject implements Serializable, Cloneable {
 
   private String id; // Should be final but readObject needs to create a default one
   private Map<String, String> properties;
+
+  private transient PropertyChangeSupport propertyChangeSupport;
 
   /**
    * Creates a new object with a unique ID prefixed by <code>object-</code>.
@@ -98,6 +103,72 @@ public abstract class HomeObject implements Serializable, Cloneable {
   }
 
   /**
+   * Adds the property change <code>listener</code> in parameter to this object.
+   * Properties set with {@link #setProperty(String, String) setProperty} will be notified with
+   * an event of {@link UserPropertyChangeEvent} class, whereas property change events fired by
+   * subclasses of <code>HomeObject</code> will be of {@link PropertyChangeEvent} class,
+   * which can be useful to distinguish homonym property names.
+   * @since 6.4
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    if (this.propertyChangeSupport == null) {
+      // Create property change support on the fly
+      this.propertyChangeSupport = new PropertyChangeSupport(this);
+    }
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this object.
+   * @since 6.4
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    if (this.propertyChangeSupport != null) {
+      this.propertyChangeSupport.removePropertyChangeListener(listener);
+      if (this.propertyChangeSupport.getPropertyChangeListeners().length == 0) {
+        this.propertyChangeSupport = null;
+      }
+    }
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this object for a specific property name.
+   * Properties set with {@link #setProperty(String, String) setProperty} will be notified with
+   * an event of {@link UserPropertyChangeEvent} class, whereas property change events fired by
+   * subclasses of <code>HomeObject</code> will be of {@link PropertyChangeEvent} class,
+   * which can be useful to distinguish homonym property names.
+   * @since 6.4
+   */
+  public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    if (this.propertyChangeSupport == null) {
+      // Create property change support on the fly
+      this.propertyChangeSupport = new PropertyChangeSupport(this);
+    }
+    this.propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this object.
+   * @since 6.4
+   */
+  public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    if (this.propertyChangeSupport != null) {
+      this.propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
+    }
+  }
+
+  /**
+   * Fires a property change of {@link PropertyChangeEvent} class to listeners, with its property name
+   * equal to <code>property.name()</code>.
+   * @since 6.4
+   */
+  protected void firePropertyChange(Enum<?> property, Object oldValue, Object newValue) {
+    if (this.propertyChangeSupport != null) {
+      this.propertyChangeSupport.firePropertyChange(property.name(), oldValue, newValue);
+    }
+  }
+
+  /**
    * Returns the ID of this object.
    * @return a unique ID
    * @since 6.4
@@ -119,13 +190,20 @@ public abstract class HomeObject implements Serializable, Cloneable {
   }
 
   /**
-   * Sets a property associated with this object.
+   * Sets a property associated with this object. Once the property is updated,
+   * listeners added to this object will receive a change event of
+   * {@link UserPropertyChangeEvent} class.<br>
+   * To avoid any issue with existing or future properties of Sweet Home 3D classes,
+   * do not use property names written with only upper case letters.
    * @param name   the name of the property to set
    * @param value  the new value of the property
    */
   public void setProperty(String name, String value) {
+    String oldValue = this.properties != null
+        ? this.properties.get(name)
+        : null;
     if (value == null) {
-      if (this.properties != null && this.properties.containsKey(name)) {
+      if (this.properties != null && oldValue != null) {
         try {
           this.properties.remove(name);
           if (this.properties.size() == 0) {
@@ -135,9 +213,14 @@ public abstract class HomeObject implements Serializable, Cloneable {
           // Exception thrown by singleton map when an entry is removed
           this.properties = null;
         }
+        if (this.propertyChangeSupport != null) {
+          this.propertyChangeSupport.firePropertyChange(name, oldValue, null);
+        }
       }
     } else {
-      if (this.properties == null) {
+      if (this.properties == null
+          || (this.properties.size() == 1
+              && oldValue != null)) {
         // Create properties map on the fly with a singleton map first
         this.properties = Collections.singletonMap(name, value);
       } else {
@@ -146,6 +229,10 @@ public abstract class HomeObject implements Serializable, Cloneable {
           this.properties = new HashMap<String, String>(this.properties);
         }
         this.properties.put(name, value);
+      }
+      if (this.propertyChangeSupport != null) {
+        // Event fired only if not null value changed
+        this.propertyChangeSupport.firePropertyChange(name, oldValue, value);
       }
     }
   }
@@ -196,7 +283,8 @@ public abstract class HomeObject implements Serializable, Cloneable {
             ? Collections.singletonMap(this.properties.keySet().iterator().next(), this.properties.values().iterator().next())
             : new HashMap<String, String>(this.properties);
       }
-    return clone;
+      clone.propertyChangeSupport = null;
+      return clone;
     } catch (CloneNotSupportedException ex) {
       throw new IllegalStateException("Super class isn't cloneable");
     }

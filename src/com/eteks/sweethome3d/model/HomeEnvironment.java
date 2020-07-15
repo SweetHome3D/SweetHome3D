@@ -19,8 +19,8 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -78,7 +78,6 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
   private float                           videoSpeed;
   private int                             videoFrameRate;
   private List<Camera>                    cameraPath;
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
    * Creates default environment.
@@ -155,7 +154,6 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
    * and reads attributes from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.ceilingLightColor = 0xD0D0D0;
     this.photoWidth = 400;
     this.photoHeight = 300;
@@ -186,16 +184,18 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
 
   /**
    * Adds the property change <code>listener</code> in parameter to this environment.
+   * Properties change will be notified with an event of {@link PropertyChangeEvent} class which property name
+   * will be equal to the value returned by {@link Property#name()} call.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
+    addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this environment.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
+    removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -215,7 +215,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
   public void setObserverCameraElevationAdjusted(boolean observerCameraElevationAdjusted) {
     if (this.observerCameraElevationAdjusted != observerCameraElevationAdjusted) {
       this.observerCameraElevationAdjusted = observerCameraElevationAdjusted;
-      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED.name(),
+      firePropertyChange(Property.OBSERVER_CAMERA_ELEVATION_ADJUSTED,
           !observerCameraElevationAdjusted, observerCameraElevationAdjusted);
     }
   }
@@ -234,8 +234,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (groundColor != this.groundColor) {
       int oldGroundColor = this.groundColor;
       this.groundColor = groundColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.GROUND_COLOR.name(), oldGroundColor, groundColor);
+      firePropertyChange(Property.GROUND_COLOR, oldGroundColor, groundColor);
     }
   }
 
@@ -253,8 +252,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (groundTexture != this.groundTexture) {
       HomeTexture oldGroundTexture = this.groundTexture;
       this.groundTexture = groundTexture;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.GROUND_TEXTURE.name(), oldGroundTexture, groundTexture);
+      firePropertyChange(Property.GROUND_TEXTURE, oldGroundTexture, groundTexture);
     }
   }
 
@@ -274,7 +272,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
   public void setBackgroundImageVisibleOnGround3D(boolean backgroundImageVisibleOnGround3D) {
     if (this.backgroundImageVisibleOnGround3D != backgroundImageVisibleOnGround3D) {
       this.backgroundImageVisibleOnGround3D = backgroundImageVisibleOnGround3D;
-      this.propertyChangeSupport.firePropertyChange(Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D.name(),
+      firePropertyChange(Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D,
           !backgroundImageVisibleOnGround3D, backgroundImageVisibleOnGround3D);
     }
   }
@@ -293,8 +291,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (skyColor != this.skyColor) {
       int oldSkyColor = this.skyColor;
       this.skyColor = skyColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.SKY_COLOR.name(), oldSkyColor, skyColor);
+      firePropertyChange(Property.SKY_COLOR, oldSkyColor, skyColor);
     }
   }
 
@@ -312,8 +309,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (skyTexture != this.skyTexture) {
       HomeTexture oldSkyTexture = this.skyTexture;
       this.skyTexture = skyTexture;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.SKY_TEXTURE.name(), oldSkyTexture, skyTexture);
+      firePropertyChange(Property.SKY_TEXTURE, oldSkyTexture, skyTexture);
     }
   }
 
@@ -331,8 +327,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (lightColor != this.lightColor) {
       int oldLightColor = this.lightColor;
       this.lightColor = lightColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.LIGHT_COLOR.name(), oldLightColor, lightColor);
+      firePropertyChange(Property.LIGHT_COLOR, oldLightColor, lightColor);
     }
   }
 
@@ -350,8 +345,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (ceilingLightColor != this.ceilingLightColor) {
       int oldCeilingLightColor = this.ceilingLightColor;
       this.ceilingLightColor = ceilingLightColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.CEILING_LIGHT_COLOR.name(), oldCeilingLightColor, ceilingLightColor);
+      firePropertyChange(Property.CEILING_LIGHT_COLOR, oldCeilingLightColor, ceilingLightColor);
     }
   }
 
@@ -370,8 +364,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (wallsAlpha != this.wallsAlpha) {
       float oldWallsAlpha = this.wallsAlpha;
       this.wallsAlpha = wallsAlpha;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.WALLS_ALPHA.name(), oldWallsAlpha, wallsAlpha);
+      firePropertyChange(Property.WALLS_ALPHA, oldWallsAlpha, wallsAlpha);
     }
   }
 
@@ -389,8 +382,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (drawingMode != this.drawingMode) {
       DrawingMode oldDrawingMode = this.drawingMode;
       this.drawingMode = drawingMode;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.DRAWING_MODE.name(), oldDrawingMode, drawingMode);
+      firePropertyChange(Property.DRAWING_MODE, oldDrawingMode, drawingMode);
     }
   }
 
@@ -411,8 +403,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (subpartSizeUnderLight != this.subpartSizeUnderLight) {
       float oldSubpartWidthUnderLight = this.subpartSizeUnderLight;
       this.subpartSizeUnderLight = subpartSizeUnderLight;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.SUBPART_SIZE_UNDER_LIGHT.name(), oldSubpartWidthUnderLight, subpartSizeUnderLight);
+      firePropertyChange(Property.SUBPART_SIZE_UNDER_LIGHT, oldSubpartWidthUnderLight, subpartSizeUnderLight);
     }
   }
 
@@ -429,8 +420,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
   public void setAllLevelsVisible(boolean allLevelsVisible) {
     if (allLevelsVisible != this.allLevelsVisible) {
       this.allLevelsVisible = allLevelsVisible;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.ALL_LEVELS_VISIBLE.name(), !allLevelsVisible, allLevelsVisible);
+      firePropertyChange(Property.ALL_LEVELS_VISIBLE, !allLevelsVisible, allLevelsVisible);
     }
   }
 
@@ -451,8 +441,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.photoWidth != photoWidth) {
       int oldPhotoWidth = this.photoWidth;
       this.photoWidth = photoWidth;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_WIDTH.name(),
-          oldPhotoWidth, photoWidth);
+      firePropertyChange(Property.PHOTO_WIDTH, oldPhotoWidth, photoWidth);
     }
   }
 
@@ -473,8 +462,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.photoHeight != photoHeight) {
       int oldPhotoHeight = this.photoHeight;
       this.photoHeight = photoHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_HEIGHT.name(),
-          oldPhotoHeight, photoHeight);
+      firePropertyChange(Property.PHOTO_HEIGHT, oldPhotoHeight, photoHeight);
     }
   }
 
@@ -496,8 +484,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
       AspectRatio oldPhotoAspectRatio = this.photoAspectRatio;
       this.photoAspectRatio = photoAspectRatio;
       this.photoAspectRatioName = this.photoAspectRatio.name();
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_ASPECT_RATIO.name(),
-          oldPhotoAspectRatio, photoAspectRatio);
+      firePropertyChange(Property.PHOTO_ASPECT_RATIO, oldPhotoAspectRatio, photoAspectRatio);
     }
   }
 
@@ -518,8 +505,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.photoQuality != photoQuality) {
       int oldPhotoQuality = this.photoQuality;
       this.photoQuality = photoQuality;
-      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_QUALITY.name(),
-          oldPhotoQuality, photoQuality);
+      firePropertyChange(Property.PHOTO_QUALITY, oldPhotoQuality, photoQuality);
     }
   }
 
@@ -540,8 +526,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.videoWidth != videoWidth) {
       int oldVideoWidth = this.videoWidth;
       this.videoWidth = videoWidth;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_WIDTH.name(),
-          oldVideoWidth, videoWidth);
+      firePropertyChange(Property.VIDEO_WIDTH, oldVideoWidth, videoWidth);
     }
   }
 
@@ -574,8 +559,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
       AspectRatio oldVideoAspectRatio = this.videoAspectRatio;
       this.videoAspectRatio = videoAspectRatio;
       this.videoAspectRatioName = this.videoAspectRatio.name();
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_ASPECT_RATIO.name(),
-          oldVideoAspectRatio, videoAspectRatio);
+      firePropertyChange(Property.VIDEO_ASPECT_RATIO, oldVideoAspectRatio, videoAspectRatio);
     }
   }
 
@@ -596,8 +580,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.videoQuality != videoQuality) {
       int oldVideoQuality = this.videoQuality;
       this.videoQuality = videoQuality;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_QUALITY.name(),
-          oldVideoQuality, videoQuality);
+      firePropertyChange(Property.VIDEO_QUALITY, oldVideoQuality, videoQuality);
     }
   }
 
@@ -617,8 +600,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.videoSpeed != videoSpeed) {
       float oldVideoSpeed = this.videoSpeed;
       this.videoSpeed = videoSpeed;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_SPEED.name(),
-          oldVideoSpeed, videoSpeed);
+      firePropertyChange(Property.VIDEO_SPEED, oldVideoSpeed, videoSpeed);
     }
   }
 
@@ -639,8 +621,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     if (this.videoFrameRate != videoFrameRate) {
       int oldVideoFrameRate = this.videoFrameRate;
       this.videoFrameRate = videoFrameRate;
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_FRAME_RATE.name(),
-          oldVideoFrameRate, videoFrameRate);
+      firePropertyChange(Property.VIDEO_FRAME_RATE, oldVideoFrameRate, videoFrameRate);
     }
   }
 
@@ -665,7 +646,7 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
       } else {
         this.cameraPath = Collections.emptyList();
       }
-      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_CAMERA_PATH.name(), oldCameraPath, cameraPath);
+      firePropertyChange(Property.VIDEO_CAMERA_PATH, oldCameraPath, cameraPath);
     }
   }
 
@@ -680,7 +661,6 @@ public class HomeEnvironment extends HomeObject implements Serializable, Cloneab
     for (Camera camera : this.cameraPath) {
       clone.cameraPath.add(camera.clone());
     }
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     return clone;
   }
 }

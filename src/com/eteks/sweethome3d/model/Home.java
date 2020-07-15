@@ -1353,6 +1353,8 @@ public class Home implements Serializable, Cloneable {
 
   /**
    * Adds the property change <code>listener</code> in parameter to this home.
+   * Properties change will be notified with an event of {@link PropertyChangeEvent} class which property name
+   * will be equal to the value returned by {@link Property#name()} call.
    * @param property the property to follow
    * @param listener the listener to add
    */
@@ -1697,18 +1699,26 @@ public class Home implements Serializable, Cloneable {
   }
 
   /**
-   * Sets a property associated with this home.
+   * Sets a property associated with this home. Once the property is updated,
+   * listeners added to this home will receive a change event of
+   * {@link PropertyChangeEvent} class.<br>
+   * To avoid any issue with existing or future properties of Sweet Home 3D classes,
+   * do not use property names written with only upper case letters.
    * @param name   the name of the property to set
    * @param value  the new value of the property
    * @since 5.2
    */
   public void setProperty(String name, String value) {
+    String oldValue = this.properties.get(name);
     if (value == null) {
-      if (this.properties.containsKey(name)) {
+      if (oldValue != null) {
         this.properties.remove(name);
+        this.propertyChangeSupport.firePropertyChange(name, oldValue, null);
       }
     } else {
       this.properties.put(name, value);
+      // Event fired only if not null value changed
+      this.propertyChangeSupport.firePropertyChange(name, oldValue, value);
     }
   }
 
@@ -1719,6 +1729,26 @@ public class Home implements Serializable, Cloneable {
    */
   public Collection<String> getPropertyNames() {
     return this.properties.keySet();
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this home for a specific property name.
+   * Properties set with {@link #setProperty(String, String) setProperty} will be notified with
+   * an event of {@link PropertyChangeEvent} class which property name will be equal to the property,
+   * whereas changes on properties of {@link Property} enum will be notified with an event where
+   * the property name will be equal to the value returned by {@link Property#name()} call.
+   * @since 6.4
+   */
+  public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this object.
+   * @since 6.4
+   */
+  public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
   }
 
   /**

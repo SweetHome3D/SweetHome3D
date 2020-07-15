@@ -24,10 +24,6 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,9 +67,8 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   private float               ceilingShininess;
   private Level               level;
 
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-  private transient Shape shapeCache;
-  private transient Float areaCache;
+  private transient Shape     shapeCache;
+  private transient Float     areaCache;
 
   /**
    * Creates a room from its name and the given coordinates.
@@ -98,29 +93,6 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Initializes new room transient fields
-   * and reads room from <code>in</code> stream with default reading method.
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
-    in.defaultReadObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this wall.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this wall.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  /**
    * Returns the name of this room.
    */
   public String getName() {
@@ -136,7 +108,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
+      firePropertyChange(Property.NAME, oldName, name);
     }
   }
 
@@ -156,7 +128,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (nameXOffset != this.nameXOffset) {
       float oldNameXOffset = this.nameXOffset;
       this.nameXOffset = nameXOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_X_OFFSET.name(), oldNameXOffset, nameXOffset);
+      firePropertyChange(Property.NAME_X_OFFSET, oldNameXOffset, nameXOffset);
     }
   }
 
@@ -176,7 +148,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (nameYOffset != this.nameYOffset) {
       float oldNameYOffset = this.nameYOffset;
       this.nameYOffset = nameYOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_Y_OFFSET.name(), oldNameYOffset, nameYOffset);
+      firePropertyChange(Property.NAME_Y_OFFSET, oldNameYOffset, nameYOffset);
     }
   }
 
@@ -195,7 +167,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (nameStyle != this.nameStyle) {
       TextStyle oldNameStyle = this.nameStyle;
       this.nameStyle = nameStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_STYLE.name(), oldNameStyle, nameStyle);
+      firePropertyChange(Property.NAME_STYLE, oldNameStyle, nameStyle);
     }
   }
 
@@ -218,7 +190,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (nameAngle != this.nameAngle) {
       float oldNameAngle = this.nameAngle;
       this.nameAngle = nameAngle;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_ANGLE.name(), oldNameAngle, nameAngle);
+      firePropertyChange(Property.NAME_ANGLE, oldNameAngle, nameAngle);
     }
   }
 
@@ -264,7 +236,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     this.points = deepCopy(points);
     this.shapeCache = null;
     this.areaCache  = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, points);
+    firePropertyChange(Property.POINTS, oldPoints, points);
   }
 
   /**
@@ -294,7 +266,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     this.points = newPoints;
     this.shapeCache = null;
     this.areaCache  = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+    firePropertyChange(Property.POINTS, oldPoints, deepCopy(this.points));
   }
 
   /**
@@ -314,7 +286,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
       this.points [index][1] = y;
       this.shapeCache = null;
       this.areaCache  = null;
-      this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+      firePropertyChange(Property.POINTS, oldPoints, deepCopy(this.points));
     }
   }
 
@@ -338,7 +310,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     this.points = newPoints;
     this.shapeCache = null;
     this.areaCache  = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+    firePropertyChange(Property.POINTS, oldPoints, deepCopy(this.points));
   }
 
   /**
@@ -355,7 +327,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   public void setAreaVisible(boolean areaVisible) {
     if (areaVisible != this.areaVisible) {
       this.areaVisible = areaVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.AREA_VISIBLE.name(), !areaVisible, areaVisible);
+      firePropertyChange(Property.AREA_VISIBLE, !areaVisible, areaVisible);
     }
   }
 
@@ -375,7 +347,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (areaXOffset != this.areaXOffset) {
       float oldAreaXOffset = this.areaXOffset;
       this.areaXOffset = areaXOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.AREA_X_OFFSET.name(), oldAreaXOffset, areaXOffset);
+      firePropertyChange(Property.AREA_X_OFFSET, oldAreaXOffset, areaXOffset);
     }
   }
 
@@ -395,7 +367,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (areaYOffset != this.areaYOffset) {
       float oldAreaYOffset = this.areaYOffset;
       this.areaYOffset = areaYOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.AREA_Y_OFFSET.name(), oldAreaYOffset, areaYOffset);
+      firePropertyChange(Property.AREA_Y_OFFSET, oldAreaYOffset, areaYOffset);
     }
   }
 
@@ -414,7 +386,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (areaStyle != this.areaStyle) {
       TextStyle oldAreaStyle = this.areaStyle;
       this.areaStyle = areaStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.AREA_STYLE.name(), oldAreaStyle, areaStyle);
+      firePropertyChange(Property.AREA_STYLE, oldAreaStyle, areaStyle);
     }
   }
 
@@ -437,7 +409,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (areaAngle != this.areaAngle) {
       float oldAreaAngle = this.areaAngle;
       this.areaAngle = areaAngle;
-      this.propertyChangeSupport.firePropertyChange(Property.AREA_ANGLE.name(), oldAreaAngle, areaAngle);
+      firePropertyChange(Property.AREA_ANGLE, oldAreaAngle, areaAngle);
     }
   }
 
@@ -483,8 +455,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (floorColor == null || !floorColor.equals(this.floorColor))) {
       Integer oldFloorColor = this.floorColor;
       this.floorColor = floorColor;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_COLOR.name(),
-          oldFloorColor, floorColor);
+      firePropertyChange(Property.FLOOR_COLOR, oldFloorColor, floorColor);
     }
   }
 
@@ -504,8 +475,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (floorTexture == null || !floorTexture.equals(this.floorTexture))) {
       HomeTexture oldFloorTexture = this.floorTexture;
       this.floorTexture = floorTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_TEXTURE.name(),
-          oldFloorTexture, floorTexture);
+      firePropertyChange(Property.FLOOR_TEXTURE, oldFloorTexture, floorTexture);
     }
   }
 
@@ -523,7 +493,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   public void setFloorVisible(boolean floorVisible) {
     if (floorVisible != this.floorVisible) {
       this.floorVisible = floorVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_VISIBLE.name(), !floorVisible, floorVisible);
+      firePropertyChange(Property.FLOOR_VISIBLE, !floorVisible, floorVisible);
     }
   }
 
@@ -545,8 +515,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (floorShininess != this.floorShininess) {
       float oldFloorShininess = this.floorShininess;
       this.floorShininess = floorShininess;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_SHININESS.name(),
-          oldFloorShininess, floorShininess);
+      firePropertyChange(Property.FLOOR_SHININESS, oldFloorShininess, floorShininess);
     }
   }
 
@@ -566,8 +535,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (ceilingColor == null || !ceilingColor.equals(this.ceilingColor))) {
       Integer oldCeilingColor = this.ceilingColor;
       this.ceilingColor = ceilingColor;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_COLOR.name(),
-          oldCeilingColor, ceilingColor);
+      firePropertyChange(Property.CEILING_COLOR, oldCeilingColor, ceilingColor);
     }
   }
 
@@ -587,8 +555,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
         && (ceilingTexture == null || !ceilingTexture.equals(this.ceilingTexture))) {
       HomeTexture oldCeilingTexture = this.ceilingTexture;
       this.ceilingTexture = ceilingTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_TEXTURE.name(),
-          oldCeilingTexture, ceilingTexture);
+      firePropertyChange(Property.CEILING_TEXTURE, oldCeilingTexture, ceilingTexture);
     }
   }
 
@@ -606,7 +573,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   public void setCeilingVisible(boolean ceilingVisible) {
     if (ceilingVisible != this.ceilingVisible) {
       this.ceilingVisible = ceilingVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_VISIBLE.name(), !ceilingVisible, ceilingVisible);
+      firePropertyChange(Property.CEILING_VISIBLE, !ceilingVisible, ceilingVisible);
     }
   }
 
@@ -628,8 +595,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (ceilingShininess != this.ceilingShininess) {
       float oldCeilingShininess = this.ceilingShininess;
       this.ceilingShininess = ceilingShininess;
-      this.propertyChangeSupport.firePropertyChange(Property.CEILING_SHININESS.name(),
-          oldCeilingShininess, ceilingShininess);
+      firePropertyChange(Property.CEILING_SHININESS, oldCeilingShininess, ceilingShininess);
     }
   }
 
@@ -650,7 +616,7 @@ public class Room extends HomeObject implements Selectable, Elevatable {
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+      firePropertyChange(Property.LEVEL, oldLevel, level);
     }
   }
 
@@ -832,7 +798,6 @@ public class Room extends HomeObject implements Selectable, Elevatable {
   @Override
   public Room clone() {
     Room clone = (Room)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     clone.level = null;
     return clone;
   }

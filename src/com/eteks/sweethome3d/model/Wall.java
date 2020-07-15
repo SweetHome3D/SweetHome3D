@@ -24,10 +24,6 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,7 +67,6 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private Integer             topColor;
   private Level               level;
 
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape      shapeCache;
   private transient float []   arcCircleCenterCache;
   private transient float [][] pointsCache;
@@ -137,29 +132,6 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
 
   /**
-   * Initializes new wall transient fields
-   * and reads wall from <code>in</code> stream with default reading method.
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
-    in.defaultReadObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this wall.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this wall.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
-  /**
    * Returns the start point abscissa of this wall.
    */
   public float getXStart() {
@@ -176,7 +148,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       this.xStart = xStart;
       clearPointsCache();
       this.arcCircleCenterCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
+      firePropertyChange(Property.X_START, oldXStart, xStart);
     }
   }
 
@@ -197,7 +169,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       this.yStart = yStart;
       clearPointsCache();
       this.arcCircleCenterCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
+      firePropertyChange(Property.Y_START, oldYStart, yStart);
     }
   }
 
@@ -218,7 +190,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       this.xEnd = xEnd;
       clearPointsCache();
       this.arcCircleCenterCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
+      firePropertyChange(Property.X_END, oldXEnd, xEnd);
     }
   }
 
@@ -239,7 +211,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       this.yEnd = yEnd;
       clearPointsCache();
       this.arcCircleCenterCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
+      firePropertyChange(Property.Y_END, oldYEnd, yEnd);
     }
   }
 
@@ -278,8 +250,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       this.arcExtent = arcExtent;
       clearPointsCache();
       this.arcCircleCenterCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.ARC_EXTENT.name(),
-          oldArcExtent, arcExtent);
+      firePropertyChange(Property.ARC_EXTENT, oldArcExtent, arcExtent);
     }
   }
 
@@ -366,8 +337,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       Wall oldWallAtStart = this.wallAtStart;
       this.wallAtStart = wallAtStart;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_START.name(),
-          oldWallAtStart, wallAtStart);
+      firePropertyChange(Property.WALL_AT_START, oldWallAtStart, wallAtStart);
 
       if (detachJoinedWallAtStart) {
         detachJoinedWall(oldWallAtStart);
@@ -404,8 +374,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       Wall oldWallAtEnd = this.wallAtEnd;
       this.wallAtEnd = wallAtEnd;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_END.name(),
-          oldWallAtEnd, wallAtEnd);
+      firePropertyChange(Property.WALL_AT_END, oldWallAtEnd, wallAtEnd);
 
       if (detachJoinedWallAtEnd) {
         detachJoinedWall(oldWallAtEnd);
@@ -443,8 +412,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       float oldThickness = this.thickness;
       this.thickness = thickness;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.name(),
-          oldThickness, thickness);
+      firePropertyChange(Property.THICKNESS, oldThickness, thickness);
     }
   }
 
@@ -466,8 +434,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (height == null || !height.equals(this.height))) {
       Float oldHeight = this.height;
       this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(),
-          oldHeight, height);
+      firePropertyChange(Property.HEIGHT, oldHeight, height);
     }
   }
 
@@ -487,8 +454,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (heightAtEnd == null || !heightAtEnd.equals(this.heightAtEnd))) {
       Float oldHeightAtEnd = this.heightAtEnd;
       this.heightAtEnd = heightAtEnd;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_AT_END.name(),
-          oldHeightAtEnd, heightAtEnd);
+      firePropertyChange(Property.HEIGHT_AT_END, oldHeightAtEnd, heightAtEnd);
     }
   }
 
@@ -519,8 +485,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (leftSideColor == null || !leftSideColor.equals(this.leftSideColor))) {
       Integer oldLeftSideColor = this.leftSideColor;
       this.leftSideColor = leftSideColor;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.name(),
-          oldLeftSideColor, leftSideColor);
+      firePropertyChange(Property.LEFT_SIDE_COLOR, oldLeftSideColor, leftSideColor);
     }
   }
 
@@ -541,8 +506,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (rightSideColor == null || !rightSideColor.equals(this.rightSideColor))) {
       Integer oldLeftSideColor = this.rightSideColor;
       this.rightSideColor = rightSideColor;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.name(),
-          oldLeftSideColor, rightSideColor);
+      firePropertyChange(Property.RIGHT_SIDE_COLOR, oldLeftSideColor, rightSideColor);
     }
   }
 
@@ -563,8 +527,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (leftSideTexture == null || !leftSideTexture.equals(this.leftSideTexture))) {
       HomeTexture oldLeftSideTexture = this.leftSideTexture;
       this.leftSideTexture = leftSideTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_TEXTURE.name(),
-          oldLeftSideTexture, leftSideTexture);
+      firePropertyChange(Property.LEFT_SIDE_TEXTURE, oldLeftSideTexture, leftSideTexture);
     }
   }
 
@@ -584,8 +547,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (rightSideTexture == null || !rightSideTexture.equals(this.rightSideTexture))) {
       HomeTexture oldLeftSideTexture = this.rightSideTexture;
       this.rightSideTexture = rightSideTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_TEXTURE.name(),
-          oldLeftSideTexture, rightSideTexture);
+      firePropertyChange(Property.RIGHT_SIDE_TEXTURE, oldLeftSideTexture, rightSideTexture);
     }
   }
 
@@ -607,7 +569,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     if (leftSideShininess != this.leftSideShininess) {
       float oldLeftSideShininess = this.leftSideShininess;
       this.leftSideShininess = leftSideShininess;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_SHININESS.name(), oldLeftSideShininess, leftSideShininess);
+      firePropertyChange(Property.LEFT_SIDE_SHININESS, oldLeftSideShininess, leftSideShininess);
     }
   }
 
@@ -629,7 +591,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     if (rightSideShininess != this.rightSideShininess) {
       float oldRightSideShininess = this.rightSideShininess;
       this.rightSideShininess = rightSideShininess;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_SHININESS.name(), oldRightSideShininess, rightSideShininess);
+      firePropertyChange(Property.RIGHT_SIDE_SHININESS, oldRightSideShininess, rightSideShininess);
     }
   }
 
@@ -652,7 +614,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       Baseboard oldLeftSideBaseboard = this.leftSideBaseboard;
       this.leftSideBaseboard = leftSideBaseboard;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_BASEBOARD.name(), oldLeftSideBaseboard, leftSideBaseboard);
+      firePropertyChange(Property.LEFT_SIDE_BASEBOARD, oldLeftSideBaseboard, leftSideBaseboard);
     }
   }
 
@@ -675,7 +637,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
       Baseboard oldRightSideBaseboard = this.rightSideBaseboard;
       this.rightSideBaseboard = rightSideBaseboard;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_BASEBOARD.name(), oldRightSideBaseboard, rightSideBaseboard);
+      firePropertyChange(Property.RIGHT_SIDE_BASEBOARD, oldRightSideBaseboard, rightSideBaseboard);
     }
   }
 
@@ -696,8 +658,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     if (this.pattern != pattern) {
       TextureImage oldPattern = this.pattern;
       this.pattern = pattern;
-      this.propertyChangeSupport.firePropertyChange(Property.PATTERN.name(),
-          oldPattern, pattern);
+      firePropertyChange(Property.PATTERN, oldPattern, pattern);
     }
   }
 
@@ -719,8 +680,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
         && (topColor == null || !topColor.equals(this.topColor))) {
       Integer oldTopColor = this.topColor;
       this.topColor = topColor;
-      this.propertyChangeSupport.firePropertyChange(Property.TOP_COLOR.name(),
-          oldTopColor, topColor);
+      firePropertyChange(Property.TOP_COLOR, oldTopColor, topColor);
     }
   }
 
@@ -741,7 +701,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+      firePropertyChange(Property.LEVEL, oldLevel, level);
     }
   }
 
@@ -1282,7 +1242,6 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   @Override
   public Wall clone() {
     Wall clone = (Wall)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     clone.wallAtStart = null;
     clone.wallAtEnd = null;
     clone.level = null;

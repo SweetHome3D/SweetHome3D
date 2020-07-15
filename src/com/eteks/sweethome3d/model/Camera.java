@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Calendar;
@@ -59,8 +57,6 @@ public class Camera extends HomeObject {
   // Lens is saved as a string to be able to keep backward compatibility
   // if new constants are added to Lens enum in future versions
   private String              lensName;
-
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
    * Creates a camera at given location and angles at midday and using a pinhole lens.
@@ -121,7 +117,6 @@ public class Camera extends HomeObject {
    * and reads its properties from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.time = midday();
     this.lens = Lens.PINHOLE;
     in.defaultReadObject();
@@ -133,20 +128,6 @@ public class Camera extends HomeObject {
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant
     }
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this camera.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this camera.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
   }
 
   /**
@@ -166,7 +147,7 @@ public class Camera extends HomeObject {
         && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
+      firePropertyChange(Property.NAME, oldName, name);
     }
   }
 
@@ -185,7 +166,7 @@ public class Camera extends HomeObject {
     if (yaw != this.yaw) {
       float oldYaw = this.yaw;
       this.yaw = yaw;
-      this.propertyChangeSupport.firePropertyChange(Property.YAW.name(), oldYaw, yaw);
+      firePropertyChange(Property.YAW, oldYaw, yaw);
     }
   }
 
@@ -204,7 +185,7 @@ public class Camera extends HomeObject {
     if (pitch != this.pitch) {
       float oldPitch = this.pitch;
       this.pitch = pitch;
-      this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
+      firePropertyChange(Property.PITCH, oldPitch, pitch);
     }
   }
 
@@ -222,7 +203,7 @@ public class Camera extends HomeObject {
     if (fieldOfView != this.fieldOfView) {
       float oldFieldOfView = this.fieldOfView;
       this.fieldOfView = fieldOfView;
-      this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW.name(), oldFieldOfView, fieldOfView);
+      firePropertyChange(Property.FIELD_OF_VIEW, oldFieldOfView, fieldOfView);
     }
   }
 
@@ -240,7 +221,7 @@ public class Camera extends HomeObject {
     if (x != this.x) {
       float oldX = this.x;
       this.x = x;
-      this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
+      firePropertyChange(Property.X, oldX, x);
     }
   }
 
@@ -258,7 +239,7 @@ public class Camera extends HomeObject {
     if (y != this.y) {
       float oldY = this.y;
       this.y = y;
-      this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
+      firePropertyChange(Property.Y, oldY, y);
     }
   }
 
@@ -276,7 +257,7 @@ public class Camera extends HomeObject {
     if (z != this.z) {
       float oldZ = this.z;
       this.z = z;
-      this.propertyChangeSupport.firePropertyChange(Property.Z.name(), oldZ, z);
+      firePropertyChange(Property.Z, oldZ, z);
     }
   }
 
@@ -298,8 +279,7 @@ public class Camera extends HomeObject {
     if (this.time != time) {
       long oldTime = this.time;
       this.time = time;
-      this.propertyChangeSupport.firePropertyChange(Property.TIME.name(),
-          oldTime, time);
+      firePropertyChange(Property.TIME, oldTime, time);
     }
   }
 
@@ -338,7 +318,7 @@ public class Camera extends HomeObject {
       Lens oldLens = this.lens;
       this.lens = lens;
       this.lensName = this.lens.name();
-      this.propertyChangeSupport.firePropertyChange(Property.LENS.name(), oldLens, lens);
+      firePropertyChange(Property.LENS, oldLens, lens);
     }
   }
 
@@ -362,7 +342,6 @@ public class Camera extends HomeObject {
   @Override
   public Camera clone() {
     Camera clone = (Camera)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     return clone;
   }
 }

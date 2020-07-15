@@ -19,11 +19,6 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 /**
  * A light in {@linkplain Home home}.
  * @author Emmanuel Puybaret
@@ -40,8 +35,6 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
 
   private final LightSource [] lightSources;
   private float power;
-
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
    * Creates a home light from an existing one.
@@ -61,36 +54,6 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
     super(id, light);
     this.lightSources = light.getLightSources();
     this.power = 0.5f;
-  }
-
-  /**
-   * Initializes transient fields to their default values
-   * and reads light from <code>in</code> stream with default reading method.
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    // Let power to 0 for lights previously added to home
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
-    in.defaultReadObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this piece.
-   * @since 3.0
-   */
-  @Override
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-    super.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this piece.
-   * @since 3.0
-   */
-  @Override
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
-    super.removePropertyChangeListener(listener);
   }
 
   /**
@@ -126,7 +89,7 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
     if (power != this.power) {
       float oldPower = this.power;
       this.power = power;
-      this.propertyChangeSupport.firePropertyChange(Property.POWER.name(), oldPower, power);
+      firePropertyChange(Property.POWER, oldPower, power);
     }
   }
 
@@ -135,8 +98,6 @@ public class HomeLight extends HomePieceOfFurniture implements Light {
    */
   @Override
   public HomeLight clone() {
-    HomeLight clone = (HomeLight)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
-    return clone;
+    return (HomeLight)super.clone();
   }
 }

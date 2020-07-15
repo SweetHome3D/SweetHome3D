@@ -25,10 +25,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 /**
  * Observer camera characteristics in home.
@@ -49,8 +45,6 @@ public class ObserverCamera extends Camera implements Selectable {
   private transient Shape shapeCache;
   private transient Shape rectangleShapeCache;
 
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-
   /**
    * Creates a camera at given location and angle.
    */
@@ -67,35 +61,6 @@ public class ObserverCamera extends Camera implements Selectable {
   }
 
   /**
-   * Initializes new camera transient fields
-   * and reads its properties from <code>in</code> stream with default reading method.
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
-    in.defaultReadObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this camera.
-   * @since 3.4
-   */
-  @Override
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-    super.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this camera.
-   * @since 3.4
-   */
-  @Override
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
-    super.removePropertyChangeListener(listener);
-  }
-
-  /**
    * Sets whether camera size should depends on its elevation and will notify listeners
    * bound to size properties of the size change.
    * @since 3.4
@@ -108,9 +73,9 @@ public class ObserverCamera extends Camera implements Selectable {
       this.fixedSize = fixedSize;
       this.shapeCache = null;
       this.rectangleShapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
-      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
+      firePropertyChange(Property.WIDTH, oldWidth, getWidth());
+      firePropertyChange(Property.DEPTH, oldDepth, getDepth());
+      firePropertyChange(Property.HEIGHT, oldHeight, getHeight());
     }
   }
 
@@ -159,9 +124,9 @@ public class ObserverCamera extends Camera implements Selectable {
     super.setZ(z);
     this.shapeCache = null;
     this.rectangleShapeCache = null;
-    this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
-    this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
-    this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
+    firePropertyChange(Property.WIDTH, oldWidth, getWidth());
+    firePropertyChange(Property.DEPTH, oldDepth, getDepth());
+    firePropertyChange(Property.HEIGHT, oldHeight, getHeight());
   }
 
   /**

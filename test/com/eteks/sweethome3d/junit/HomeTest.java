@@ -24,11 +24,13 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeObject;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Wall;
 
 import junit.framework.TestCase;
@@ -39,7 +41,7 @@ import junit.framework.TestCase;
  */
 public class HomeTest extends TestCase {
   public void testHomeWalls() {
-    // Create a home and a wall listener that updates lists when notified 
+    // Create a home and a wall listener that updates lists when notified
     Home home = new Home();
     final List<Wall> addedWalls = new ArrayList<Wall>();
     final List<Wall> deletedWalls = new ArrayList<Wall>();
@@ -63,7 +65,7 @@ public class HomeTest extends TestCase {
         }
       }
     });
-    
+
     // Create 2 walls
     Wall wall1 = new Wall(0, 0, 100, 0, 0, home.getWallHeight());
     Wall wall2 = new Wall(100, 0, 100, 100, 0, home.getWallHeight());
@@ -73,7 +75,7 @@ public class HomeTest extends TestCase {
     // Check they were added and that wall listener received a notification for each wall
     assertWallCollectionContains(home.getWalls(), wall1, wall2);
     assertWallCollectionContains(addedWalls, wall1, wall2);
-    
+
     // Join end point of first wall to start point of second wall
     wall1.setWallAtEnd(wall2);
     // Check wall1 end wall is wall2 and that wall listener received 1 notification
@@ -86,7 +88,7 @@ public class HomeTest extends TestCase {
     // Check wall2 start wall is wall1 and that wall listener received 1 notification
     assertSame("Wall not joined", wall1, wall2.getWallAtStart());
     assertWallCollectionContains(updatedWalls, wall2);
-    
+
     // Move end point of second wall
     updatedWalls.clear();
     wall2.setXEnd(60);
@@ -114,7 +116,7 @@ public class HomeTest extends TestCase {
     assertEquals("Incorrect ordinate", 0f, wall1.getYEnd());
     // Check that wall listener received 2 notifications
     assertWallCollectionContains(updatedWalls, wall1);
-    
+
     // Detach second wall from first wall
     updatedWalls.clear();
     wall2.setWallAtStart(null);
@@ -122,32 +124,58 @@ public class HomeTest extends TestCase {
     assertSame("Wall joined", null, wall1.getWallAtEnd());
     assertSame("Wall joined", null, wall2.getWallAtStart());
     assertWallCollectionContains(updatedWalls, wall1, wall2);
-    
+
     // Delete second wall
     home.deleteWall(wall2);
-    // Check it was removed and that wall listener received a notification 
+    // Check it was removed and that wall listener received a notification
     assertWallCollectionContains(home.getWalls(), wall1);
     assertWallCollectionContains(deletedWalls, wall2);
   }
-  
+
   public void testProperties() {
     // Test properties management on a subclass of HomeObject
     HomeObject object = new HomeObject() { };
-    object.setProperty("id", "Object1");
-    assertEquals("Wrong count of properties", 1, object.getPropertyNames().size());
-    assertEquals("Wrong property name", "id", object.getPropertyNames().iterator().next());
-    assertEquals("Wrong property value", "Object1", object.getProperty("id"));
-    assertEquals("Wrong property value on clone", "Object1", object.clone().getProperty("id"));
-    // Set a second property that should change internally the way properties are stored
+    assertTrue("Missing internal id", object.getId().startsWith("object-"));
+    final AtomicReference<String> propertyName = new AtomicReference<String>(null);
+    PropertyChangeListener userPropertyChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          propertyName.set((String)ev.getPropertyName());
+        }
+      };
+    object.addPropertyChangeListener(userPropertyChangeListener);
     object.setProperty("name", "My object");
+    assertEquals("Wrong count of properties", 1, object.getPropertyNames().size());
+    assertEquals("Wrong property name", "name", object.getPropertyNames().iterator().next());
+    assertEquals("Wrong property property name", "name", propertyName.get());
+    assertEquals("Wrong property value", "My object", object.getProperty("name"));
+    assertEquals("Wrong property value on clone", "My object", object.clone().getProperty("name"));
+    // Change the property to check it behaves correctly with one property
+    object.setProperty("name", "My other object");
+    assertEquals("Wrong property value", "My other object", object.getProperty("name"));
+    // Set a second property that should change internally the way properties are stored
+    object.setProperty("id", "Object1");
     assertEquals("Wrong count of properties", 2, object.getPropertyNames().size());
     assertEquals("Wrong property value", "Object1", object.getProperty("id"));
-    assertEquals("Wrong property value", "My object", object.getProperty("name"));
+    assertEquals("Wrong property value", "My other object", object.getProperty("name"));
     assertEquals("Wrong properties count on clone", 2, object.clone().getPropertyNames().size());
     object.setProperty("name", null);
     object.setProperty("id", null);
     assertEquals("Wrong count of properties", 0, object.getPropertyNames().size());
     assertEquals("Wrong properties count on clone", 0, object.clone().getPropertyNames().size());
+
+    Label label = new Label("Text", 0, 0);
+    PropertyChangeListener modelPropertyChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          propertyName.set((String)ev.getPropertyName());
+        }
+      };
+    label.addPropertyChangeListener(modelPropertyChangeListener);
+    label.setText("Text2");
+    assertEquals("Wrong property property name", Label.Property.TEXT.name(), propertyName.get());
+    label.removePropertyChangeListener(modelPropertyChangeListener);
+    label.addPropertyChangeListener(userPropertyChangeListener);
+    label.setProperty("prop", "value");
+    assertEquals("Wrong property property name", "prop", propertyName.get());
   }
 
   private void assertWallCollectionContains(Collection<Wall> wallCollection, Wall ... walls) {

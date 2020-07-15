@@ -25,8 +25,6 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.math.BigDecimal;
@@ -330,7 +328,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private boolean                modelMirrored;
   private Level                  level;
 
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
 
@@ -424,7 +421,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     this.deformable = true;
     this.texturable = true;
     this.horizontallyRotatable = true;
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.widthInPlan =
     this.depthInPlan =
     this.heightInPlan = Float.NEGATIVE_INFINITY;
@@ -446,20 +442,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       // Keep default value to false only if model rotation matrix isn't identity
       this.modelCenteredAtOrigin = Arrays.deepEquals(IDENTITY, this.modelRotation);
     }
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this piece.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this piece.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
   }
 
   /**
@@ -485,7 +467,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         && (name == null || !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
+      firePropertyChange(Property.NAME, oldName, name);
     }
   }
 
@@ -503,7 +485,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   public void setNameVisible(boolean nameVisible) {
     if (nameVisible != this.nameVisible) {
       this.nameVisible = nameVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_VISIBLE.name(), !nameVisible, nameVisible);
+      firePropertyChange(Property.NAME_VISIBLE, !nameVisible, nameVisible);
     }
   }
 
@@ -522,7 +504,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (nameXOffset != this.nameXOffset) {
       float oldNameXOffset = this.nameXOffset;
       this.nameXOffset = nameXOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_X_OFFSET.name(), oldNameXOffset, nameXOffset);
+      firePropertyChange(Property.NAME_X_OFFSET, oldNameXOffset, nameXOffset);
     }
   }
 
@@ -542,7 +524,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (nameYOffset != this.nameYOffset) {
       float oldNameYOffset = this.nameYOffset;
       this.nameYOffset = nameYOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_Y_OFFSET.name(), oldNameYOffset, nameYOffset);
+      firePropertyChange(Property.NAME_Y_OFFSET, oldNameYOffset, nameYOffset);
     }
   }
 
@@ -561,7 +543,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (nameStyle != this.nameStyle) {
       TextStyle oldNameStyle = this.nameStyle;
       this.nameStyle = nameStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_STYLE.name(), oldNameStyle, nameStyle);
+      firePropertyChange(Property.NAME_STYLE, oldNameStyle, nameStyle);
     }
   }
 
@@ -584,7 +566,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (nameAngle != this.nameAngle) {
       float oldNameAngle = this.nameAngle;
       this.nameAngle = nameAngle;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME_ANGLE.name(), oldNameAngle, nameAngle);
+      firePropertyChange(Property.NAME_ANGLE, oldNameAngle, nameAngle);
     }
   }
 
@@ -605,7 +587,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         && (description == null || !description.equals(this.description))) {
       String oldDescription = this.description;
       this.description = description;
-      this.propertyChangeSupport.firePropertyChange(Property.DESCRIPTION.name(), oldDescription, description);
+      firePropertyChange(Property.DESCRIPTION, oldDescription, description);
     }
   }
 
@@ -635,7 +617,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         float oldDepth = this.depth;
         this.depth = depth;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, depth);
+        firePropertyChange(Property.DEPTH, oldDepth, depth);
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
@@ -660,7 +642,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       float oldDepth = this.depthInPlan;
       this.depthInPlan = depthInPlan;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.DEPTH_IN_PLAN.name(), oldDepth, depthInPlan);
+      firePropertyChange(Property.DEPTH_IN_PLAN, oldDepth, depthInPlan);
     }
   }
 
@@ -681,7 +663,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       if (height != this.height) {
         float oldHeight = this.height;
         this.height = height;
-        this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
+        firePropertyChange(Property.HEIGHT, oldHeight, height);
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
@@ -705,7 +687,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (heightInPlan != this.heightInPlan) {
       float oldHeight = this.heightInPlan;
       this.heightInPlan = heightInPlan;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_IN_PLAN.name(), oldHeight, heightInPlan);
+      firePropertyChange(Property.HEIGHT_IN_PLAN, oldHeight, heightInPlan);
     }
   }
 
@@ -727,7 +709,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         float oldWidth = this.width;
         this.width = width;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
+        firePropertyChange(Property.WIDTH, oldWidth, width);
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
@@ -752,7 +734,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       float oldWidth = this.widthInPlan;
       this.widthInPlan = widthInPlan;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH_IN_PLAN.name(), oldWidth, widthInPlan);
+      firePropertyChange(Property.WIDTH_IN_PLAN, oldWidth, widthInPlan);
     }
   }
 
@@ -805,7 +787,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+      firePropertyChange(Property.ELEVATION, oldElevation, elevation);
     }
   }
 
@@ -823,7 +805,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   public void setMovable(boolean movable) {
     if (movable != this.movable) {
       this.movable = movable;
-      this.propertyChangeSupport.firePropertyChange(Property.MOVABLE.name(), !movable, movable);
+      firePropertyChange(Property.MOVABLE, !movable, movable);
     }
   }
 
@@ -890,7 +872,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         this.modelMaterials = modelMaterials != null
             ? modelMaterials.clone()
             : null;
-        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MATERIALS.name(), oldModelMaterials, modelMaterials);
+        firePropertyChange(Property.MODEL_MATERIALS, oldModelMaterials, modelMaterials);
       }
     } else {
       throw new IllegalStateException("Piece isn't texturable");
@@ -931,7 +913,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
           && (color == null || !color.equals(this.color))) {
         Integer oldColor = this.color;
         this.color = color;
-        this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+        firePropertyChange(Property.COLOR, oldColor, color);
       }
     } else {
       throw new IllegalStateException("Piece isn't texturable");
@@ -960,7 +942,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
           && (texture == null || !texture.equals(this.texture))) {
         HomeTexture oldTexture = this.texture;
         this.texture = texture;
-        this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
+        firePropertyChange(Property.TEXTURE, oldTexture, texture);
       }
     } else {
       throw new IllegalStateException("Piece isn't texturable");
@@ -988,7 +970,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
           && (shininess == null || !shininess.equals(this.shininess))) {
         Float oldShininess = this.shininess;
         this.shininess = shininess;
-        this.propertyChangeSupport.firePropertyChange(Property.SHININESS.name(), oldShininess, shininess);
+        firePropertyChange(Property.SHININESS, oldShininess, shininess);
       }
     } else {
       throw new IllegalStateException("Piece isn't texturable");
@@ -1051,7 +1033,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         && (price == null || !price.equals(this.price))) {
       BigDecimal oldPrice = this.price;
       this.price = price;
-      this.propertyChangeSupport.firePropertyChange(Property.PRICE.name(), oldPrice, price);
+      firePropertyChange(Property.PRICE, oldPrice, price);
     }
   }
 
@@ -1071,7 +1053,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         && (valueAddedTaxPercentage == null || !valueAddedTaxPercentage.equals(this.valueAddedTaxPercentage))) {
       BigDecimal oldValueAddedTaxPercentage = this.valueAddedTaxPercentage;
       this.valueAddedTaxPercentage = valueAddedTaxPercentage;
-      this.propertyChangeSupport.firePropertyChange(Property.VALUE_ADDED_TAX_PERCENTAGE.name(), oldValueAddedTaxPercentage, valueAddedTaxPercentage);
+      firePropertyChange(Property.VALUE_ADDED_TAX_PERCENTAGE, oldValueAddedTaxPercentage, valueAddedTaxPercentage);
 
     }
   }
@@ -1118,7 +1100,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         && (currency == null || !currency.equals(this.currency))) {
       String oldCurrency = this.currency;
       this.currency = currency;
-      this.propertyChangeSupport.firePropertyChange(Property.CURRENCY.name(), oldCurrency, currency);
+      firePropertyChange(Property.CURRENCY, oldCurrency, currency);
     }
   }
 
@@ -1136,7 +1118,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   public void setVisible(boolean visible) {
     if (visible != this.visible) {
       this.visible = visible;
-      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.name(), !visible, visible);
+      firePropertyChange(Property.VISIBLE, !visible, visible);
     }
   }
 
@@ -1156,7 +1138,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       float oldX = this.x;
       this.x = x;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
+      firePropertyChange(Property.X, oldX, x);
     }
   }
 
@@ -1176,7 +1158,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       float oldY = this.y;
       this.y = y;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
+      firePropertyChange(Property.Y, oldY, y);
     }
   }
 
@@ -1198,7 +1180,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       float oldAngle = this.angle;
       this.angle = angle;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
+      firePropertyChange(Property.ANGLE, oldAngle, angle);
     }
   }
 
@@ -1223,7 +1205,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         float oldPitch = this.pitch;
         this.pitch = pitch;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
+        firePropertyChange(Property.PITCH, oldPitch, pitch);
       }
     } else {
       throw new IllegalStateException("Piece can't be rotated around an horizontal axis");
@@ -1251,7 +1233,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
         float oldRoll = this.roll;
         this.roll = roll;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.ROLL.name(), oldRoll, roll);
+        firePropertyChange(Property.ROLL, oldRoll, roll);
       }
     } else {
       throw new IllegalStateException("Piece can't be rotated around an horizontal axis");
@@ -1282,7 +1264,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (isResizable()) {
       if (modelMirrored != this.modelMirrored) {
         this.modelMirrored = modelMirrored;
-        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.name(),
+        firePropertyChange(Property.MODEL_MIRRORED,
             !modelMirrored, modelMirrored);
       }
     } else {
@@ -1336,7 +1318,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       this.modelTransformations = modelTransformations != null && modelTransformations.length > 0
           ? modelTransformations.clone()
           : null;
-      this.propertyChangeSupport.firePropertyChange(Property.MODEL_MATERIALS.name(), oldModelTransformations, modelTransformations);
+      firePropertyChange(Property.MODEL_MATERIALS, oldModelTransformations, modelTransformations);
      }
   }
 
@@ -1396,7 +1378,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+      firePropertyChange(Property.LEVEL, oldLevel, level);
     }
   }
 
@@ -1610,7 +1592,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   @Override
   public HomePieceOfFurniture clone() {
     HomePieceOfFurniture clone = (HomePieceOfFurniture)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     clone.level = null;
     return clone;
   }
