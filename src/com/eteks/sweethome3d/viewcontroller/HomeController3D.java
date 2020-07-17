@@ -477,7 +477,6 @@ public class HomeController3D implements Controller {
     private UserPreferencesChangeListener userPreferencesChangeListener;
 
     public TopCameraState(UserPreferences preferences) {
-      this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
       this.userPreferencesChangeListener = new UserPreferencesChangeListener(this);
     }
 
@@ -505,6 +504,7 @@ public class HomeController3D implements Controller {
     public void enter() {
       this.topCamera = home.getCamera();
       this.previousSelectionEmpty = home.getSelectedItems().isEmpty();
+      this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
       updateCameraFromHomeBounds(false, false);
       for (Level level : home.getLevels()) {
         level.addPropertyChangeListener(this.objectChangeListener);
