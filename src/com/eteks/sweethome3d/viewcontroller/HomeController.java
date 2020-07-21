@@ -142,8 +142,8 @@ public class HomeController implements Controller {
                         HomeApplication application,
                         ViewFactory    viewFactory,
                         ContentManager contentManager) {
-    this(home, application.getUserPreferences(), viewFactory,
-        contentManager, application);
+    this(home, application, application.getUserPreferences(),
+        viewFactory, contentManager);
   }
 
   /**
@@ -155,7 +155,7 @@ public class HomeController implements Controller {
   public HomeController(Home home,
                         HomeApplication application,
                         ViewFactory viewFactory) {
-    this(home, application.getUserPreferences(), viewFactory, null, application);
+    this(home, application, application.getUserPreferences(), viewFactory, null);
   }
 
   /**
@@ -167,7 +167,7 @@ public class HomeController implements Controller {
   public HomeController(Home home,
                         UserPreferences preferences,
                         ViewFactory viewFactory) {
-    this(home, preferences, viewFactory, null, null);
+    this(home, null, preferences, viewFactory, null);
   }
 
   /**
@@ -181,14 +181,14 @@ public class HomeController implements Controller {
                         UserPreferences preferences,
                         ViewFactory    viewFactory,
                         ContentManager contentManager) {
-    this(home, preferences, viewFactory, contentManager, null);
+    this(home, null, preferences, viewFactory, contentManager);
   }
 
   private HomeController(final Home home,
+                         HomeApplication application,
                          final UserPreferences preferences,
                          ViewFactory    viewFactory,
-                         ContentManager contentManager,
-                         HomeApplication application) {
+                         ContentManager contentManager) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
