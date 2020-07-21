@@ -1131,7 +1131,7 @@ public class VideoPanel extends JPanel implements DialogView {
         || !compareCameraLocation(lastCamera, camera)) {
       // Record only new locations
       cameraPath = new ArrayList<Camera>(cameraPath);
-      Camera recordedCamera = camera.clone();
+      Camera recordedCamera = (Camera)camera.duplicate();
       recordedCamera.setLens(Camera.Lens.PINHOLE);
       recordedCamera.setTime(this.controller.getTime());
       cameraPath.add(recordedCamera);

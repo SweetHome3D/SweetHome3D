@@ -341,7 +341,6 @@ public class Camera extends HomeObject {
    */
   @Override
   public Camera clone() {
-    Camera clone = (Camera)super.clone();
-    return clone;
+    return (Camera)super.clone();
   }
 }
