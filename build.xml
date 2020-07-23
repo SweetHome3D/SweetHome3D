@@ -758,11 +758,11 @@
   <!-- Builds install/SweetHome3D-version-windows.exe installer able to install SweetHome3D.exe
        with a Windows JRE and Sweet Home 3D libraries.
        CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_202, 
-                 64 bit JRE 1.8.0_202, launch4j and Inno Setup Unicode installed in their default location -->
+                 64 bit JRE 1.8.0_202, launch4j and Inno Setup 6 installed in their default location -->
   <target name="windowsInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
-    <!-- Create SweetHome3D-version-windows.exe with Inno Setup Unicode -->
-    <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">
+    <!-- Create SweetHome3D-version-windows.exe with Inno Setup 6 -->
+    <exec executable="C:\Program Files (x86)\Inno Setup 6\ISCC.exe" failonerror="yes">
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>
 
@@ -782,7 +782,7 @@
   <!-- Builds install/SweetHome3D-version-windows.exe signed installer able to install SweetHome3D.exe
        with a Windows JRE and Sweet Home 3D libraries.
        CAUTION : May be run only under Windows 64 bit and requires Windows 32 bit JRE 1.8.0_202, 
-                 64 bit JRE 1.8.0_202, launch4j, Inno Setup Unicode and SignTool included in Windows platform SDK
+                 64 bit JRE 1.8.0_202, launch4j, Inno Setup 6 and SignTool included in Windows platform SDK
                  installed in their default location -->
   <target name="windowsSignedInstaller" depends="windowsLauncher"
           description="Builds install/SweetHome3D-version-windows.exe installer">
@@ -803,8 +803,8 @@
       <arg value="${basedir}\install\windows\build\SweetHome3D-x86.exe"/>
       <arg value="${basedir}\install\windows\build\SweetHome3D-x64.exe"/>
     </exec>
-    <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup Unicode -->
-    <exec executable="C:\Program Files (x86)\Inno Setup 5\ISCC.exe" failonerror="yes">
+    <!-- Create signed SweetHome3D-version-windows.exe with Inno Setup 6 -->
+    <exec executable="C:\Program Files (x86)\Inno Setup 6\ISCC.exe" failonerror="yes">
       <arg value="/sSignToolPgm=$$qC:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe$$q sign /f $$q${basedir}\keys.p12$$q /p ${password} /t ${timestampAuthorityURL} $p"/>
       <arg value="${basedir}\install\windows\signedInstallerInnoSetup.iss"/>
     </exec>
