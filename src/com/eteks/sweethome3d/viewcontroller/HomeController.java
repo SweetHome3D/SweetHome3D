@@ -214,18 +214,6 @@ public class HomeController implements Controller {
       recentHomes.remove(home.getName());
       recentHomes.add(0, home.getName());
       updateUserPreferencesRecentHomes(recentHomes);
-
-      // If home version is more recent than current version
-      if (home.getVersion() > Home.CURRENT_VERSION) {
-        // Warn the user that view will display a home created with a more recent version
-        getView().invokeLater(new Runnable() {
-            public void run() {
-              String message = preferences.getLocalizedString(HomeController.class,
-                  "moreRecentVersionHome", home.getName());
-              getView().showMessage(message);
-            }
-          });
-      }
     }
   }
 
@@ -367,6 +355,19 @@ public class HomeController implements Controller {
       this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);
       enableDefaultActions(this.homeView);
       addListeners();
+
+      // If home version is more recent than current version
+      if (this.home.getName() != null
+          && this.home.getVersion() > Home.CURRENT_VERSION) {
+        // Warn the user that view will display a home created with a more recent version
+        this.homeView.invokeLater(new Runnable() {
+            public void run() {
+              String message = preferences.getLocalizedString(HomeController.class,
+                  "moreRecentVersionHome", home.getName());
+              getView().showMessage(message);
+            }
+          });
+      }
     }
     return this.homeView;
   }
