@@ -6548,14 +6548,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
         Transform3D rotation = new Transform3D();
         rotation.rotX(-Math.PI / 2);
-        Transform3D transform = new Transform3D();
-        transform.setTranslation(new Vector3f(0, 5, 0));
-        transform.mul(rotation);
-        viewPlatformTransform.setTransform(transform);
-        // Use parallel projection
+        viewPlatformTransform.setTransform(rotation);
+        // Use parallel projection with a frustrum front and back distance
+        // limited to an object centered at the origin and contained in a 2 units wide cube
         Viewer viewer = viewingPlatform.getViewers() [0];
         javax.media.j3d.View view = viewer.getView();
         view.setProjectionPolicy(javax.media.j3d.View.PARALLEL_PROJECTION);
+        view.setFrontClipDistance(-1.01f);
+        view.setBackClipDistance(1.01f);
         sceneRoot = new BranchGroup();
         // Prepare scene root
         sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
