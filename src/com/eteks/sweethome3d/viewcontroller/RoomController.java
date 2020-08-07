@@ -1163,9 +1163,9 @@ public class RoomController implements Controller {
                     wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(),
                     intersectedWall.getXStart(), intersectedWall.getYStart(), intersectedWall.getXEnd(), intersectedWall.getYEnd());
                 if (intersection != null) {
-                  // Clone new walls to copy their characteristics
-                  firstWall = wall.clone();
-                  secondWall = wall.clone();
+                  // Duplicate new walls to copy their characteristics
+                  firstWall = (Wall)wall.duplicate();
+                  secondWall = (Wall)wall.duplicate();
                   // Store wall level to add new walls at the same level as the split wall
                   firstWall.setLevel(wall.getLevel());
                   secondWall.setLevel(wall.getLevel());

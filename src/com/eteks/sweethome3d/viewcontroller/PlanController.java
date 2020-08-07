@@ -1714,10 +1714,10 @@ public class PlanController extends FurnitureController implements Controller {
         && wallAtEnd.getWallAtStart() == splitWall;
 
       // Clone new walls to copy their characteristics
-      Wall firstWall = splitWall.clone();
+      Wall firstWall = (Wall)splitWall.duplicate();
       this.home.addWall(firstWall);
       firstWall.setLevel(splitWall.getLevel());
-      Wall secondWall = splitWall.clone();
+      Wall secondWall = (Wall)splitWall.duplicate();
       this.home.addWall(secondWall);
       secondWall.setLevel(splitWall.getLevel());
 

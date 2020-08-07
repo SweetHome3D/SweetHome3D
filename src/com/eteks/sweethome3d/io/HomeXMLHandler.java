@@ -777,13 +777,15 @@ public class HomeXMLHandler extends DefaultHandler {
     // Rebind wall starts and ends
     for (JoinedWall joinedWall : this.joinedWalls.values()) {
       Wall wall = joinedWall.getWall();
-      if (joinedWall.getWallAtStartId() != null) {
+      if (joinedWall.getWallAtStartId() != null
+          && !joinedWall.getWallAtStartId().equals(wall.getId())) { // Check wall doesn't point to itself (bug in version 6.4)
         JoinedWall joinedWallAtStart = this.joinedWalls.get(joinedWall.getWallAtStartId());
         if (joinedWallAtStart != null) {
           wall.setWallAtStart(joinedWallAtStart.getWall());
         }
       }
-      if (joinedWall.getWallAtEndId() != null) {
+      if (joinedWall.getWallAtEndId() != null
+          && !joinedWall.getWallAtEndId().equals(wall.getId())) { // Check wall doesn't point to itself (bug in version 6.4)
         JoinedWall joinedWallAtEnd = this.joinedWalls.get(joinedWall.getWallAtEndId());
         if (joinedWallAtEnd != null) {
           wall.setWallAtEnd(joinedWallAtEnd.getWall());
