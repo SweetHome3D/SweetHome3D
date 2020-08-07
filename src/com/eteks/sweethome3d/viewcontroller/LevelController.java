@@ -115,7 +115,7 @@ public class LevelController implements Controller {
    */
   protected void updateProperties() {
     Level selectedLevel = this.home.getSelectedLevel();
-    setLevels(duplicate(this.home.getLevels().toArray(new Level [0])));
+    setLevels(clone(this.home.getLevels().toArray(new Level [0])));
     if (selectedLevel == null) {
       setSelectedLevelIndex(null);
       setName(null); // Nothing to edit
@@ -135,7 +135,7 @@ public class LevelController implements Controller {
     }
   }
 
-  private Level [] duplicate(Level[] levels) {
+  private Level [] clone(Level[] levels) {
     for (int i = 0; i < levels.length; i++) {
       levels [i] = levels [i].clone();
     }
@@ -415,7 +415,7 @@ public class LevelController implements Controller {
 
       ModifiedLevel modifiedLevel = new ModifiedLevel(selectedLevel);
       // Apply modification
-      doModifyLevel(home, modifiedLevel, name, viewable, elevation, floorThickness, height, elevationIndex);
+      doModifyLevel(this.home, modifiedLevel, name, viewable, elevation, floorThickness, height, elevationIndex);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LevelModificationUndoableEdit(
             this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
