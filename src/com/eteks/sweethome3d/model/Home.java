@@ -1965,11 +1965,11 @@ public class Home implements Serializable, Cloneable {
   public static List<Selectable> duplicate(List<? extends Selectable> items) {
     List<Selectable> list = new ArrayList<Selectable>();
     // Clone first walls list with their walls at start and end point set
-    List<Wall> clonedWalls = Wall.duplicate(getWallsSubList(items));
+    List<Wall> duplicatedWalls = Wall.duplicate(getWallsSubList(items));
     int wallIndex = 0;
     for (Selectable item : items) {
       if (item instanceof Wall) {
-        list.add(clonedWalls.get(wallIndex++));
+        list.add(duplicatedWalls.get(wallIndex++));
       } else if (item instanceof HomeObject) {
         list.add((Selectable)((HomeObject)item).duplicate());
       } else {
