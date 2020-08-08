@@ -19,8 +19,12 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import static org.junit.Assert.assertNotEquals;
+
 import java.awt.event.InputEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import javax.swing.JComponent;
@@ -32,14 +36,9 @@ import javax.swing.JTextField;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEditSupport;
 
-import junit.extensions.abbot.ComponentTestFixture;
-import abbot.finder.AWTHierarchy;
-import abbot.finder.BasicFinder;
-import abbot.finder.ComponentSearchException;
-import abbot.finder.matchers.ClassMatcher;
-import abbot.tester.JComponentTester;
-
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
@@ -59,27 +58,34 @@ import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
+import abbot.finder.AWTHierarchy;
+import abbot.finder.BasicFinder;
+import abbot.finder.ComponentSearchException;
+import abbot.finder.matchers.ClassMatcher;
+import abbot.tester.JComponentTester;
+import junit.extensions.abbot.ComponentTestFixture;
+
 /**
- * Tests rooms in {@link com.eteks.sweethome3d.swing.PlanComponent plan} component and 
+ * Tests rooms in {@link com.eteks.sweethome3d.swing.PlanComponent plan} component and
  * their management in {@link com.eteks.sweethome3d.viewcontroller.PlanController controller}.
  * @author Emmanuel Puybaret
  */
 public class RoomTest extends ComponentTestFixture {
-  public void testRoomCreation() throws ComponentSearchException, 
+  public void testRoomCreation() throws ComponentSearchException,
       NoSuchFieldException, IllegalAccessException {
-    // 1. Create a frame that displays a home view 
-    RoomTestFrame frame = new RoomTestFrame();    
+    // 1. Create a frame that displays a home view
+    RoomTestFrame frame = new RoomTestFrame();
     // Show home plan frame
     showWindow(frame);
-    
+
     // 2. Change default wall thickness and height
     frame.preferences.setNewWallThickness(10);
     frame.preferences.setNewWallHeight(100);
-    // Create a home with 5 walls 
+    // Create a home with 5 walls
     PlanController planController = frame.homeController.getPlanController();
     PlanComponent planComponent = (PlanComponent)planController.getView();
     planController.setMode(PlanController.Mode.WALL_CREATION);
-    // Click at (50, 50), (200, 50), (250, 100), (250, 150), (50, 150) then double click at (50, 50) 
+    // Click at (50, 50), (200, 50), (250, 100), (250, 150), (50, 150) then double click at (50, 50)
     JComponentTester tester = new JComponentTester();
     tester.actionClick(planComponent, 50, 50);
     tester.actionClick(planComponent, 200, 50);
@@ -88,14 +94,14 @@ public class RoomTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 50, 150);
     tester.actionClick(planComponent, 50, 50, InputEvent.BUTTON1_MASK, 2);
     assertEquals("Wrong wall count in home", 5, frame.home.getWalls().size());
-    
+
     // 3. Use ROOM_CREATION mode
     planController.setMode(PlanController.Mode.ROOM_CREATION);
-    // Double click outside of walls 
+    // Double click outside of walls
     tester.actionClick(planComponent, 40, 40, InputEvent.BUTTON1_MASK, 2);
     // Check no room was created
     assertEquals("Wrong room count in home", 0, frame.home.getRooms().size());
-    // Double click inside walls 
+    // Double click inside walls
     tester.actionClick(planComponent, 100, 100, InputEvent.BUTTON1_MASK, 2);
     // Check a room was created
     assertEquals("Wrong room count in home", 1, frame.home.getRooms().size());
@@ -103,32 +109,32 @@ public class RoomTest extends ComponentTestFixture {
     Room room = frame.home.getRooms().get(0);
     assertEquals("Wrong point count", 5, room.getPoints().length);
     assertEquals("Wrong room area", 69244.766f, room.getArea());
-    
+
     // 4. Edit created room
     JDialog attributesDialog = showRoomPanel(frame.preferences, frame.homeController, frame, tester);
     // Retrieve RoomPanel components
     RoomPanel wallPanel = (RoomPanel)TestUtilities.findComponent(
         attributesDialog, RoomPanel.class);
-    JTextField nameTextField = 
+    JTextField nameTextField =
         (JTextField)TestUtilities.getField(wallPanel, "nameTextField");
-    NullableCheckBox areaVisibleCheckBox = 
+    NullableCheckBox areaVisibleCheckBox =
         (NullableCheckBox)TestUtilities.getField(wallPanel, "areaVisibleCheckBox");
-    NullableCheckBox floorVisibleCheckBox = 
+    NullableCheckBox floorVisibleCheckBox =
         (NullableCheckBox)TestUtilities.getField(wallPanel, "floorVisibleCheckBox");
-    NullableCheckBox ceilingVisibleCheckBox = 
+    NullableCheckBox ceilingVisibleCheckBox =
         (NullableCheckBox)TestUtilities.getField(wallPanel, "ceilingVisibleCheckBox");
     // Check name is empty and check boxes are selected
     assertTrue("Name not empty", nameTextField.getText().length() == 0);
     assertTrue("Area check box isn't checked", areaVisibleCheckBox.getValue());
     assertTrue("Floor check box isn't checked", floorVisibleCheckBox.getValue());
     assertTrue("Ceiling check box isn't checked", ceilingVisibleCheckBox.getValue());
-    
+
     // Enter a name and unchecked boxes
     nameTextField.setText("Test");
     tester.click(areaVisibleCheckBox);
     tester.click(floorVisibleCheckBox);
     tester.click(ceilingVisibleCheckBox);
-    
+
     final JOptionPane attributesOptionPane = (JOptionPane)TestUtilities.findComponent(
         attributesDialog, JOptionPane.class);
     tester.invokeAndWait(new Runnable() {
@@ -138,13 +144,13 @@ public class RoomTest extends ComponentTestFixture {
         }
       });
     assertFalse("Dialog still showing", attributesDialog.isShowing());
-    
+
     // Assert room was modified accordingly
     assertEquals("Name is incorrect", "Test", room.getName());
     assertFalse("Area is visible", room.isAreaVisible());
     assertFalse("Floor is visible", room.isFloorVisible());
     assertFalse("Ceiling is visible", room.isCeilingVisible());
-    
+
     // 5. Increase font size of room name text
     assertNull("Text style exists", room.getNameStyle());
     runAction(frame.homeController, HomeView.ActionType.INCREASE_TEXT_SIZE, tester);
@@ -152,7 +158,7 @@ public class RoomTest extends ComponentTestFixture {
     assertEquals("Wrong text size", 26.f, room.getNameStyle().getFontSize());
     // Decrease font size of room name text
     runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE, tester);
-    runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE, tester);    
+    runAction(frame.homeController, HomeView.ActionType.DECREASE_TEXT_SIZE, tester);
     assertEquals("Wrong text size", 22.f, room.getNameStyle().getFontSize());
     // Change style to italic
     runAction(frame.homeController, HomeView.ActionType.TOGGLE_ITALIC_STYLE, tester);
@@ -162,7 +168,7 @@ public class RoomTest extends ComponentTestFixture {
     runAction(frame.homeController, HomeView.ActionType.TOGGLE_BOLD_STYLE, tester);
     assertTrue("Text isn't italic", room.getNameStyle().isItalic());
     assertTrue("Text isn't bold", room.getNameStyle().isBold());
-    
+
     // 6. Undo style change
     runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
     runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
@@ -183,14 +189,14 @@ public class RoomTest extends ComponentTestFixture {
     // Undo room creation
     runAction(frame.homeController, HomeView.ActionType.UNDO, tester);
     assertEquals("Wrong room count in home", 0, frame.home.getRooms().size());
-   
+
     // 7. Redo everything
     for (int i = 0; i < 7; i++) {
       runAction(frame.homeController, HomeView.ActionType.REDO, tester);
     }
     // Check room is back
     assertEquals("Wrong room count in home", 1, frame.home.getRooms().size());
-    room = frame.home.getRooms().get(0);    
+    room = frame.home.getRooms().get(0);
     assertEquals("Name is incorrect", "Test", room.getName());
     assertFalse("Area is visible", room.isAreaVisible());
     assertFalse("Floor is visible", room.isFloorVisible());
@@ -201,26 +207,26 @@ public class RoomTest extends ComponentTestFixture {
   }
 
   /**
-   * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
-   * in <code>HomePane</code>. 
+   * Runs <code>actionPerformed</code> method matching <code>actionType</code>
+   * in <code>HomePane</code>.
    */
   private void runAction(final HomeController controller,
                          final HomePane.ActionType actionType, JComponentTester tester) {
-    tester.invokeAndWait(new Runnable() { 
+    tester.invokeAndWait(new Runnable() {
         public void run() {
           ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
         }
       });
   }
-  
+
   /**
-   * Returns the dialog that displays room attributes. 
+   * Returns the dialog that displays room attributes.
    */
   private JDialog showRoomPanel(UserPreferences preferences,
-                                final HomeController controller, 
-                                JFrame parent, JComponentTester tester) 
+                                final HomeController controller,
+                                JFrame parent, JComponentTester tester)
             throws ComponentSearchException {
-    tester.invokeLater(new Runnable() { 
+    tester.invokeLater(new Runnable() {
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
           ((JComponent)controller.getView()).getActionMap().get(HomeView.ActionType.MODIFY_ROOM).actionPerformed(null);
@@ -230,7 +236,7 @@ public class RoomTest extends ComponentTestFixture {
     tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
         RoomPanel.class, "room.title"));
     // Check dialog box is displayed
-    JDialog attributesDialog = (JDialog)new BasicFinder().find(parent, 
+    JDialog attributesDialog = (JDialog)new BasicFinder().find(parent,
         new ClassMatcher (JDialog.class, true));
     assertTrue("Room dialog not showing", attributesDialog.isShowing());
     return attributesDialog;
@@ -246,7 +252,7 @@ public class RoomTest extends ComponentTestFixture {
     UndoManager undoManager = new UndoManager();
     undoSupport.addUndoableEditListener(undoManager);
 
-    // 1. Create a home drawing walls as follows 
+    // 1. Create a home drawing walls as follows
     // --------------------
     // |        |         |
     // |   0    |    1    |
@@ -255,10 +261,10 @@ public class RoomTest extends ComponentTestFixture {
     // |        |         |
     // |        |        /
     // -----------------/
-    Wall [] walls = {new Wall(0, 0, 1000, 0, 20, 250), 
-                     new Wall(1000, 0, 1000, 800, 20, 250), 
-                     new Wall(1000, 800, 800, 1000, 20, 250), 
-                     new Wall(800, 1000, 0, 1000, 20, 250), 
+    Wall [] walls = {new Wall(0, 0, 1000, 0, 20, 250),
+                     new Wall(1000, 0, 1000, 800, 20, 250),
+                     new Wall(1000, 800, 800, 1000, 20, 250),
+                     new Wall(800, 1000, 0, 1000, 20, 250),
                      new Wall(0, 1000, 0, 0, 20, 250),
                      new Wall(500, 0, 500, 1000, 10, 250),
                      new Wall(0, 400, 500, 400, 10, 250)};
@@ -270,32 +276,47 @@ public class RoomTest extends ComponentTestFixture {
     for (Wall wall : walls) {
       home.addWall(wall);
     }
-    
+
     // 2. Create automatically 2 rooms by simulating double clicks
     PlanController planController = new PlanController(home, preferences, new SwingViewFactory(), null, undoSupport);
     planController.setMode(PlanController.Mode.ROOM_CREATION);
     planController.pressMouse(50, 50, 1, false, false);
     planController.pressMouse(50, 50, 2, false, false);
     assertEquals("Room wasn't created", 1, home.getRooms().size());
-    assertRoomCoordinates(home.getRooms().get(0), 
+    assertRoomCoordinates(home.getRooms().get(0),
         new float [][] {{495.0f, 10.0f}, {495.0f, 395.0f}, {10.0f, 395.0f}, {10.0f, 10.0f}});
     planController.pressMouse(700, 700, 1, false, false);
     planController.pressMouse(700, 700, 2, false, false);
     Room room = home.getRooms().get(1);
-    assertRoomCoordinates(room, 
+    assertRoomCoordinates(room,
         new float [][] {{990.0f, 10.0f}, {990.0f, 795.8579f}, {795.8579f, 990.0f}, {505.0f, 990.0f}, {505.0f, 10.0f}});
     assertTrue("Second room isn't selected", home.getSelectedItems().contains(room));
-    
+
     // 3. Split walls automatically
     RoomController roomController = new RoomController(home, preferences, new SwingViewFactory(), null, undoSupport);
     assertTrue("Walls around second room have to be splitted", roomController.isSplitSurroundingWallsNeeded());
     roomController.setSplitSurroundingWalls(true);
+    final List<Wall> newWalls = new ArrayList<Wall>();
+    final List<Wall> deletedWalls = new ArrayList<Wall>();
+    home.addWallsListener(new CollectionListener<Wall>() {
+        public void collectionChanged(CollectionEvent<Wall> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            newWalls.add(ev.getItem());
+          } else {
+            deletedWalls.add(ev.getItem());
+          }
+        }
+      });
     roomController.modifyRooms();
     // Check two walls were split
     assertEquals("No wall was split", walls.length + 2, home.getWalls().size());
+    // Check walls have a new id
+    assertFalse("Walls have same id", deletedWalls.get(0).getId().equals(newWalls.get(0).getId()));
+    assertFalse("Walls have same id", deletedWalls.get(0).getId().equals(newWalls.get(1).getId()));
+    assertFalse("Walls have same id", newWalls.get(0).getId().equals(newWalls.get(1).getId()));
     undoManager.undo();
     assertEquals("Incorrect wall count", walls.length, home.getWalls().size());
-    
+
     home.setSelectedItems(Arrays.asList(new Selectable [] {home.getRooms().get(0), walls [0]}));
     roomController = new RoomController(home, preferences, new SwingViewFactory(), null, undoSupport);
     roomController.setSplitSurroundingWalls(true);
@@ -312,7 +333,7 @@ public class RoomTest extends ComponentTestFixture {
 
     roomController = new RoomController(home, preferences, new SwingViewFactory(), null, undoSupport);
     assertFalse("Walls around first room don't need to be splitted", roomController.isSplitSurroundingWallsNeeded());
-  }  
+  }
 
   /**
    * Asserts the points of the given <code>room</code> are the same as in <code>points</code>.
@@ -325,7 +346,7 @@ public class RoomTest extends ComponentTestFixture {
       assertEquals("Not same ordinate", points [i][1], roomPoints [i][1]);
     }
   }
-  
+
   /**
    * Tests the computation of the area of various rooms.
    */
@@ -365,7 +386,7 @@ public class RoomTest extends ComponentTestFixture {
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setVisible(true);
   }
-  
+
   private static class RoomTestFrame extends JFrame {
     private final UserPreferences preferences;
     private final Home            home;
