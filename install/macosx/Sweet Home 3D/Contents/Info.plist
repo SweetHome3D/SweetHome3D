@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleGetInfoString</key>
-	<string>Sweet Home 3D 6.4 Copyright 2007-2020 eTeks</string>
+	<string>Sweet Home 3D 6.4.2 Copyright 2007-2020 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>6400</string>
+	<string>6420</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.4</string>
+	<string>6.4.2</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -17,7 +17,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.eteks.sweethome3d.SweetHome3D</string>
 	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.4</string>
+	<string>6.4.2</string>
 	<key>CFBundleName</key>
 	<string>Sweet Home 3D</string>
 	<key>CFBundlePackageType</key>
