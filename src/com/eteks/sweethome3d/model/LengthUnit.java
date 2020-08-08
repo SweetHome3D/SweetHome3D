@@ -73,10 +73,10 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("millimeterUnit");
-        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0 " + this.name, 10);
+        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0 " + this.name.replace(".", "'.'"), 10);
         this.lengthFormat = new MeterFamilyFormat("#,##0", 10);
         String squareMeterUnit = resource.getString("squareMeterUnit");
-        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
+        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit.replace(".", "'.'"));
       }
     }
 
@@ -146,10 +146,10 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("centimeterUnit");
-        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.# " + this.name, 1);
+        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.# " + this.name.replace(".", "'.'"), 1);
         this.lengthFormat = new MeterFamilyFormat("#,##0.#", 1);
         String squareMeterUnit = resource.getString("squareMeterUnit");
-        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
+        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit.replace(".", "'.'"));
       }
     }
 
@@ -220,10 +220,10 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("meterUnit");
-        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.00# " + this.name, 0.01f);
+        this.lengthFormatWithUnit = new MeterFamilyFormat("#,##0.00# " + this.name.replace(".", "'.'"), 0.01f);
         this.lengthFormat = new MeterFamilyFormat("#,##0.00#", 0.01f);
         String squareMeterUnit = resource.getString("squareMeterUnit");
-        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
+        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit.replace(".", "'.'"));
       }
     }
 
@@ -472,7 +472,7 @@ public enum LengthUnit {
           };
 
         String squareFootUnit = resource.getString("squareFootUnit");
-        this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0 " + squareFootUnit);
+        this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0 " + squareFootUnit.replace(".", "'.'"));
       }
     }
 
@@ -599,7 +599,7 @@ public enum LengthUnit {
         this.lengthFormatWithUnit = new InchDecimalsFormat(new MessageFormat(resource.getString("inchDecimalsFormatWithUnit")));
 
         String squareFootUnit = resource.getString("squareFootUnit");
-        this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0.## " + squareFootUnit);
+        this.areaFormatWithUnit = new SquareFootAreaFormatWithUnit("#,##0.## " + squareFootUnit.replace(".", "'.'"));
       }
     }
 
