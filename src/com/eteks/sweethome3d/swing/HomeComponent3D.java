@@ -1832,10 +1832,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   public Selectable getClosestItemAt(int x, int y) {
     if (this.component3D != null) {
       Canvas3D canvas;
-      if (this.component3D instanceof JCanvas3D) {
-        canvas = ((JCanvas3D)this.component3D).getOffscreenCanvas3D();
-      } else {
+      if (this.component3D instanceof Canvas3D) {
         canvas = (Canvas3D)this.component3D;
+      } else {
+        canvas = ((JCanvas3D)this.component3D).getOffscreenCanvas3D();
       }
       PickCanvas pickCanvas = new PickCanvas(canvas, this.onscreenUniverse.getLocale());
       pickCanvas.setMode(PickCanvas.GEOMETRY);

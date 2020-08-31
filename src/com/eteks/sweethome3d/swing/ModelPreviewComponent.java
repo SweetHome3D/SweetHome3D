@@ -398,10 +398,10 @@ public class ModelPreviewComponent extends JComponent {
             ModelManager modelManager = ModelManager.getInstance();
             this.boundedPitch = !modelManager.containsDeformableNode(getModelNode());
             Canvas3D canvas;
-            if (component3D instanceof JCanvas3D) {
-              canvas = ((JCanvas3D)component3D).getOffscreenCanvas3D();
-            } else {
+            if (component3D instanceof Canvas3D) {
               canvas = (Canvas3D)component3D;
+            } else {
+              canvas = ((JCanvas3D)component3D).getOffscreenCanvas3D();
             }
             PickCanvas pickCanvas = new PickCanvas(canvas, getModelNode());
             pickCanvas.setMode(PickCanvas.GEOMETRY);
@@ -409,10 +409,10 @@ public class ModelPreviewComponent extends JComponent {
             PickResult result = pickCanvas.pickClosest();
             if (result != null) {
               this.pickedTransformGroup = (TransformGroup)result.getNode(PickResult.TRANSFORM_GROUP);
-              if (pickedTransformGroup != null) {
+              if (this.pickedTransformGroup != null) {
                 // The pivot node is the first sibling node which is not a transform group
                 Group group = (Group)this.pickedTransformGroup.getParent();
-                int i = group.indexOfChild(pickedTransformGroup) - 1;
+                int i = group.indexOfChild(this.pickedTransformGroup) - 1;
                 while (i >= 0 && (group.getChild(i) instanceof TransformGroup)) {
                   i--;
                 }
