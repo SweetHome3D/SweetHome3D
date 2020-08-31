@@ -122,6 +122,7 @@ public class Ground3D extends Object3DBranch {
     RenderingAttributes renderingAttributes = new RenderingAttributes();
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
     backgroundImageAppearance.setRenderingAttributes(renderingAttributes);
+    backgroundImageAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
 
     TransformGroup transformGroup = new TransformGroup();
     // Allow the change of the transformation that sets background image size and position
