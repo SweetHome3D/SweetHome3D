@@ -1283,6 +1283,7 @@ public class ModelManager {
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
     transformGroup.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
+    transformGroup.setCapability(TransformGroup.ALLOW_PARENT_READ);
     transformGroup.setUserData(deformableGroupPrefix + DEFORMABLE_TRANSFORM_GROUP_SUFFIX);
     // Store the node around which objects should turn
     for (Node child : children) {
@@ -1340,7 +1341,7 @@ public class ModelManager {
    * modulates textures if needed and allows shapes to change their pickable property.
    */
   private void turnOffLightsShareAndModulateTextures(Node node,
-                                                     Map<Texture, Texture> replacedTextures) {
+                                                      Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren();
@@ -1353,7 +1354,11 @@ public class ModelManager {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
       node.setCapability(Node.ALLOW_PICKABLE_WRITE);
-      Appearance appearance = ((Shape3D)node).getAppearance();
+      Shape3D shape = ((Shape3D)node);
+      for (Enumeration<Geometry> it = shape.getAllGeometries(); it.hasMoreElements(); ) {
+        it.nextElement().setCapability(Geometry.ALLOW_INTERSECT);
+      }
+      Appearance appearance = shape.getAppearance();
       if (appearance != null) {
         Texture texture = appearance.getTexture();
         if (texture != null) {
