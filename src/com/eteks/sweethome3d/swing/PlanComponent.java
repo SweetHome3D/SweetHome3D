@@ -6574,8 +6574,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           sceneRoot.addChild(light);
         }
         universe.addBranchGraph(sceneRoot);
+        sceneRoot.setUserData(universe); // Store universe in user data to be able to access it under Java 3D 1.3
       } else {
-        SimpleUniverse universe = (SimpleUniverse)sceneRoot.getLocale().getVirtualUniverse();
+        SimpleUniverse universe = (SimpleUniverse)sceneRoot.getUserData();
         Canvas3D canvas3D = universe.getCanvas();
         if (canvas3D.getWidth() != iconSize) {
           universe.cleanup();
@@ -6611,7 +6612,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Render scene with a white background
       Background background = (Background)sceneRoot.getChild(0);
       background.setColor(1, 1, 1);
-      Canvas3D canvas3D = ((SimpleUniverse)sceneRoot.getLocale().getVirtualUniverse()).getCanvas();
+      Canvas3D canvas3D = ((SimpleUniverse)sceneRoot.getUserData()).getCanvas();
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();
       BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
