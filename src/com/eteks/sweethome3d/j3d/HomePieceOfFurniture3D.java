@@ -215,8 +215,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     if (isVisible()) {
       updatePieceOfFurnitureModelTransformations();
       updatePieceOfFurnitureTransform();
-      updatePieceOfFurnitureModelMirrored();
       updatePieceOfFurnitureColorAndTexture(false);
+      updatePieceOfFurnitureModelMirrored();
     }
     updateLight();
     updatePieceOfFurnitureVisibility();
@@ -564,8 +564,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     }
     // Update piece color, visibility and model mirror in dispatch thread as
     // these attributes may be changed in that thread
-    updatePieceOfFurnitureModelMirrored();
     updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);
+    updatePieceOfFurnitureModelMirrored();
     updateLight();
     updatePieceOfFurnitureVisibility();
 
@@ -1059,6 +1059,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         }
       } catch (CapabilityNotSetException ex) {
         // Shouldn't happen since capability is set but happens though with Java 3D 1.3
+        // (note that DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES and NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES
+        // don't have their ALLOW_CULL_FACE_WRITE capability set but as their cull face is set to CULL_NONE,
+        // their setCullFace method is never called)
         ex.printStackTrace();
       }
     }
