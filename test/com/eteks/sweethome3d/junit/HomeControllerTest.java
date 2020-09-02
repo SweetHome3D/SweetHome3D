@@ -244,25 +244,25 @@ public class HomeControllerTest extends TestCase {
     // Align on bottom
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM);
     // Check bottom of second piece equals bottom of first piece
-    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on bottom of first piece",
+    assertEquals("Second piece isn't aligned on bottom of first piece",
         getMaxY(firstPiece), getMaxY(secondPiece), 10E-4f);
 
     // 6. Align on top
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP);
     // Check bottom of second piece equals bottom of first piece
-    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on top of first piece",
+    assertEquals("Second piece isn't aligned on top of first piece",
         getMinY(firstPiece), getMinY(secondPiece), 10E-4f);
 
     // 7. Align on left
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT);
     // Check bottom of second piece equals bottom of first piece
-    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on left of first piece",
+    assertEquals("Second piece isn't aligned on left of first piece",
         getMinX(firstPiece), getMinX(secondPiece), 10E-4f);
 
     // 8. Align on right
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT);
     // Check bottom of second piece equals bottom of first piece
-    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on right of first piece",
+    assertEquals("Second piece isn't aligned on right of first piece",
         getMaxX(firstPiece), getMaxX(secondPiece), 10E-4f);
     float alignedPieceX = secondPiece.getX();
     float alignedPieceY = secondPiece.getY();
@@ -273,9 +273,9 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.UNDO);
     runAction(HomePane.ActionType.UNDO);
     // Check second piece is back to its place
-    TestUtilities.assertEqualsWithinEpsilon("Second piece abcissa is incorrect",
+    assertEquals("Second piece abcissa is incorrect",
         secondPieceX, secondPiece.getX(), 10E-4f);
-    TestUtilities.assertEqualsWithinEpsilon("Second piece ordinate is incorrect",
+    assertEquals("Second piece ordinate is incorrect",
         secondPieceY, secondPiece.getY(), 10E-4f);
 
     // 10. Redo alignments
@@ -284,9 +284,9 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.REDO);
     runAction(HomePane.ActionType.REDO);
     // Check second piece is back to its place
-    TestUtilities.assertEqualsWithinEpsilon("Second piece abcissa is incorrect",
+    assertEquals("Second piece abcissa is incorrect",
         alignedPieceX, secondPiece.getX(), 10E-4f);
-    TestUtilities.assertEqualsWithinEpsilon("Second piece ordinate is incorrect",
+    assertEquals("Second piece ordinate is incorrect",
         alignedPieceY, secondPiece.getY(), 10E-4f);
   }
 
@@ -391,11 +391,14 @@ public class HomeControllerTest extends TestCase {
     Rectangle2D rotatedGroupRectangle = new GeneralPath(groupRectangle).createTransformedShape(
         AffineTransform.getRotateInstance(angle, groupRectangle.getCenterX(), groupRectangle.getCenterY())).getBounds2D();
     groupRectangle = getSurroundingRectangle(group);
-    assertEquals("Surrounding rectangle is incorrect", rotatedGroupRectangle, groupRectangle);
+    assertEquals("Surrounding group rectangle is incorrect", rotatedGroupRectangle, groupRectangle);
+
     piecesRectangle = getSurroundingRectangle(piece1);
     piecesRectangle.add(getSurroundingRectangle(piece2));
-    assertEquals("Surrounding rectangle is incorrect", piecesRectangle.getWidth(), groupRectangle.getWidth());
-    assertEquals("Surrounding rectangle is incorrect", piecesRectangle.getHeight(), groupRectangle.getHeight());
+    assertEquals("Surrounding rectangle width for pieces is incorrect",
+            piecesRectangle.getWidth(), groupRectangle.getWidth(), 0.0001);
+    assertEquals("Surrounding rectangle height for pieces is incorrect",
+            piecesRectangle.getHeight(), groupRectangle.getHeight(), 0.0001);
 
     // 4. Undo / Redo
     assertActionsEnabled(true, true, true, false);

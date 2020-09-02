@@ -35,13 +35,13 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * Gathers tools used by tests.
  * @author Emmanuel Puybaret
  */
-public final class TestUtilities {  
-  private TestUtilities() {    
+public final class TestUtilities {
+  private TestUtilities() {
     // This class isn't instantiable and contains only static methods
   }
 
   /**
-   * Returns a reference to <code>fieldName</code> 
+   * Returns a reference to <code>fieldName</code>
    * in a given <code>instance</code> by reflection.
    */
   public static Object getField(Object instance, String fieldName)
@@ -52,7 +52,7 @@ public final class TestUtilities {
   }
 
   /**
-   * Sets the value of the <code>fieldName</code> 
+   * Sets the value of the <code>fieldName</code>
    * in a given <code>instance</code> by reflection.
    */
   public static void setField(Object instance, String fieldName, Object value)
@@ -65,8 +65,8 @@ public final class TestUtilities {
   /**
    * Returns the component of a given class in <code>container</code> hierarchy.
    */
-  public static Component findComponent(Container container, 
-                                        final Class componentClass) 
+  public static Component findComponent(Container container,
+                                        final Class componentClass)
       throws ComponentSearchException {
     return new BasicFinder().find(container, new Matcher () {
         public boolean matches(Component component) {
@@ -75,15 +75,6 @@ public final class TestUtilities {
       });
   }
 
-  /**
-   * Asserts <code>value1</code> equals <code>value2</code> within <code>epsilon</code>.
-   */
-  public static void assertEqualsWithinEpsilon(String message, 
-                                               float value1, float value2, float epsilon) {
-    TestCase.assertTrue(message + ", expected:" + value1 + " but was:" + value2, 
-        Math.abs(value1 - value2) < epsilon);
-  }
-  
   /**
    * Returns the key used to toggle magnetism.
    */

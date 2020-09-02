@@ -136,8 +136,8 @@ public class PhotoCreationTest extends ComponentTestFixture {
     compass.setTimeZone("Europe/Paris");
     GregorianCalendar calendar = new GregorianCalendar(2010, GregorianCalendar.SEPTEMBER, 1, 14, 30, 10);
     calendar.setTimeZone(TimeZone.getTimeZone(compass.getTimeZone()));
-    TestUtilities.assertEqualsWithinEpsilon("Incorrect azimuth", 3.383972f, compass.getSunAzimuth(calendar.getTimeInMillis()), 1E-5f);
-    TestUtilities.assertEqualsWithinEpsilon("Incorrect elevation", 0.915943f, compass.getSunElevation(calendar.getTimeInMillis()), 1E-5f);
+    assertEquals("Incorrect azimuth", 3.383972f, compass.getSunAzimuth(calendar.getTimeInMillis()), 1E-5f);
+    assertEquals("Incorrect elevation", 0.915943f, compass.getSunElevation(calendar.getTimeInMillis()), 1E-5f);
     
     compass = new Compass(0, 0, 2);
     compass.setLatitude((float)Math.toRadians(40));
@@ -145,8 +145,8 @@ public class PhotoCreationTest extends ComponentTestFixture {
     compass.setTimeZone("Asia/Tokyo");
     calendar = new GregorianCalendar(2011, GregorianCalendar.JANUARY, 31, 8, 0, 0);
     calendar.setTimeZone(TimeZone.getTimeZone(compass.getTimeZone()));
-    TestUtilities.assertEqualsWithinEpsilon("Incorrect azimuth", 2.44565f, compass.getSunAzimuth(calendar.getTimeInMillis()), 1E-5f);
-    TestUtilities.assertEqualsWithinEpsilon("Incorrect elevation", 0.38735f, compass.getSunElevation(calendar.getTimeInMillis()), 1E-5f);
+    assertEquals("Incorrect azimuth", 2.44565f, compass.getSunAzimuth(calendar.getTimeInMillis()), 1E-5f);
+    assertEquals("Incorrect elevation", 0.38735f, compass.getSunElevation(calendar.getTimeInMillis()), 1E-5f);
   }
   
   public void testPhotoCreation() throws InterruptedException, ComponentSearchException, NoSuchFieldException, IllegalAccessException, InvocationTargetException, IOException {
