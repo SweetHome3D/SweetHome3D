@@ -24,12 +24,11 @@ import java.awt.Container;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 
-import junit.framework.TestCase;
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.Matcher;
-
-import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Gathers tools used by tests.
