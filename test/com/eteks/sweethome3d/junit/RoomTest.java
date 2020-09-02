@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import static org.junit.Assert.assertNotEquals;
-
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;

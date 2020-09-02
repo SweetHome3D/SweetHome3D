@@ -36,7 +36,6 @@ import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.matchers.ClassMatcher;
 import abbot.tester.JComponentTester;
-import abbot.tester.JSpinnerTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
