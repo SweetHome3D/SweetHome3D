@@ -129,9 +129,9 @@ public class RoomTest extends ComponentTestFixture {
 
     // Enter a name and unchecked boxes
     nameTextField.setText("Test");
-    tester.click(areaVisibleCheckBox);
-    tester.click(floorVisibleCheckBox);
-    tester.click(ceilingVisibleCheckBox);
+    tester.actionClick(areaVisibleCheckBox);
+    tester.actionClick(floorVisibleCheckBox);
+    tester.actionClick(ceilingVisibleCheckBox);
 
     final JOptionPane attributesOptionPane = (JOptionPane)TestUtilities.findComponent(
         attributesDialog, JOptionPane.class);

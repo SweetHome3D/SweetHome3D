@@ -184,10 +184,8 @@ public class PhotoCreationTest extends ComponentTestFixture {
     for (int i = qualitySlider.getMinimum(); i <= qualitySlider.getMaximum(); i++) {
       sliderTester.actionSlide(qualitySlider, i);
       // Test image creation at each quality 
-      tester.click(createButton);
-      if (i == qualitySlider.getMinimum()) {
-        assertFalse("Rendering didn't start", saveButton.isEnabled());
-      }
+      tester.actionClick(createButton);
+      assertFalse("Rendering didn't start", saveButton.isEnabled());
       // Wait image is generated
       for (int j = 0; j < 1000 && !saveButton.isEnabled(); j++) {
         Thread.sleep(100);
@@ -197,7 +195,7 @@ public class PhotoCreationTest extends ComponentTestFixture {
           preferences.getLocalizedString(PhotoPanel.class, "savePhotoDialog.title"),
           photoCreationDialog, tester);
     }
-    tester.click(closeButton);
+    tester.actionClick(closeButton);
     tester.close(frame);
   }
 
@@ -226,7 +224,7 @@ public class PhotoCreationTest extends ComponentTestFixture {
       sliderTester.actionSlide(qualitySlider, i);
       // Test image creation at quality 1 and 3 
       assertFalse("Progress bar is showing", progressBar.isShowing());
-      tester.click(createButton);
+      tester.actionClick(createButton);
       assertTrue("Progress bar isn't showing", progressBar.isShowing());
       // Wait image is generated
       for (int j = 0; j < 1000 && !saveButton.isEnabled(); j++) {
@@ -237,7 +235,7 @@ public class PhotoCreationTest extends ComponentTestFixture {
           preferences.getLocalizedString(VideoPanel.class, "saveVideoDialog.title"),
           videoCreationDialog, tester);
     }
-    tester.click(closeButton);
+    tester.actionClick(closeButton);
     tester.close(frame);
   }
   
@@ -296,7 +294,7 @@ public class PhotoCreationTest extends ComponentTestFixture {
     assertTrue("Couldn't create tmp directory", tmpDirectory.mkdir());
     String mediaBaseName = "test";
     // Show save dialog box
-    tester.click(saveButton);
+    tester.actionClick(saveButton);
     // Wait for file chooser to be shown
     tester.waitForFrameShowing(new AWTHierarchy(), fileDialogTitle);
     // Check dialog box is displayed

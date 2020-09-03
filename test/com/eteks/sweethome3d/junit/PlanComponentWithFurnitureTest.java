@@ -75,7 +75,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     
     // 2. Use CREATE_WALLS mode
     JComponentTester tester = new JComponentTester();
-    tester.click(frame.createWallsButton);
+    tester.actionClick(frame.createWallsButton);
     PlanComponent planComponent = (PlanComponent)
         frame.homeController.getPlanController().getView();
     // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
@@ -92,14 +92,14 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEquals("Wrong walls count", 5, frame.home.getWalls().size());
 
     // 3. Use SELECTION mode
-    tester.click(frame.selectButton);
+    tester.actionClick(frame.selectButton);
     // Select the first piece in catalog tree
     JTree catalogTree = (JTree)
         frame.homeController.getFurnitureCatalogController().getView();
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 1);
     // Click on Add furniture button
-    tester.click(frame.addButton);
+    tester.actionClick(frame.addButton);
     // Check home contains one selected piece
     tester.waitForIdle();
     assertEquals("Wrong piece count", 
@@ -325,7 +325,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEqualsDimensionLine(42, 310, 498, 310, 20, orderedDimensionLines.get(1));
     
     // 16. Select the first dimension line
-    tester.click(frame.selectButton);
+    tester.actionClick(frame.selectButton);
     tester.actionClick(planComponent, 280, 90);
     assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
     assertEquals("Selection doesn't contain the first dimension", 

@@ -133,7 +133,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     
     // 3. Choose tested image
     String imageChoiceOrChangeButtonText = imageChoiceOrChangeButton.getText();
-    tester.click(imageChoiceOrChangeButton);
+    tester.actionClick(imageChoiceOrChangeButton);
     // Wait 100 ms to let time to Java to load the image
     Thread.sleep(100);
     // Check choice button text changed
@@ -144,7 +144,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     // Retrieve wizard view next button
     final JButton nextFinishOptionButton = (JButton)TestUtilities.getField(view, "nextFinishOptionButton"); 
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
-    tester.click(nextFinishOptionButton);
+    tester.actionClick(nextFinishOptionButton);
     // Check current step is scale
     assertStepShowing(panel, false, true, false);
     
@@ -159,7 +159,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     tester.actionKeyString("100");    
     // Check next button is enabled 
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
-    tester.click(nextFinishOptionButton);
+    tester.actionClick(nextFinishOptionButton);
     // Check current step is origin
     assertStepShowing(panel, false, false, true);
     
@@ -174,7 +174,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     tester.actionKeyString("10");    
     assertEquals("Wrong origin x spinner value", 10f, xOriginSpinner.getValue());
 
-    tester.click(nextFinishOptionButton);
+    tester.actionClick(nextFinishOptionButton);
     // Check home has a background image
     BackgroundImage backgroundImage = home.getBackgroundImage();
     assertTrue("No background image in home", backgroundImage != null);
