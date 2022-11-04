@@ -2963,6 +2963,7 @@ public class HomePane extends JRootPane implements HomeView {
       addActionToPopupMenu(ActionType.JOIN_WALLS, planViewPopup);
       addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
       addActionToPopupMenu(ActionType.SPLIT_WALL, planViewPopup);
+      //TODO: Multilevel
       addActionToPopupMenu(ActionType.MODIFY_ROOM, planViewPopup);
       JMenuItem addRoomPointMenuItem = addActionToPopupMenu(ActionType.ADD_ROOM_POINT, planViewPopup);
       JMenuItem deleteRoomPointMenuItem = addActionToPopupMenu(ActionType.DELETE_ROOM_POINT, planViewPopup);

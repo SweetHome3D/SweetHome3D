@@ -88,6 +88,7 @@ public class PlanController extends FurnitureController implements Controller {
     public static final Mode SELECTION               = new Mode("SELECTION");
     public static final Mode PANNING                 = new Mode("PANNING");
     public static final Mode WALL_CREATION           = new Mode("WALL_CREATION");
+    //TODO Multilevel
     public static final Mode ROOM_CREATION           = new Mode("ROOM_CREATION");
     public static final Mode POLYLINE_CREATION       = new Mode("POLYLINE_CREATION");
     public static final Mode DIMENSION_LINE_CREATION = new Mode("DIMENSION_LINE_CREATION");
@@ -10220,7 +10221,7 @@ public class PlanController extends FurnitureController implements Controller {
       Wall previousWall = this.wallEndAtStart != null
           ? this.wallEndAtStart
           : this.wallStartAtStart;
-      // Create a new wall with an angle equal to previous wall angle - 90°
+      // Create a new wall with an angle equal to previous wall angle - 90ï¿½
       double previousWallAngle = Math.PI - Math.atan2(previousWall.getYStart() - previousWall.getYEnd(),
           previousWall.getXStart() - previousWall.getXEnd());
       previousWallAngle -=  Math.PI / 2;
@@ -11713,7 +11714,7 @@ public class PlanController extends FurnitureController implements Controller {
       float newPitch = (float)(this.oldPitch
           + (y - getYLastMousePress()) * Math.cos(this.selectedCamera.getYaw()) * Math.PI / 360
           - (x - getXLastMousePress()) * Math.sin(this.selectedCamera.getYaw()) * Math.PI / 360);
-      // Check new angle is between -90° and 90°
+      // Check new angle is between -90ï¿½ and 90ï¿½
       newPitch = Math.max(newPitch, -(float)Math.PI / 2);
       newPitch = Math.min(newPitch, (float)Math.PI / 2);
 
@@ -13230,7 +13231,7 @@ public class PlanController extends FurnitureController implements Controller {
       float [][] points = this.newRoom.getPoints();
       this.xPreviousPoint = points [points.length - 1][0];
       this.yPreviousPoint = points [points.length - 1][1];
-      // Create a new side with an angle equal to previous side angle - 90°
+      // Create a new side with an angle equal to previous side angle - 90ï¿½
       double previousSideAngle = Math.PI - Math.atan2(points [points.length - 2][1] - points [points.length - 1][1],
           points [points.length - 2][0] - points [points.length - 1][0]);
       previousSideAngle -=  Math.PI / 2;
@@ -14174,7 +14175,7 @@ public class PlanController extends FurnitureController implements Controller {
       float [][] points = this.newPolyline.getPoints();
       this.xPreviousPoint = points [points.length - 1][0];
       this.yPreviousPoint = points [points.length - 1][1];
-      // Create a new segment with an angle equal to previous segment angle - 90°
+      // Create a new segment with an angle equal to previous segment angle - 90ï¿½
       double previousSegmentAngle = Math.PI - Math.atan2(points [points.length - 2][1] - points [points.length - 1][1],
           points [points.length - 2][0] - points [points.length - 1][0]);
       previousSegmentAngle -=  Math.PI / 2;

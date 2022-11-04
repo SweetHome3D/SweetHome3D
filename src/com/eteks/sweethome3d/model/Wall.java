@@ -65,6 +65,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private boolean             symmetric = true;
   private TextureImage        pattern;
   private Integer             topColor;
+  //TODO: Multilevel
   private Level               level;
 
   private transient Shape      shapeCache;

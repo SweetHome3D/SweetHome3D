@@ -96,6 +96,7 @@ public class WallController implements Controller {
   private Float        sloppingWallHeightAtEnd;
   private Float        thickness;
   private Float        arcExtentInDegrees;
+  //TODO: Multilevel
 
   /**
    * Creates the controller of wall view with undo support.

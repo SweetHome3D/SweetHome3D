@@ -124,6 +124,7 @@ public class WallPanel extends JPanel implements DialogView {
   private JSpinner             arcExtentSpinner;
   private JEditorPane          wallOrientationLabel;
   private String               dialogTitle;
+  //TODO: Multilevel
 
   /**
    * Creates a panel that displays wall data according to the units set in
